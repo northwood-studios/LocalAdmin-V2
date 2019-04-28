@@ -1,27 +1,79 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.ConstrainedExecution;
+using System.Threading;
 
 namespace LocalAdmin_V2_Net_Core
 {
     public static class ConsoleUtil
     {
-	    public static object WriteLock;
+	    private static bool _exit;
+		private static Queue<ConsoleLogEntry> _q;
+	    private static readonly char[] ToTrim = {'\n', '\r'};
+	    private static Thread _queueThread;
+
+	    public static void Init()
+	    {
+			_q = new Queue<ConsoleLogEntry>();
+			_queueThread = new Thread(ProcessQueue) {IsBackground = true};
+			_queueThread.Start();
+	    }
 
         public static void Write(string content, ConsoleColor color = ConsoleColor.White, int height = 0)
         {
-	        content = content.TrimEnd('\n').TrimEnd('\r');
-	        lock (WriteLock)
+	        content = content.Trim().Trim(ToTrim);
+			_q.Enqueue(new ConsoleLogEntry(content == "" ? "" : $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {content}", color, height));
+        }
+
+        private static void ProcessQueue()
+        {
+			while (_q == null)
+				Thread.Sleep(25);
+
+	        while (!_exit || _q.Count > 0)
 	        {
-		        Console.CursorTop += height;
-		        Console.ForegroundColor = color;
+		        if (_q.Count == 0)
+		        {
+					Thread.Sleep(20);
+					continue;
+		        }
 
-		        var time = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] ";
+		        try
+		        {
+			        var entry = _q.Dequeue();
 
-		        Console.WriteLine(content == "" ? "" : time + content);
-		        Logger.Log(content == "" ? "" : time + content);
+			        Console.BackgroundColor = ConsoleColor.Black;
 
-		        Console.ForegroundColor = ConsoleColor.White;
-		        Console.BackgroundColor = ConsoleColor.Black;
+			        try
+			        {
+				        Console.ForegroundColor = entry.Color;
+			        }
+			        catch
+			        {
+				        Console.ForegroundColor = ConsoleColor.White;
+			        }
+
+			        if (entry.Height > 0)
+				        Console.CursorTop += entry.Height;
+
+			        Console.WriteLine(entry.Content);
+
+			        Console.ForegroundColor = ConsoleColor.White;
+			        Console.BackgroundColor = ConsoleColor.Black;
+
+			        Logger.Log(entry.Content);
+		        }
+		        catch (Exception e)
+		        {
+					Write("[LocalAdmin] Queue processing exception: " + e.Message, ConsoleColor.Red);
+		        }
 	        }
+        }
+
+        public static void Terminate()
+        {
+	        _exit = true;
         }
 	}
 }

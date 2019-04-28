@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LocalAdmin_V2_Net_Core.Commands;
 
@@ -21,14 +22,15 @@ namespace LocalAdmin_V2_Net_Core
          * Blue - normal SCPSL log
         */
 
-        private const string VersionString = "1.0";
+        private const string VersionString = "2.1.1";
 
         public static string localAdminExecutable;
+        private static bool _exit;
 
         public static void Main(string[] args)
         {
-			ConsoleUtil.WriteLock = new object();
-			Console.Title = "LocalAdmin 2 - " + VersionString;
+			ConsoleUtil.Init();
+			Console.Title = "LocalAdmin v. " + VersionString;
 
 			try
 	        {
@@ -36,8 +38,9 @@ namespace LocalAdmin_V2_Net_Core
 		        ushort port = 0;
 
 				if (args.Length == 0)
-		        {
-			        ConsoleUtil.Write("You can pass port number as first startup argument.", ConsoleColor.Green);
+				{
+					Console.ForegroundColor = ConsoleColor.Green;
+					Console.WriteLine("You can pass port number as first startup argument.");
 			        Console.WriteLine("");
 
 					while (!portSelected)
@@ -64,7 +67,7 @@ namespace LocalAdmin_V2_Net_Core
 
 		        if (portSelected || ushort.TryParse(args[0], out port))
 		        {
-			        Console.Title = "LocalAdmin 2 - " + VersionString + " on port " + port;
+			        Console.Title = "LocalAdmin v. " + VersionString + " on port " + port;
 			        var scpslExecutable = "";
 
 			        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -86,7 +89,7 @@ namespace LocalAdmin_V2_Net_Core
 				        Environment.Exit(-1);
 			        }
 
-			        Process gameProcess = null;
+					Process gameProcess = null;
 			        var commandService = new CommandService();
 
 			        var session = "";
@@ -101,37 +104,43 @@ namespace LocalAdmin_V2_Net_Core
 
 			        var readerTask = new Task(() =>
 			        {
-				        while (true)
+						while(client == null) Thread.Sleep(20);
+				        while (!_exit)
 				        {
 					        var input = Console.ReadLine();
+					        if (string.IsNullOrWhiteSpace(input)) continue;
 					        var currentLineCursor = Console.CursorTop;
 					        Console.SetCursorPosition(0, Console.CursorTop - 1);
 					        Console.Write(new string(' ', Console.WindowWidth));
 					        ConsoleUtil.Write(">>> " + input, ConsoleColor.DarkMagenta, -1);
 					        Console.SetCursorPosition(0, currentLineCursor);
 
-					        var split = input?.ToUpper().Split(' ');
+					        var split = input.ToUpper().Split(' ');
 
-					        if (split.Length > 0)
-					        {
-						        var name = split[0];
-						        var arguments = split.Skip(1).ToArray();
+					        if (split.Length <= 0) continue;
+					        var name = split[0];
+					        var arguments = split.Skip(1).ToArray();
 
-						        var command = commandService.GetCommandByName(name);
+					        var command = commandService.GetCommandByName(name);
 
-						        if (command != null)
-							        command.Execute(arguments);
-						        else
-							        client.Write(input);
-					        }
+					        if (input.ToLower() == "exit")
+						        _exit = true;
+
+					        if (command != null)
+						        command.Execute(arguments);
+					        else
+						        client.Write(input);
 				        }
 			        });
 
 			        var memoryWatcherTask = new Task(() =>
 			        {
-				        while (true)
+				        while (!_exit)
 				        {
-					        if (gameProcess != null && !gameProcess.HasExited)
+					        Thread.Sleep(2000);
+
+							if (gameProcess == null) continue;
+							if (!gameProcess.HasExited)
 					        {
 						        gameProcess.Refresh();
 						        var UsedRAM_MB = (int) (gameProcess.WorkingSet64 / 1048576);
@@ -146,13 +155,29 @@ namespace LocalAdmin_V2_Net_Core
 							        ConsoleUtil.Write("Session crashed. Trying to restart dedicated server...",
 								        ConsoleColor.Red);
 
-							        Process.Start(localAdminExecutable);
 							        gameProcess?.Kill();
+									Process.Start(localAdminExecutable, port.ToString());	
+									Environment.Exit(0);
 						        }
+
+						        continue;
 					        }
 
-					        Task.Delay(2000);
-				        }
+							ConsoleUtil.Write("Session crashed. Trying to restart dedicated server...",
+								ConsoleColor.Red);
+
+							Process.Start(localAdminExecutable, port.ToString());
+							Environment.Exit(0);
+						}
+
+						if (gameProcess != null)
+							while (!gameProcess.HasExited)
+								Thread.Sleep(100);
+
+						ConsoleUtil.Write("Game process successfully exited.", ConsoleColor.DarkGreen);
+						ConsoleUtil.Write("Exiting LocalAdmin...", ConsoleColor.DarkGreen);
+
+						ConsoleUtil.Terminate();
 			        });
 
 			        session = Randomizer.RandomString(20);
@@ -181,14 +206,14 @@ namespace LocalAdmin_V2_Net_Core
 			        #region "Menu"
 
 			        Console.Clear();
-			        ConsoleUtil.Write("SCP: Secret Laboratory - LocalAdmin 2 - " + VersionString,
+			        ConsoleUtil.Write("SCP: Secret Laboratory - LocalAdmin v. " + VersionString,
 				        ConsoleColor.Cyan);
 			        ConsoleUtil.Write("");
 			        ConsoleUtil.Write(
 				        "Licensed under The MIT License (use command \"license\" to get license text).",
-				        ConsoleColor.DarkGray);
+				        ConsoleColor.Cyan);
 			        ConsoleUtil.Write("Copyright by KernelError and zabszk, 2019",
-				        ConsoleColor.DarkGray);
+				        ConsoleColor.Cyan);
 			        ConsoleUtil.Write("");
 			        ConsoleUtil.Write("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
 			        ConsoleUtil.Write("");
@@ -221,37 +246,28 @@ namespace LocalAdmin_V2_Net_Core
 			        client = new COMClient(session);
 			        client.Received += (sender, eventArgs) =>
 			        {
-				        var color = 8;
+				        var color = 7;
 				        if (eventArgs.Contains("LOGTYPE"))
 				        {
-					        var num = eventArgs.Remove(0, eventArgs.IndexOf("LOGTYPE", StringComparison.Ordinal) + 7);
+					        var num = eventArgs.Remove(0, eventArgs.LastIndexOf("LOGTYPE", StringComparison.Ordinal) + 7);
 					        color = int.Parse(num.Contains("-") ? num.Remove(0, 1) : num);
 
-					        eventArgs = eventArgs.Remove(eventArgs.IndexOf("LOGTYPE", StringComparison.Ordinal) + 9);
+					        eventArgs = eventArgs.Remove(eventArgs.LastIndexOf("LOGTYPE", StringComparison.Ordinal) + 9);
 				        }
 
-				        ConsoleUtil.Write(
-					        eventArgs.Contains("LOGTYPE")
-						        ? eventArgs.Substring(0, eventArgs.Length - 9)
-						        : eventArgs, (ConsoleColor) color);
-			        };
+						ConsoleUtil.Write(
+							eventArgs.Contains("LOGTYPE")
+								? eventArgs.Substring(0, eventArgs.Length - 9)
+								: eventArgs, (ConsoleColor)color);
+					};
 
-			        AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => { gameProcess?.Kill(); };
 
-			        if (gameProcess != null)
-				        gameProcess.Exited += (obj, eventArgs) =>
-				        {
-					        var startInfo = new ProcessStartInfo(localAdminExecutable, args[0]);
-					        Process.Start(startInfo);
-					        Environment.Exit(0);
-				        };
-
-			        //Run coroutines
+			        //Run
 			        readerTask.Start();
 			        memoryWatcherTask.Start();
 
 			        Task.WaitAll(readerTask, memoryWatcherTask);
-		        }
+				}
 		        else
 		        {
 			        ConsoleUtil.Write("Failed - Invalid port!");
