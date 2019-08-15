@@ -5,7 +5,12 @@ namespace LocalAdmin.V2.Commands
 {
     public class NewCommand : CommandBase
     {
-        public NewCommand() : base("New") { }
+        private string _executable;
+
+        public NewCommand(string executable) : base("New")
+        {
+            _executable = executable;
+        }
 
         public override void Execute(string[] arguments)
         {
@@ -13,7 +18,7 @@ namespace LocalAdmin.V2.Commands
             {
                 var port = -1;
                 if (int.TryParse(arguments[0], out port))
-                    Process.Start(new ProcessStartInfo(Program.localAdminExecutable, Convert.ToString(port)));
+                    Process.Start(new ProcessStartInfo(_executable, Convert.ToString(port)));
                 else
                     ConsoleUtil.Write("Usage: new port", ConsoleColor.Yellow);
             }
