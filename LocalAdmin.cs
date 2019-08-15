@@ -176,9 +176,11 @@ namespace LocalAdmin.V2
 
         private void SetupReader()
         {
-            readerTask = new Task(() =>
+            readerTask = new Task(async () =>
             {
-                while (client == null) Thread.Sleep(20);
+                while (client == null)
+                    await Task.Delay(20);
+
                 while (!_exit)
                 {
                     var input = Console.ReadLine();
@@ -189,7 +191,7 @@ namespace LocalAdmin.V2
                     var currentLineCursor = Console.CursorTop;
 
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    Console.Write(new string(' ', Console.WindowWidth));
+                    ConsoleUtil.Write(new string(' ', Console.WindowWidth));
                     ConsoleUtil.WriteLine(">>> " + input, ConsoleColor.DarkMagenta, -1);
                     Console.SetCursorPosition(0, currentLineCursor);
 
@@ -209,18 +211,18 @@ namespace LocalAdmin.V2
                     if (command != null)
                         command.Execute(arguments);
                     else
-                        client.Write(input);
+                        client.WriteLine(input);
                 }
             });
         }
 
         private void SetupMemoryWatcher()
         {
-            memoryWatcherTask = new Task(() =>
+            memoryWatcherTask = new Task(async () =>
             {
                 while (!_exit)
                 {
-                    Thread.Sleep(2000);
+                    await Task.Delay(2000);
 
                     if (gameProcess == null) continue;
                     if (!gameProcess.HasExited)
@@ -238,6 +240,7 @@ namespace LocalAdmin.V2
                             ConsoleUtil.WriteLine("Session crashed. Trying to restart dedicated server...", ConsoleColor.Red);
 
                             gameProcess?.Kill();
+
                             Restart();
                         }
 
@@ -276,12 +279,6 @@ namespace LocalAdmin.V2
             }
         }
 
-        private void Restart()
-        {
-            Process.Start(LocalAdminExecutable, port.ToString());
-            Environment.Exit(0);
-        }
-
         private void RegisterCommands()
         {
             commandService.RegisterCommand(new NewCommand(LocalAdminExecutable));
@@ -307,8 +304,18 @@ namespace LocalAdmin.V2
 
         private void Exit(int code = -1)
         {
+            client.Dispose();
+
             Console.ReadKey(true);
             Environment.Exit(code);
+        }
+
+        private void Restart()
+        {
+            client.Dispose();
+
+            Process.Start(LocalAdminExecutable, port.ToString());
+            Environment.Exit(0);
         }
     }
 }

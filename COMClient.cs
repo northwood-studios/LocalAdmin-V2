@@ -6,9 +6,11 @@ namespace LocalAdmin.V2
 {
     public class COMClient : IDisposable
     {
-        private readonly FileSystemWatcher fileSystemWatcher;
+        public event EventHandler<string> Received;
+
         public readonly string Session;
 
+        private readonly FileSystemWatcher fileSystemWatcher;
         private int logID;
 
         public COMClient(string session)
@@ -24,17 +26,21 @@ namespace LocalAdmin.V2
 
             fileSystemWatcher.Created += (sender, eventArgs) =>
             {
-                Task.Factory.StartNew(() =>
+                Task.Factory.StartNew(async () =>
                 {
                     if (File.Exists(eventArgs.FullPath))
                     {
-                        while (IsFileUsed(eventArgs.FullPath))
+                        while (true)
                         {
+                            if (!IsFileUsed(eventArgs.FullPath))
+                                break;
+
+                            await Task.Delay(10);
                         }
 
                         using (var streamReader = new StreamReader(eventArgs.FullPath))
                         {
-                            if (Received != null) Received(this, streamReader.ReadToEnd());
+                            Received?.Invoke(this, streamReader.ReadToEnd());
                         }
                     }
                     else
@@ -47,26 +53,20 @@ namespace LocalAdmin.V2
             fileSystemWatcher.EnableRaisingEvents = true;
         }
 
-        public void Dispose()
+        public void WriteLine(string message)
         {
-            fileSystemWatcher?.Dispose();
-        }
-
-        public event EventHandler<string> Received;
-
-        public void Write(string message)
-        {
-            using (var sw = new StreamWriter("SCPSL_Data/Dedicated/" + Session + "/cs" + logID + ".mapi"))
+            using (var streamWriter = new StreamWriter("SCPSL_Data/Dedicated/" + Session + "/cs" + logID + ".mapi"))
             {
                 logID++;
-                sw.WriteLine(message + "terminator"); //Terminator - an "end-of-message" signal
+
+                streamWriter.WriteLine(message + "terminator"); //Terminator - an "end-of-message" signal
                 ConsoleUtil.WriteLine("Sending request to SCP: Secret Laboratory...");
             }
         }
 
-        public void ResetLogID()
+        public void Dispose()
         {
-            logID = 0;
+            fileSystemWatcher?.Dispose();
         }
 
         private bool IsFileUsed(string file)
