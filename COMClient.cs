@@ -60,7 +60,7 @@ namespace LocalAdmin.V2
             {
                 logID++;
                 sw.WriteLine(message + "terminator"); //Terminator - an "end-of-message" signal
-                ConsoleUtil.Write("Sending request to SCP: Secret Laboratory...");
+                ConsoleUtil.WriteLine("Sending request to SCP: Secret Laboratory...");
             }
         }
 

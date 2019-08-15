@@ -8,19 +8,19 @@ namespace LocalAdmin.V2.Commands
 
         public override void Execute(string[] arguments)
         {
-            ConsoleUtil.Write("");
-            ConsoleUtil.Write("----HELP----", ConsoleColor.DarkGray);
-            ConsoleUtil.Write("NEW - starts the next server on different port.");
-            ConsoleUtil.Write("BAN - time-bans player using IP address or part of the nickname.");
-            ConsoleUtil.Write("FORCESTART - forces the round to start.");
-            ConsoleUtil.Write("ROUNDRESTART - forces the round to restart.");
-            ConsoleUtil.Write("HELLO - tests if server is responding.");
-            ConsoleUtil.Write("CONFIG - opens the server's configuration file.");
-            ConsoleUtil.Write("CONFIG RELOAD - applies config changes.");
-            ConsoleUtil.Write("EXIT - stops the server.");
-            ConsoleUtil.Write("SEED - shows the current map seed in order to re-generate level in the future.");
-            ConsoleUtil.Write("BANREFRESH - forces ban database to refresh.");
-            ConsoleUtil.Write("------------" + Environment.NewLine, ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("");
+            ConsoleUtil.WriteLine("----HELP----", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("NEW - starts the next server on different port.");
+            ConsoleUtil.WriteLine("BAN - time-bans player using IP address or part of the nickname.");
+            ConsoleUtil.WriteLine("FORCESTART - forces the round to start.");
+            ConsoleUtil.WriteLine("ROUNDRESTART - forces the round to restart.");
+            ConsoleUtil.WriteLine("HELLO - tests if server is responding.");
+            ConsoleUtil.WriteLine("CONFIG - opens the server's configuration file.");
+            ConsoleUtil.WriteLine("CONFIG RELOAD - applies config changes.");
+            ConsoleUtil.WriteLine("EXIT - stops the server.");
+            ConsoleUtil.WriteLine("SEED - shows the current map seed in order to re-generate level in the future.");
+            ConsoleUtil.WriteLine("BANREFRESH - forces ban database to refresh.");
+            ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
         }
     }
 }

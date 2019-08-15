@@ -49,27 +49,24 @@ namespace LocalAdmin.V2
             {
                 if (args.Length == 0)
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("You can pass port number as first startup argument.");
+                    ConsoleUtil.WriteLine("You can pass port number as first startup argument.", ConsoleColor.Green);
                     Console.WriteLine("");
-
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.Write("Port number (default: 7777): ");
+                    ConsoleUtil.Write("Port number (default: 7777): ", ConsoleColor.Green);
 
                     var userInput = ReadInput((input) =>
                     {
                         return ushort.TryParse(input, out port);
                     }, () => { }, () =>
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Port number must be a unsigned short integer.");
+                        ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red);
                     });
                 } else
                 {
                     if(!ushort.TryParse(args[0], out port))
                     {
-                        ConsoleUtil.Write("Failed - Invalid port!");
-                        
+                        ConsoleUtil.WriteLine("Failed - Invalid port!");
+
+                        Exit();
                     }
                 }
 
@@ -85,8 +82,8 @@ namespace LocalAdmin.V2
                 SetupFiles();
                 Menu();
 
-                ConsoleUtil.Write("Started new session.", ConsoleColor.DarkGreen);
-                ConsoleUtil.Write("Trying to start server...", ConsoleColor.Gray);
+                ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
+                ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
 
                 RunSCPSL(port);
                 SetupClient();
@@ -108,14 +105,14 @@ namespace LocalAdmin.V2
 
         private void Menu()
         {
-            Console.Clear();
-            ConsoleUtil.Write("SCP: Secret Laboratory - LocalAdmin v. " + VersionString, ConsoleColor.Cyan);
-            ConsoleUtil.Write("");
-            ConsoleUtil.Write("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
-            ConsoleUtil.Write("Copyright by KernelError and zabszk, 2019", ConsoleColor.Cyan);
-            ConsoleUtil.Write("");
-            ConsoleUtil.Write("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
-            ConsoleUtil.Write("");
+            ConsoleUtil.Clear();
+            ConsoleUtil.WriteLine("SCP: Secret Laboratory - LocalAdmin v. " + VersionString, ConsoleColor.Cyan);
+            ConsoleUtil.WriteLine("");
+            ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
+            ConsoleUtil.WriteLine("Copyright by KernelError and zabszk, 2019", ConsoleColor.Cyan);
+            ConsoleUtil.WriteLine("");
+            ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
+            ConsoleUtil.WriteLine("");
         }
 
         private void SetupPlatform()
@@ -132,7 +129,7 @@ namespace LocalAdmin.V2
             }
             else
             {
-                ConsoleUtil.Write("Failed - Unsupported platform!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
 
                 Exit();
             }
@@ -148,8 +145,8 @@ namespace LocalAdmin.V2
                 }
                 catch (IOException)
                 {
-                    ConsoleUtil.Write("Failed - Please close all open files in SCPSL_Data/Dedicated and restart the server!", ConsoleColor.Red);
-                    ConsoleUtil.Write("Press any key to close...", ConsoleColor.DarkGray);
+                    ConsoleUtil.WriteLine("Failed - Please close all open files in SCPSL_Data/Dedicated and restart the server!", ConsoleColor.Red);
+                    ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
 
                     Exit();
                 }
@@ -173,7 +170,7 @@ namespace LocalAdmin.V2
                     eventArgs = eventArgs.Remove(eventArgs.LastIndexOf("LOGTYPE", StringComparison.Ordinal) + 9);
                 }
 
-                ConsoleUtil.Write(eventArgs.Contains("LOGTYPE") ? eventArgs.Substring(0, eventArgs.Length - 9) : eventArgs, (ConsoleColor)color);
+                ConsoleUtil.WriteLine(eventArgs.Contains("LOGTYPE") ? eventArgs.Substring(0, eventArgs.Length - 9) : eventArgs, (ConsoleColor)color);
             };
         }
 
@@ -193,7 +190,7 @@ namespace LocalAdmin.V2
 
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
                     Console.Write(new string(' ', Console.WindowWidth));
-                    ConsoleUtil.Write(">>> " + input, ConsoleColor.DarkMagenta, -1);
+                    ConsoleUtil.WriteLine(">>> " + input, ConsoleColor.DarkMagenta, -1);
                     Console.SetCursorPosition(0, currentLineCursor);
 
                     var split = input.ToUpper().Split(' ');
@@ -238,8 +235,7 @@ namespace LocalAdmin.V2
 
                         if (tooLowMemory > 5 || gameProcess.MainWindowTitle != "")
                         {
-                            ConsoleUtil.Write("Session crashed. Trying to restart dedicated server...",
-                                ConsoleColor.Red);
+                            ConsoleUtil.WriteLine("Session crashed. Trying to restart dedicated server...", ConsoleColor.Red);
 
                             gameProcess?.Kill();
                             Process.Start(LocalAdminExecutable, port.ToString());
@@ -249,8 +245,7 @@ namespace LocalAdmin.V2
                         continue;
                     }
 
-                    ConsoleUtil.Write("Session crashed. Trying to restart dedicated server...",
-                        ConsoleColor.Red);
+                    ConsoleUtil.WriteLine("Session crashed. Trying to restart dedicated server...", ConsoleColor.Red);
 
                     Process.Start(LocalAdminExecutable, port.ToString());
                     Environment.Exit(0);
@@ -260,8 +255,8 @@ namespace LocalAdmin.V2
                     while (!gameProcess.HasExited)
                         Thread.Sleep(100);
 
-                ConsoleUtil.Write("Game process successfully exited.", ConsoleColor.DarkGreen);
-                ConsoleUtil.Write("Exiting LocalAdmin...", ConsoleColor.DarkGreen);
+                ConsoleUtil.WriteLine("Game process successfully exited.", ConsoleColor.DarkGreen);
+                ConsoleUtil.WriteLine("Exiting LocalAdmin...", ConsoleColor.DarkGreen);
             });
         }
 
@@ -269,15 +264,15 @@ namespace LocalAdmin.V2
         {
             if (File.Exists(scpslExecutable))
             {
-                ConsoleUtil.Write("Executing: " + scpslExecutable, ConsoleColor.DarkGreen);
+                ConsoleUtil.WriteLine("Executing: " + scpslExecutable, ConsoleColor.DarkGreen);
                 gameProcess = Process.Start(scpslExecutable,
                     "-batchmode -nographics -key" + session + " -nodedicateddelete -port" + port + " -id" +
                     Process.GetCurrentProcess().Id);
             }
             else
             {
-                ConsoleUtil.Write("Failed - Executable file not found!", ConsoleColor.Red);
-                ConsoleUtil.Write("Press any key to close...", ConsoleColor.DarkGray);
+                ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
 
                 Exit();
             }

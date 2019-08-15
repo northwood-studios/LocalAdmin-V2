@@ -20,11 +20,11 @@ namespace LocalAdmin.V2.Commands
                 if (int.TryParse(arguments[0], out port))
                     Process.Start(new ProcessStartInfo(_executable, Convert.ToString(port)));
                 else
-                    ConsoleUtil.Write("Usage: new port", ConsoleColor.Yellow);
+                    ConsoleUtil.WriteLine("Usage: new port", ConsoleColor.Yellow);
             }
             else
             {
-                ConsoleUtil.Write("Usage: new port", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine("Usage: new port", ConsoleColor.Yellow);
             }
         }
     }
