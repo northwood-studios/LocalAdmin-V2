@@ -43,7 +43,6 @@ namespace LocalAdmin.V2
 
         public void Start(string[] args)
         {
-            ConsoleUtil.Init();
             Console.Title = "LocalAdmin v. " + VersionString;
 
             try
@@ -78,7 +77,6 @@ namespace LocalAdmin.V2
 
                 SetupPlatform();
                 RegisterCommands();
-
                 SetupMemoryWatcher();
                 SetupReader();
 
@@ -264,8 +262,6 @@ namespace LocalAdmin.V2
 
                 ConsoleUtil.Write("Game process successfully exited.", ConsoleColor.DarkGreen);
                 ConsoleUtil.Write("Exiting LocalAdmin...", ConsoleColor.DarkGreen);
-
-                ConsoleUtil.Terminate();
             });
         }
 
