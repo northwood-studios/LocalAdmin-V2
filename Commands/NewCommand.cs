@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace LocalAdmin_V2_Net_Core.Commands
+namespace LocalAdmin.V2.Commands
 {
     public class NewCommand : CommandBase
     {
-        public NewCommand() : base("New")
-        {
-        }
+        public NewCommand() : base("New") { }
 
         public override void Execute(string[] arguments)
         {

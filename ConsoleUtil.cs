@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.ConstrainedExecution;
 using System.Threading;
 
-namespace LocalAdmin_V2_Net_Core
+namespace LocalAdmin.V2
 {
     public static class ConsoleUtil
     {

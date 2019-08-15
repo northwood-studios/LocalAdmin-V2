@@ -1,12 +1,10 @@
 ﻿using System;
 
-namespace LocalAdmin_V2_Net_Core.Commands
+namespace LocalAdmin.V2.Commands
 {
 	public class LicenseCommand : CommandBase
 	{
-		public LicenseCommand() : base("License")
-		{
-		}
+        public LicenseCommand() : base("License") { }
 
 		public override void Execute(string[] arguments)
 		{

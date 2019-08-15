@@ -5,9 +5,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LocalAdmin_V2_Net_Core.Commands;
+using LocalAdmin.V2.Commands;
 
-namespace LocalAdmin_V2_Net_Core
+namespace LocalAdmin.V2
 {
     internal class Program
     {

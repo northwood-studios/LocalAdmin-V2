@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace LocalAdmin_V2_Net_Core
+namespace LocalAdmin.V2
 {
     public class COMClient : IDisposable
     {

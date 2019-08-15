@@ -1,12 +1,10 @@
 ﻿using System;
 
-namespace LocalAdmin_V2_Net_Core.Commands
+namespace LocalAdmin.V2.Commands
 {
     public class HelpCommand : CommandBase
     {
-        public HelpCommand() : base("Help")
-        {
-        }
+        public HelpCommand() : base("Help") { }
 
         public override void Execute(string[] arguments)
         {

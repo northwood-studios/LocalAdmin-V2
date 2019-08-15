@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace LocalAdmin_V2_Net_Core
+namespace LocalAdmin.V2
 {
 	public class ConsoleLogEntry
 	{

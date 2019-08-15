@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace LocalAdmin_V2_Net_Core
+namespace LocalAdmin.V2
 {
     public class CommandService
     {
