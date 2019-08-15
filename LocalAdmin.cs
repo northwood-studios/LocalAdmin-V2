@@ -238,8 +238,7 @@ namespace LocalAdmin.V2
                             ConsoleUtil.WriteLine("Session crashed. Trying to restart dedicated server...", ConsoleColor.Red);
 
                             gameProcess?.Kill();
-                            Process.Start(LocalAdminExecutable, port.ToString());
-                            Environment.Exit(0);
+                            Restart();
                         }
 
                         continue;
@@ -247,8 +246,7 @@ namespace LocalAdmin.V2
 
                     ConsoleUtil.WriteLine("Session crashed. Trying to restart dedicated server...", ConsoleColor.Red);
 
-                    Process.Start(LocalAdminExecutable, port.ToString());
-                    Environment.Exit(0);
+                    Restart();
                 }
 
                 if (gameProcess != null)
@@ -276,6 +274,12 @@ namespace LocalAdmin.V2
 
                 Exit();
             }
+        }
+
+        private void Restart()
+        {
+            Process.Start(LocalAdminExecutable, port.ToString());
+            Environment.Exit(0);
         }
 
         private void RegisterCommands()
