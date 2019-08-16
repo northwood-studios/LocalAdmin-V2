@@ -22,7 +22,7 @@ namespace LocalAdmin.V2
 
     internal class LocalAdmin
     {
-        public const string VersionString = "2.1.1";
+        public const string VersionString = "2.1.2";
         public string LocalAdminExecutable { get; private set; }
 
         private CommandService commandService = new CommandService();
@@ -144,11 +144,11 @@ namespace LocalAdmin.V2
 
         private void SetupFiles()
         {
-            if (Directory.Exists("SCPSL_DATA/Dedicated/" + session))
+            if (Directory.Exists("SCPSL_Data/Dedicated/" + session))
             {
                 try
                 {
-                    Directory.Delete("SCPSL_DATA/Dedicated/" + session, true);
+                    Directory.Delete("SCPSL_Data/Dedicated/" + session, true);
                 }
                 catch (IOException)
                 {
