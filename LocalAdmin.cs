@@ -137,11 +137,11 @@ namespace LocalAdmin.V2
 
         private void SetupFiles()
         {
-            if (Directory.Exists("SCPSL_DATA/Dedicated/" + session))
+            if (Directory.Exists("SCPSL_Data/Dedicated/" + session))
             {
                 try
                 {
-                    Directory.Delete("SCPSL_DATA/Dedicated/" + session, true);
+                    Directory.Delete("SCPSL_Data/Dedicated/" + session, true);
                 }
                 catch (IOException)
                 {
