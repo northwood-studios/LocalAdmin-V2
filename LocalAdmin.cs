@@ -266,9 +266,15 @@ namespace LocalAdmin.V2
             if (File.Exists(scpslExecutable))
             {
                 ConsoleUtil.WriteLine("Executing: " + scpslExecutable, ConsoleColor.DarkGreen);
-                gameProcess = Process.Start(scpslExecutable,
-                    "-batchmode -nographics -key" + session + " -nodedicateddelete -port" + port + " -id" +
-                    Process.GetCurrentProcess().Id);
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = scpslExecutable,
+                    Arguments = $"-batchmode -nographics -key{session} -nodedicateddelete -port{port} -id{Process.GetCurrentProcess().Id}",
+                    CreateNoWindow = true
+                };
+
+                gameProcess = Process.Start(startInfo);
             }
             else
             {
