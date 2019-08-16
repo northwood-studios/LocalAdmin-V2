@@ -55,6 +55,13 @@ namespace LocalAdmin.V2
 
                     var userInput = ReadInput((input) =>
                     {
+                        if(input == "")
+                        {
+                            port = 7777;
+
+                            return true;
+                        }
+                            
                         return ushort.TryParse(input, out port);
                     }, () => { }, () =>
                     {
