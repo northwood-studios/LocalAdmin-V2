@@ -18,8 +18,8 @@
 	<DelaySign>true</DelaySign>	
 	<RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
 	<IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
-	<IlcDisableReflection>true</IlcDisableReflection>
-	<IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+	<IlcDisableReflection>false</IlcDisableReflection>
+	<IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
 	<IlcOptimizationPreference>Speed</IlcOptimizationPreference>
 	<IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
 	<LangVersion>8</LangVersion>
