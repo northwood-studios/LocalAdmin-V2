@@ -56,7 +56,7 @@ namespace LocalAdmin.V2
                     Console.WriteLine("");
                     ConsoleUtil.Write("Port number (default: 7777): ", ConsoleColor.Green);
 
-                    var userInput = ReadInput((input) =>
+                    ReadInput((input) =>
                     {
                         if(input == "")
                         {
@@ -94,8 +94,8 @@ namespace LocalAdmin.V2
 
                 consolePort = GetFirstFreePort();
 
-                RunSCPSL(gamePort);
                 SetupServer();
+                RunSCPSL(gamePort);
 
                 readerTask.Start();
                 memoryWatcherTask.Start();
@@ -146,7 +146,7 @@ namespace LocalAdmin.V2
         
         private void SetupServer()
         {
-            server = new TcpServer(gamePort);
+            server = new TcpServer(consolePort);
             server.Received += (sender, line) =>
             {
                 var colorValue = byte.Parse(Convert.ToString(line[0]), NumberStyles.HexNumber);
