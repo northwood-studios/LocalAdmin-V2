@@ -13,13 +13,11 @@
     <AssemblyName>LocalAdmin</AssemblyName>
 	<CrossGenDuringPublish>false</CrossGenDuringPublish>
 	<TrimUnusedDependencies>true</TrimUnusedDependencies>
-	<Version>2.1.2</Version>
-	<SignAssembly>false</SignAssembly>
-	<DelaySign>true</DelaySign>	
+	<Version>2.2.0</Version>
 	<RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
 	<IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
-	<IlcDisableReflection>true</IlcDisableReflection>
-	<IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+	<IlcDisableReflection>false</IlcDisableReflection>
+	<IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
 	<IlcOptimizationPreference>Speed</IlcOptimizationPreference>
 	<IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
 	<LangVersion>8</LangVersion>
