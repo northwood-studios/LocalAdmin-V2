@@ -13,9 +13,7 @@
     <AssemblyName>LocalAdmin</AssemblyName>
 	<CrossGenDuringPublish>false</CrossGenDuringPublish>
 	<TrimUnusedDependencies>true</TrimUnusedDependencies>
-	<Version>2.1.2</Version>
-	<SignAssembly>false</SignAssembly>
-	<DelaySign>true</DelaySign>	
+	<Version>2.2.0</Version>
 	<RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
 	<IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
 	<IlcDisableReflection>false</IlcDisableReflection>
