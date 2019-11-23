@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,16 +30,17 @@ namespace LocalAdmin.V2
         private CommandService commandService = new CommandService();
 
         private Process gameProcess;
-        private COMClient client;
+
+        private TcpServer server;
 
         private Task memoryWatcherTask;
         private Task readerTask;
 
         private string scpslExecutable = "";
-        private string session = "";
 
-        private int tooLowMemory = 0;
-        private ushort port = 0;
+        private int tooLowMemory;
+        private ushort gamePort;
+        private ushort consolePort;
 
         private bool _exit;
 
@@ -57,19 +60,19 @@ namespace LocalAdmin.V2
                     {
                         if(input == "")
                         {
-                            port = 7777;
+                            gamePort = 7777;
 
                             return true;
                         }
                             
-                        return ushort.TryParse(input, out port);
+                        return ushort.TryParse(input, out gamePort);
                     }, () => { }, () =>
                     {
                         ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red);
                     });
                 } else
                 {
-                    if(!ushort.TryParse(args[0], out port))
+                    if(!ushort.TryParse(args[0], out gamePort))
                     {
                         ConsoleUtil.WriteLine("Failed - Invalid port!");
 
@@ -77,23 +80,22 @@ namespace LocalAdmin.V2
                     }
                 }
 
-                Console.Title = "LocalAdmin v. " + VersionString + " on port " + port;
+                Console.Title = "LocalAdmin v. " + VersionString + " on port " + gamePort;
 
                 SetupPlatform();
                 RegisterCommands();
                 SetupMemoryWatcher();
                 SetupReader();
 
-                session = Randomizer.RandomString(20);
-
-                SetupFiles();
                 Menu();
 
                 ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
                 ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
 
-                RunSCPSL(port);
-                SetupClient();
+                consolePort = GetFirstFreePort();
+
+                RunSCPSL(gamePort);
+                SetupServer();
 
                 readerTask.Start();
                 memoryWatcherTask.Start();
@@ -141,51 +143,25 @@ namespace LocalAdmin.V2
                 Exit();
             }
         }
-
-        private void SetupFiles()
+        
+        private void SetupServer()
         {
-            if (Directory.Exists("SCPSL_Data/Dedicated/" + session))
+            server = new TcpServer(gamePort);
+            server.Received += (sender, line) =>
             {
-                try
-                {
-                    Directory.Delete("SCPSL_Data/Dedicated/" + session, true);
-                }
-                catch (IOException)
-                {
-                    ConsoleUtil.WriteLine("Failed - Please close all open files in SCPSL_Data/Dedicated and restart the server!", ConsoleColor.Red);
-                    ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
+                var colorValue = byte.Parse(Convert.ToString(line[0]), NumberStyles.HexNumber);
+                var color = (ConsoleColor)colorValue;
 
-                    Exit();
-                }
-            }
-
-            Directory.CreateDirectory("SCPSL_Data/Dedicated/" + session);
-        }
-
-        private void SetupClient()
-        {
-            client = new COMClient(session);
-            client.Received += (sender, eventArgs) =>
-            {
-                var color = 7;
-
-                if (eventArgs.Contains("LOGTYPE"))
-                {
-                    var num = eventArgs.Remove(0, eventArgs.LastIndexOf("LOGTYPE", StringComparison.Ordinal) + 7);
-
-                    color = int.Parse(num.Contains("-") ? num.Remove(0, 1) : num);
-                    eventArgs = eventArgs.Remove(eventArgs.LastIndexOf("LOGTYPE", StringComparison.Ordinal) + 9);
-                }
-
-                ConsoleUtil.WriteLine(eventArgs.Contains("LOGTYPE") ? eventArgs.Substring(0, eventArgs.Length - 9) : eventArgs, (ConsoleColor)color);
+                ConsoleUtil.WriteLine(line.Substring(1, line.Length - 2), color);
             };
+            server.Start();
         }
 
         private void SetupReader()
         {
             readerTask = new Task(async () =>
             {
-                while (client == null)
+                while (server == null)
                     await Task.Delay(20);
 
                 while (!_exit)
@@ -218,7 +194,7 @@ namespace LocalAdmin.V2
                     if (command != null)
                         command.Execute(arguments);
                     else
-                        client.WriteLine(input);
+                        server.WriteLine(input);
                 }
             });
         }
@@ -277,7 +253,7 @@ namespace LocalAdmin.V2
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = scpslExecutable,
-                    Arguments = $"-batchmode -nographics -key{session} -nodedicateddelete -port{port} -id{Process.GetCurrentProcess().Id}",
+                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{gamePort} -console{consolePort} -id{Process.GetCurrentProcess().Id}",
                     CreateNoWindow = true
                 };
 
@@ -317,7 +293,7 @@ namespace LocalAdmin.V2
 
         private void Exit(int code = -1)
         {
-            client.Dispose();
+            server.Stop();
 
             Console.ReadKey(true);
             Environment.Exit(code);
@@ -325,10 +301,25 @@ namespace LocalAdmin.V2
 
         private void Restart()
         {
-            client.Dispose();
+            server.Stop();
 
-            Process.Start(LocalAdminExecutable, port.ToString());
+            Process.Start(LocalAdminExecutable, gamePort.ToString());
             Environment.Exit(0);
+        }
+        
+        private ushort GetFirstFreePort()
+        {
+            var activeTcpListeners = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
+        
+            for (ushort port = 10000; port < ushort.MaxValue; port++)
+            {
+                if (activeTcpListeners.All(listener => listener.Port != port))
+                {
+                    return port;
+                }
+            }
+
+            throw new Exception("No free port!");
         }
     }
 }
