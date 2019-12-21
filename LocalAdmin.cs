@@ -149,10 +149,20 @@ namespace LocalAdmin.V2
             server = new TcpServer(consolePort);
             server.Received += (sender, line) =>
             {
-                var colorValue = byte.Parse(Convert.ToString(line[0]), NumberStyles.HexNumber);
+                byte colorValue;
+
+                try
+                {
+                    colorValue = byte.Parse(Convert.ToString(line[0]), NumberStyles.HexNumber);
+                }
+                catch
+                {
+                    colorValue = (byte)ConsoleColor.Gray;
+                }
+
                 var color = (ConsoleColor)colorValue;
 
-                ConsoleUtil.WriteLine(line.Substring(1, line.Length - 2), color);
+                ConsoleUtil.WriteLine(line.Substring(1, line.Length - 1), color);
             };
             server.Start();
         }
@@ -178,23 +188,23 @@ namespace LocalAdmin.V2
                     ConsoleUtil.WriteLine(">>> " + input, ConsoleColor.DarkMagenta, -1);
                     Console.SetCursorPosition(0, currentLineCursor);
 
-                    var split = input.ToUpper().Split(' ');
+                    var split = input.Split(' ');
 
-                    if (split.Length <= 0)
-                        continue;
+                    if (split.Length > 0)
+                    {
+                        var name = split[0].ToUpper();
+                        var arguments = split.Skip(1).ToArray();
 
-                    var name = split[0];
-                    var arguments = split.Skip(1).ToArray();
+                        var command = commandService.GetCommandByName(name);
 
-                    var command = commandService.GetCommandByName(name);
+                        if (input.ToLower() == "exit")
+                            _exit = true;
 
-                    if (input.ToLower() == "exit")
-                        _exit = true;
-
-                    if (command != null)
-                        command.Execute(arguments);
-                    else
-                        server.WriteLine(input);
+                        if (command != null)
+                            command.Execute(arguments);
+                        else
+                            server.WriteLine(input);
+                    }
                 }
             });
         }
@@ -302,7 +312,6 @@ namespace LocalAdmin.V2
         private void Restart()
         {
             server.Stop();
-
             Process.Start(LocalAdminExecutable, gamePort.ToString());
             Environment.Exit(0);
         }

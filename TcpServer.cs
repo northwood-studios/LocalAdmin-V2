@@ -2,21 +2,19 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading.Tasks;
+using System.Text;
+using System.Threading;
 
 namespace LocalAdmin.V2
 {
     public class TcpServer
     {
-        public event EventHandler<string> Received;
-        
+        public event EventHandler<string>? Received;
+
         private TcpListener listener;
         private TcpClient? client;
         private NetworkStream? networkStream;
         private StreamReader? streamReader;
-        private StreamWriter? streamWriter;
-
-        private Task? dataReaderTask;
 
         private volatile bool exit = false;
 
@@ -27,37 +25,46 @@ namespace LocalAdmin.V2
 
         public void Start()
         {
+            exit = false;
+
             listener.Start();
             client = listener.AcceptTcpClient();
             networkStream = client.GetStream();
             streamReader = new StreamReader(networkStream);
-            streamWriter = new StreamWriter(networkStream);
 
-            dataReaderTask = Task.Run(() =>
+            new Thread(() =>
             {
                 while (!exit)
                 {
-                    if (networkStream.DataAvailable)
+                    if (!streamReader!.EndOfStream)
                     {
-                        Received?.Invoke(this, streamReader.ReadLine());
+                        Received?.Invoke(this, streamReader!.ReadLine()!);
                     }
+
+                    Thread.Sleep(10);
                 }
-            });
+            }).Start();
         }
 
         public void Stop()
         {
-            exit = true;
-            
-            listener.Stop();
-            client.Close();
-            streamReader.Dispose();
-            streamWriter.Dispose();
+            if (!exit)
+            {
+                exit = true;
+
+                listener.Stop();
+                client!.Close();
+                streamReader!.Dispose();
+            }
         }
 
         public void WriteLine(string input)
         {
-            streamWriter.WriteLine(input);
+            if (!exit)
+            {
+                var buffer = Encoding.UTF8.GetBytes(input + Environment.NewLine);
+                networkStream!.Write(buffer, 0, buffer.Length);
+            }
         }
     }
 }
