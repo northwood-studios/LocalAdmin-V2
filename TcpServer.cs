@@ -27,13 +27,13 @@ namespace LocalAdmin.V2
         {
             exit = false;
 
-            listener.Start();
-            client = listener.AcceptTcpClient();
-            networkStream = client.GetStream();
-            streamReader = new StreamReader(networkStream);
-
             new Thread(() =>
             {
+                listener.Start();
+                client = listener.AcceptTcpClient();
+                networkStream = client.GetStream();
+                streamReader = new StreamReader(networkStream);
+
                 while (!exit)
                 {
                     if (!streamReader!.EndOfStream)
