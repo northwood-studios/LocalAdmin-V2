@@ -8,7 +8,7 @@
     <Product>LocalAdmin V2</Product>
     <Company>Northwood Studios</Company>
     <PackageId>LocalAdmin V2</PackageId>
-    <Copyright>Copyright by KernelError and Łukasz Jurczyk, 2019</Copyright>
+    <Copyright>Copyright by KernelError and Łukasz Jurczyk, 2019 - 2020</Copyright>
     <Platforms>AnyCPU;x64</Platforms>
     <AssemblyName>LocalAdmin</AssemblyName>
 	<CrossGenDuringPublish>false</CrossGenDuringPublish>
