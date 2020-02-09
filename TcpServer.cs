@@ -3,7 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace LocalAdmin.V2
 {
@@ -16,7 +16,8 @@ namespace LocalAdmin.V2
         private NetworkStream? networkStream;
         private StreamReader? streamReader;
 
-        private volatile bool exit = false;
+        private volatile bool exit = true;
+        private object lck = new object();
 
         public TcpServer(ushort port)
         {
@@ -25,45 +26,63 @@ namespace LocalAdmin.V2
 
         public void Start()
         {
-            exit = false;
-
-            new Thread(() =>
+            lock (lck)
             {
+                exit = false;
+
                 listener.Start();
-                client = listener.AcceptTcpClient();
-                networkStream = client.GetStream();
-                streamReader = new StreamReader(networkStream);
-
-                while (!exit)
+                listener.BeginAcceptTcpClient(new AsyncCallback((result) =>
                 {
-                    if (!streamReader!.EndOfStream)
-                    {
-                        Received?.Invoke(this, streamReader!.ReadLine()!);
-                    }
+                    client = listener.EndAcceptTcpClient(result);
+                    networkStream = client.GetStream();
+                    streamReader = new StreamReader(networkStream);
 
-                    Thread.Sleep(10);
-                }
-            }).Start();
+                    Task.Run(async () =>
+                    {
+                        while (true)
+                        {
+                            lock (lck)
+                            {
+                                if (exit)
+                                    break;
+                            }
+
+                            if (!streamReader?.EndOfStream == true)
+                            {
+                                Received?.Invoke(this, streamReader!.ReadLine()!);
+                            }
+
+                            await Task.Delay(10);
+                        }
+                    });
+                }), listener);
+            }
         }
 
         public void Stop()
         {
-            if (!exit)
+            lock (lck)
             {
-                exit = true;
+                if (!exit)
+                {
+                    exit = true;
 
-                listener.Stop();
-                client!.Close();
-                streamReader!.Dispose();
+                    listener.Stop();
+                    client!.Close();
+                    streamReader!.Dispose();
+                }
             }
         }
 
         public void WriteLine(string input)
         {
-            if (!exit)
+            lock (lck)
             {
-                var buffer = Encoding.UTF8.GetBytes(input + Environment.NewLine);
-                networkStream!.Write(buffer, 0, buffer.Length);
+                if (!exit)
+                {
+                    var buffer = Encoding.UTF8.GetBytes(input + Environment.NewLine);
+                    networkStream!.Write(buffer, 0, buffer.Length);
+                }
             }
         }
     }

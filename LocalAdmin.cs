@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 using LocalAdmin.V2.Commands;
 
@@ -28,20 +27,12 @@ namespace LocalAdmin.V2
         public string LocalAdminExecutable { get; private set; }
 
         private CommandService commandService = new CommandService();
-
         private Process gameProcess;
-
         private TcpServer server;
-
-        private Task memoryWatcherTask;
         private Task readerTask;
-
         private string scpslExecutable = "";
-
-        private int tooLowMemory;
         private ushort gamePort;
         private ushort consolePort;
-
         private bool _exit;
 
         public void Start(string[] args)
@@ -84,7 +75,6 @@ namespace LocalAdmin.V2
 
                 SetupPlatform();
                 RegisterCommands();
-                SetupMemoryWatcher();
                 SetupReader();
 
                 Menu();
@@ -98,9 +88,8 @@ namespace LocalAdmin.V2
                 RunSCPSL(gamePort);
 
                 readerTask.Start();
-                memoryWatcherTask.Start();
 
-                Task.WaitAll(readerTask, memoryWatcherTask);
+                Task.WaitAll(readerTask);
             }
             catch (Exception ex)
             {
@@ -209,51 +198,6 @@ namespace LocalAdmin.V2
             });
         }
 
-        private void SetupMemoryWatcher()
-        {
-            memoryWatcherTask = new Task(async () =>
-            {
-                while (!_exit)
-                {
-                    await Task.Delay(2000);
-
-                    if (gameProcess == null) continue;
-                    if (!gameProcess.HasExited)
-                    {
-                        gameProcess.Refresh();
-                        var UsedRAM_MB = (int)(gameProcess.WorkingSet64 / 1048576);
-
-                        if (UsedRAM_MB < 400 && gameProcess.StartTime.AddMinutes(3) < DateTime.Now)
-                            tooLowMemory++;
-                        else
-                            tooLowMemory = 0;
-
-                        if (tooLowMemory > 5 || gameProcess.MainWindowTitle != "")
-                        {
-                            ConsoleUtil.WriteLine("Session crashed. Trying to restart dedicated server...", ConsoleColor.Red);
-
-                            gameProcess?.Kill();
-
-                            Restart();
-                        }
-
-                        continue;
-                    }
-
-                    ConsoleUtil.WriteLine("Session crashed. Trying to restart dedicated server...", ConsoleColor.Red);
-
-                    Restart();
-                }
-
-                if (gameProcess != null)
-                    while (!gameProcess.HasExited)
-                        Thread.Sleep(100);
-
-                ConsoleUtil.WriteLine("Game process successfully exited.", ConsoleColor.DarkGreen);
-                ConsoleUtil.WriteLine("Exiting LocalAdmin...", ConsoleColor.DarkGreen);
-            });
-        }
-
         private void RunSCPSL(ushort port)
         {
             if (File.Exists(scpslExecutable))
@@ -304,7 +248,6 @@ namespace LocalAdmin.V2
         private void Exit(int code = -1)
         {
             server.Stop();
-
             Console.ReadKey(true);
             Environment.Exit(code);
         }
