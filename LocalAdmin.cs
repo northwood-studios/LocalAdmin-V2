@@ -23,7 +23,7 @@ namespace LocalAdmin.V2
 
     internal class LocalAdmin
     {
-        public const string VersionString = "2.2.0";
+        public const string VersionString = "2.2.1";
         public string LocalAdminExecutable { get; private set; }
 
         private CommandService commandService = new CommandService();
@@ -191,8 +191,9 @@ namespace LocalAdmin.V2
 
                         if (command != null)
                             command.Execute(arguments);
-                        else
+                        else if (server.Connected)
                             server.WriteLine(input);
+                        else ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
                     }
                 }
             });

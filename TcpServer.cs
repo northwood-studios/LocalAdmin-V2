@@ -11,13 +11,14 @@ namespace LocalAdmin.V2
     {
         public event EventHandler<string>? Received;
 
-        private TcpListener listener;
+        private readonly TcpListener listener;
         private TcpClient? client;
         private NetworkStream? networkStream;
         private StreamReader? streamReader;
 
+        internal volatile bool Connected;
         private volatile bool exit = true;
-        private object lck = new object();
+        private readonly object lck = new object();
 
         public TcpServer(ushort port)
         {
@@ -35,6 +36,7 @@ namespace LocalAdmin.V2
                 {
                     client = listener.EndAcceptTcpClient(result);
                     networkStream = client.GetStream();
+                    Connected = true;
                     streamReader = new StreamReader(networkStream);
 
                     Task.Run(async () =>
@@ -63,14 +65,12 @@ namespace LocalAdmin.V2
         {
             lock (lck)
             {
-                if (!exit)
-                {
-                    exit = true;
+                if (exit) return;
+                exit = true;
 
-                    listener.Stop();
-                    client!.Close();
-                    streamReader!.Dispose();
-                }
+                listener.Stop();
+                client!.Close();
+                streamReader!.Dispose();
             }
         }
 
@@ -78,11 +78,9 @@ namespace LocalAdmin.V2
         {
             lock (lck)
             {
-                if (!exit)
-                {
-                    var buffer = Encoding.UTF8.GetBytes(input + Environment.NewLine);
-                    networkStream!.Write(buffer, 0, buffer.Length);
-                }
+                if (exit) return;
+                var buffer = Encoding.UTF8.GetBytes(input + Environment.NewLine);
+                networkStream!.Write(buffer, 0, buffer.Length);
             }
         }
     }
