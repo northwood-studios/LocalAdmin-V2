@@ -1,7 +1,8 @@
 using System;
-using System.IO;
+using System.Buffers;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,11 +15,11 @@ namespace LocalAdmin.V2
         private readonly TcpListener listener;
         private TcpClient? client;
         private NetworkStream? networkStream;
-        private StreamReader? streamReader;
 
         internal volatile bool Connected;
         private volatile bool exit = true;
         private readonly object lck = new object();
+        private readonly UTF8Encoding _encoding = new UTF8Encoding(false, true);
 
         public TcpServer(ushort port)
         {
@@ -32,15 +33,16 @@ namespace LocalAdmin.V2
                 exit = false;
 
                 listener.Start();
-                listener.BeginAcceptTcpClient(new AsyncCallback((result) =>
+                listener.BeginAcceptTcpClient(result =>
                 {
                     client = listener.EndAcceptTcpClient(result);
                     networkStream = client.GetStream();
                     Connected = true;
-                    streamReader = new StreamReader(networkStream);
 
                     Task.Run(async () =>
                     {
+                        const int offset = sizeof(int);
+                        var lengthBuffer = new byte[offset];
                         while (true)
                         {
                             lock (lck)
@@ -49,15 +51,23 @@ namespace LocalAdmin.V2
                                     break;
                             }
 
-                            if (!streamReader?.EndOfStream == true)
+                            if (networkStream?.DataAvailable == true)
                             {
-                                Received?.Invoke(this, streamReader!.ReadLine()!);
+                                await networkStream.ReadAsync(lengthBuffer, 0, offset);
+                                var length = MemoryMarshal.Cast<byte, int>(lengthBuffer)[0];
+
+                                var buffer = ArrayPool<byte>.Shared.Rent(length);
+                                await networkStream.ReadAsync(buffer, 0, length);
+                                var message = _encoding.GetString(buffer, 0, length);
+                                ArrayPool<byte>.Shared.Return(buffer);
+
+                                Received?.Invoke(this, message);
                             }
 
                             await Task.Delay(10);
                         }
                     });
-                }), listener);
+                }, listener);
             }
         }
 
@@ -70,7 +80,6 @@ namespace LocalAdmin.V2
 
                 listener.Stop();
                 client!.Close();
-                streamReader!.Dispose();
             }
         }
 
@@ -78,9 +87,16 @@ namespace LocalAdmin.V2
         {
             lock (lck)
             {
-                if (exit) return;
-                var buffer = Encoding.UTF8.GetBytes(input + Environment.NewLine);
-                networkStream!.Write(buffer, 0, buffer.Length);
+                if (exit) return; 
+                const int offset = sizeof(int);
+
+                var buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(input.Length) + offset);
+
+                var length = _encoding.GetBytes(input, 0, input.Length, buffer, offset);
+                MemoryMarshal.Cast<byte, int>(buffer)[0] = length;
+
+                networkStream!.Write(buffer, 0, length + offset);
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
     }
