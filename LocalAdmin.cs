@@ -189,7 +189,7 @@ namespace LocalAdmin.V2
 
                         var command = commandService.GetCommandByName(name);
 
-                        if (input.ToLower() == "exit")
+                        if (input.Equals("exit", StringComparison.InvariantCultureIgnoreCase))
                             _exit = true;
 
                         if (command != null)
