@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LocalAdmin.V2.Commands;
+using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -6,7 +7,6 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using LocalAdmin.V2.Commands;
 
 namespace LocalAdmin.V2
 {
@@ -24,12 +24,12 @@ namespace LocalAdmin.V2
     internal class LocalAdmin
     {
         public const string VersionString = "2.2.1";
-        public string LocalAdminExecutable { get; private set; }
+        public string? LocalAdminExecutable { get; private set; }
 
         private CommandService commandService = new CommandService();
-        private Process gameProcess;
-        private TcpServer server;
-        private Task readerTask;
+        private Process? gameProcess;
+        private TcpServer? server;
+        private Task? readerTask;
         private string scpslExecutable = "";
         private ushort gamePort;
         private ushort consolePort;
@@ -49,21 +49,22 @@ namespace LocalAdmin.V2
 
                     ReadInput((input) =>
                     {
-                        if(input == "")
+                        if (string.IsNullOrEmpty(input))
                         {
                             gamePort = 7777;
 
                             return true;
                         }
-                            
+
                         return ushort.TryParse(input, out gamePort);
                     }, () => { }, () =>
                     {
                         ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red);
                     });
-                } else
+                }
+                else
                 {
-                    if(!ushort.TryParse(args[0], out gamePort))
+                    if (!ushort.TryParse(args[0], out gamePort))
                     {
                         ConsoleUtil.WriteLine("Failed - Invalid port!");
 
@@ -87,9 +88,11 @@ namespace LocalAdmin.V2
                 SetupServer();
                 RunSCPSL(gamePort);
 
-                readerTask.Start();
+                readerTask!.Start();
 
                 Task.WaitAll(readerTask);
+
+                Exit(0); // After the readerTast is completed this will happen
             }
             catch (Exception ex)
             {
@@ -132,7 +135,7 @@ namespace LocalAdmin.V2
                 Exit();
             }
         }
-        
+
         private void SetupServer()
         {
             server = new TcpServer(consolePort);
@@ -186,7 +189,7 @@ namespace LocalAdmin.V2
 
                         var command = commandService.GetCommandByName(name);
 
-                        if (input.ToLower() == "exit")
+                        if (input.Equals("exit", StringComparison.InvariantCultureIgnoreCase))
                             _exit = true;
 
                         if (command != null)
@@ -225,7 +228,7 @@ namespace LocalAdmin.V2
 
         private void RegisterCommands()
         {
-            commandService.RegisterCommand(new NewCommand(LocalAdminExecutable));
+            commandService.RegisterCommand(new NewCommand(LocalAdminExecutable!));
             commandService.RegisterCommand(new HelpCommand());
             commandService.RegisterCommand(new LicenseCommand());
         }
@@ -248,22 +251,22 @@ namespace LocalAdmin.V2
 
         private void Exit(int code = -1)
         {
-            server.Stop();
-            Console.ReadKey(true);
+            server!.Stop();
+            gameProcess!.Kill(); // Forcefully terminating the process
             Environment.Exit(code);
         }
 
         private void Restart()
         {
-            server.Stop();
+            server!.Stop();
             Process.Start(LocalAdminExecutable, gamePort.ToString());
             Environment.Exit(0);
         }
-        
+
         private ushort GetFirstFreePort()
         {
             var activeTcpListeners = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
-        
+
             for (ushort port = 10000; port < ushort.MaxValue; port++)
             {
                 if (activeTcpListeners.All(listener => listener.Port != port))
