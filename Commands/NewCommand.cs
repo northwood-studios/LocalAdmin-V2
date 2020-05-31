@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace LocalAdmin.V2.Commands
 {
-    public class NewCommand : CommandBase
+    internal class NewCommand : CommandBase
     {
         private string _executable;
 
@@ -12,7 +12,7 @@ namespace LocalAdmin.V2.Commands
             _executable = executable;
         }
 
-        public override void Execute(string[] arguments)
+        internal override void Execute(string[] arguments)
         {
             if (arguments.Length == 1)
             {

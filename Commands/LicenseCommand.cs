@@ -2,11 +2,11 @@
 
 namespace LocalAdmin.V2.Commands
 {
-	public class LicenseCommand : CommandBase
+	internal class LicenseCommand : CommandBase
 	{
         public LicenseCommand() : base("License") { }
 
-		public override void Execute(string[] arguments)
+        internal override void Execute(string[] arguments)
 		{
 			ConsoleUtil.WriteLine("MIT License", ConsoleColor.Cyan);
 			ConsoleUtil.WriteLine("Copyright by KernelError and zabszk, 2019", ConsoleColor.Gray);

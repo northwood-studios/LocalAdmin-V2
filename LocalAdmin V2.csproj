@@ -22,7 +22,7 @@
 	<IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
 	<LangVersion>8</LangVersion>
 	<Nullable>enable</Nullable>
-	<PackageVersion>2.2.1</PackageVersion>
+	<PackageVersion>2.2.2</PackageVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DefineConstants />

@@ -1,14 +1,13 @@
-﻿namespace LocalAdmin.V2
+﻿using System.Globalization;
+
+namespace LocalAdmin.V2
 {
-    public abstract class CommandBase
+    internal abstract class CommandBase
     {
         public readonly string Name;
 
-        public CommandBase(string name)
-        {
-            Name = name.ToUpper();
-        }
+        protected CommandBase(string name) => Name = name.ToUpper(CultureInfo.InvariantCulture);
 
-        public abstract void Execute(string[] arguments);
+        internal abstract void Execute(string[] arguments);
     }
 }

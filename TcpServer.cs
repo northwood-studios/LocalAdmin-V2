@@ -19,12 +19,9 @@ namespace LocalAdmin.V2
         internal volatile bool Connected;
         private volatile bool exit = true;
         private readonly object lck = new object();
-        private readonly UTF8Encoding _encoding = new UTF8Encoding(false, true);
+        private readonly UTF8Encoding encoding = new UTF8Encoding(false, true);
 
-        public TcpServer(ushort port)
-        {
-            listener = new TcpListener(new IPEndPoint(IPAddress.Loopback, port));
-        }
+        public TcpServer() => listener = new TcpListener(IPAddress.Loopback, 0);
 
         public void Start()
         {
@@ -33,6 +30,7 @@ namespace LocalAdmin.V2
                 exit = false;
 
                 listener.Start();
+                LocalAdmin.ConsolePort = (ushort) ((IPEndPoint) (listener.LocalEndpoint)).Port;
                 listener.BeginAcceptTcpClient(result =>
                 {
                     client = listener.EndAcceptTcpClient(result);
@@ -58,7 +56,7 @@ namespace LocalAdmin.V2
 
                                 var buffer = ArrayPool<byte>.Shared.Rent(length);
                                 await networkStream.ReadAsync(buffer, 0, length);
-                                var message = _encoding.GetString(buffer, 0, length);
+                                var message = encoding.GetString(buffer, 0, length);
                                 ArrayPool<byte>.Shared.Return(buffer);
 
                                 Received?.Invoke(this, message);
@@ -92,7 +90,7 @@ namespace LocalAdmin.V2
 
                 var buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(input.Length) + offset);
 
-                var length = _encoding.GetBytes(input, 0, input.Length, buffer, offset);
+                var length = encoding.GetBytes(input, 0, input.Length, buffer, offset);
                 MemoryMarshal.Cast<byte, int>(buffer)[0] = length;
 
                 networkStream!.Write(buffer, 0, length + offset);

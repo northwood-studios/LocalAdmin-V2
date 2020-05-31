@@ -2,11 +2,11 @@
 
 namespace LocalAdmin.V2.Commands
 {
-    public class HelpCommand : CommandBase
+    internal class HelpCommand : CommandBase
     {
         public HelpCommand() : base("Help") { }
 
-        public override void Execute(string[] arguments)
+        internal override void Execute(string[] arguments)
         {
             ConsoleUtil.WriteLine("");
             ConsoleUtil.WriteLine("----HELP----", ConsoleColor.DarkGray);

@@ -1,17 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 
 namespace LocalAdmin.V2
 {
-    public class CommandService
+    internal class CommandService
     {
         private readonly List<CommandBase> commands = new List<CommandBase>();
 
-        public void RegisterCommand(CommandBase command)
+        internal void RegisterCommand(CommandBase command)
         {
             commands.Add(command);
         }
 
-        public void UnregisterCommand(CommandBase command)
+        internal void UnregisterCommand(CommandBase command)
         {
             if (commands.Contains(command))
                 commands.Remove(command);
@@ -19,10 +20,10 @@ namespace LocalAdmin.V2
                 throw new KeyNotFoundException();
         }
 
-        public CommandBase GetCommandByName(string name)
+        internal CommandBase? GetCommandByName(string name)
         {
             foreach (var command in commands)
-                if (command.Name == name.ToUpper())
+                if (command.Name == name.ToUpper(CultureInfo.InvariantCulture))
                     return command;
 
             return null;
