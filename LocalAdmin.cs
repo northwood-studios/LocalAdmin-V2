@@ -25,8 +25,6 @@ namespace LocalAdmin.V2
     {
         private const string VersionString = "2.2.2";
         private string? LocalAdminExecutable { get; set; }
-        
-        internal static ushort ConsolePort;
 
         private readonly CommandService commandService = new CommandService();
         private Process? gameProcess;
@@ -82,7 +80,7 @@ namespace LocalAdmin.V2
 
                 SetupServer();
                 
-                while (ConsolePort == 0)
+                while (server!.ConsolePort == 0)
                     Thread.Sleep(200);
                 
                 RunScpsl();
@@ -140,20 +138,10 @@ namespace LocalAdmin.V2
             server = new TcpServer();
             server.Received += (sender, line) =>
             {
-                byte colorValue;
+                if (!byte.TryParse(line.AsSpan(0, 1), NumberStyles.HexNumber, null, out var colorValue))
+                    colorValue = (byte) ConsoleColor.Gray;
 
-                try
-                {
-                    colorValue = byte.Parse(Convert.ToString(line[0]), NumberStyles.HexNumber);
-                }
-                catch
-                {
-                    colorValue = (byte)ConsoleColor.Gray;
-                }
-
-                var color = (ConsoleColor)colorValue;
-
-                ConsoleUtil.WriteLine(line.Substring(1, line.Length - 1), color);
+                ConsoleUtil.WriteLine(line.Substring(1, line.Length - 1), (ConsoleColor)colorValue);
             };
             server.Start();
         }
@@ -208,7 +196,7 @@ namespace LocalAdmin.V2
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = scpslExecutable,
-                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{gamePort} -console{ConsolePort} -id{Process.GetCurrentProcess().Id}",
+                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{gamePort} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id}",
                     CreateNoWindow = true
                 };
 

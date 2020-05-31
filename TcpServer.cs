@@ -16,8 +16,9 @@ namespace LocalAdmin.V2
         private TcpClient? client;
         private NetworkStream? networkStream;
 
-        internal volatile bool Connected;
-        private volatile bool exit = true;
+        internal ushort ConsolePort;
+        internal bool Connected;
+        private bool exit = true;
         private readonly object lck = new object();
         private readonly UTF8Encoding encoding = new UTF8Encoding(false, true);
 
@@ -30,7 +31,7 @@ namespace LocalAdmin.V2
                 exit = false;
 
                 listener.Start();
-                LocalAdmin.ConsolePort = (ushort) ((IPEndPoint) (listener.LocalEndpoint)).Port;
+                ConsolePort = (ushort) ((IPEndPoint) (listener.LocalEndpoint)).Port;
                 listener.BeginAcceptTcpClient(result =>
                 {
                     client = listener.EndAcceptTcpClient(result);
