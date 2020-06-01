@@ -1,7 +1,6 @@
 ﻿using LocalAdmin.V2.Commands;
 using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
-using LocalAdmin.V2.IO.Logging;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -90,13 +89,15 @@ namespace LocalAdmin.V2.Core
 
                 Exit(0); // After the readerTask is completed this will happen
             }
-            catch (Exception ex)
+            catch (Exception)
             {
+                /*
                 Logger.Log("|===| Exception |===|");
                 Logger.Log("Time: " + DateTime.Now);
                 Logger.Log(ex);
                 Logger.Log("|===================|");
                 Logger.Log("");
+                */
             }
         }
 
