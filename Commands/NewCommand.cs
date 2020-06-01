@@ -5,27 +5,27 @@ namespace LocalAdmin.V2.Commands
 {
     internal class NewCommand : CommandBase
     {
-        private string _executable;
-
-        public NewCommand(string executable) : base("New")
-        {
-            _executable = executable;
-        }
+        public NewCommand() : base("New") { }
 
         internal override void Execute(string[] arguments)
         {
+            ushort port = 7777;
+
             if (arguments.Length == 1)
             {
-                var port = -1;
-                if (int.TryParse(arguments[0], out port))
-                    Process.Start(new ProcessStartInfo(_executable, Convert.ToString(port)));
+                if (ushort.TryParse(arguments[0], out port))
+                    StartNew(port);
                 else
                     ConsoleUtil.WriteLine("Usage: new port", ConsoleColor.Yellow);
             }
             else
-            {
                 ConsoleUtil.WriteLine("Usage: new port", ConsoleColor.Yellow);
-            }
+        }
+
+        private void StartNew(ushort port)
+        {
+            Process.Start(new ProcessStartInfo(Program.localAdmin!.LocalAdminExecutable!, Convert.ToString(port)));
+            Program.localAdmin!.Exit(1); // Terminate the previous session
         }
     }
 }

@@ -1,0 +1,13 @@
+﻿namespace LocalAdmin.V2.Commands
+{
+    internal sealed class RestartCommand : CommandBase
+    {
+        public RestartCommand() : base("Restart") { }
+
+
+        internal override void Execute(string[] arguments)
+        {
+            Program.localAdmin!.StartSession(true);
+        }
+    }
+}

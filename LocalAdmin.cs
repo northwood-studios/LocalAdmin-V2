@@ -24,7 +24,7 @@ namespace LocalAdmin.V2
     internal class LocalAdmin
     {
         private const string VersionString = "2.2.2";
-        private string? LocalAdminExecutable { get; set; }
+        public string? LocalAdminExecutable { get; private set; }
 
         private readonly CommandService commandService = new CommandService();
         private Process? gameProcess;
@@ -76,17 +76,7 @@ namespace LocalAdmin.V2
                 RegisterCommands();
                 SetupReader();
 
-                Menu();
-
-                ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
-                ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
-
-                SetupServer();
-                
-                while (server!.ConsolePort == 0)
-                    Thread.Sleep(200);
-                
-                RunScpsl();
+                StartSession(false);
 
                 readerTask!.Start();
 
@@ -102,6 +92,30 @@ namespace LocalAdmin.V2
                 Logger.Log("|===================|");
                 Logger.Log("");
             }
+        }
+
+        /// <summary>
+        ///     Starts a session,
+        ///     if the session has already begun,
+        ///     then terminates it.
+        /// </summary>
+        internal void StartSession(bool isRestart = true)
+        {
+            // Terminate the game, if it's a restart
+            if (isRestart)
+                TerminateGame();
+
+            Menu();
+
+            ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
+            ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
+
+            SetupServer();
+
+            while (server!.ConsolePort == 0)
+                Thread.Sleep(200);
+
+            RunScpsl();
         }
 
         private void Menu()
@@ -132,7 +146,7 @@ namespace LocalAdmin.V2
             {
                 ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
 
-                Exit();
+                Exit(10); // According to MSDN, it's the ERROR_BAD_ENVIRONMENT error code
             }
         }
 
@@ -210,13 +224,14 @@ namespace LocalAdmin.V2
                 ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
                 ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
 
-                Exit();
+                Exit(2); // According to MSDN, it's the ERROR_FILE_NOT_FOUND error code
             }
         }
 
         private void RegisterCommands()
         {
-            commandService.RegisterCommand(new NewCommand(LocalAdminExecutable!));
+            commandService.RegisterCommand(new RestartCommand());
+            commandService.RegisterCommand(new NewCommand());
             commandService.RegisterCommand(new HelpCommand());
             commandService.RegisterCommand(new LicenseCommand());
         }
@@ -235,23 +250,24 @@ namespace LocalAdmin.V2
             validInputAction();
         }
 
-        private void Exit(int code = -1)
+        /// <summary>
+        ///     Terminates the game.
+        /// </summary>
+        private void TerminateGame()
         {
             server!.Stop();
-            gameProcess!.Kill(); // Forcefully terminating the process
+            gameProcess!.Kill();
+        }
+
+        internal void Exit(int code = -1)
+        {
+            TerminateGame(); // Forcefully terminating the process
             Environment.Exit(code);
         }
 
-        public void OnConsoleClosed(object? s, EventArgs e)
+        private void OnConsoleClosed(object? s, EventArgs e)
         {
             Exit(0);
         }
-
-        /*private void Restart()
-        {
-            server!.Stop();
-            Process.Start(LocalAdminExecutable, gamePort.ToString());
-            Environment.Exit(0);
-        }*/
     }
 }

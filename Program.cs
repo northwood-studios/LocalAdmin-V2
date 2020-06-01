@@ -2,9 +2,11 @@
 {
     internal class Program
     {
+        internal static LocalAdmin? localAdmin;
+
         public static void Main(string[] args)
         {
-            var localAdmin = new LocalAdmin();
+            localAdmin = new LocalAdmin();
 
             localAdmin.Start(args);
         }
