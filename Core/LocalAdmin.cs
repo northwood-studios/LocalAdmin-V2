@@ -110,7 +110,7 @@ namespace LocalAdmin.V2.Core
         public void StartSession(ushort port)
         {
             // Terminate the game, if the game process is exists
-            if (gameProcess != null || !gameProcess!.HasExited)
+            if (gameProcess != null && !gameProcess.HasExited)
                 TerminateGame();
 
             Menu();
