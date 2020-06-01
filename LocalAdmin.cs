@@ -1,4 +1,5 @@
 ﻿using LocalAdmin.V2.Commands;
+using LocalAdmin.V2.NativeExitSignal;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -34,11 +35,14 @@ namespace LocalAdmin.V2
         private ushort gamePort;
         private bool exit;
 
+        static LocalAdmin()
+        {
+            // Installing the handler once
+            NativeSignalHandler.Setup();
+        }
+
         public void Start(string[] args)
         {
-            // Catch the event closing the console to prevent the ghost process
-            Process.GetCurrentProcess().Exited += OnConsoleClosed;
-
             Console.Title = "LocalAdmin v. " + VersionString;
 
             try
@@ -156,7 +160,7 @@ namespace LocalAdmin.V2
             server.Received += (sender, line) =>
             {
                 if (!byte.TryParse(line.AsSpan(0, 1), NumberStyles.HexNumber, null, out var colorValue))
-                    colorValue = (byte) ConsoleColor.Gray;
+                    colorValue = (byte)ConsoleColor.Gray;
 
                 ConsoleUtil.WriteLine(line.Substring(1, line.Length - 1), (ConsoleColor)colorValue);
             };
@@ -263,11 +267,6 @@ namespace LocalAdmin.V2
         {
             TerminateGame(); // Forcefully terminating the process
             Environment.Exit(code);
-        }
-
-        private void OnConsoleClosed(object? s, EventArgs e)
-        {
-            Exit(0);
         }
     }
 }
