@@ -74,8 +74,6 @@ namespace LocalAdmin.V2.Core
                     }
                 }
 
-                Console.Title = $"LocalAdmin v. {_VersionString} on port {port}";
-
                 SetupPlatform();
                 RegisterCommands();
                 SetupReader();
@@ -114,6 +112,8 @@ namespace LocalAdmin.V2.Core
                 TerminateGame();
 
             Menu();
+
+            Console.Title = $"LocalAdmin v. {_VersionString} on port {port}";
 
             ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
             ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
