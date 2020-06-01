@@ -24,7 +24,11 @@ namespace LocalAdmin.V2.Commands
 
         private void StartNew(ushort port)
         {
-            Process.Start(new ProcessStartInfo(Program.localAdmin!.LocalAdminExecutable!, Convert.ToString(port)));
+            var processStartInfo = new ProcessStartInfo(Program.localAdmin!.LocalAdminExecutable!, Convert.ToString(port));
+            // Use a new shell to launch
+            // Actual for Windows Terminal - when launched inside an existing console, it breaks
+            processStartInfo.UseShellExecute = true;
+            Process.Start(processStartInfo);
             Program.localAdmin!.Exit(1); // Terminate the previous session
         }
     }
