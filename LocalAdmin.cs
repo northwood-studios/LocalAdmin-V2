@@ -36,6 +36,9 @@ namespace LocalAdmin.V2
 
         public void Start(string[] args)
         {
+            // Catch the event closing the console to prevent the ghost process
+            Process.GetCurrentProcess().Exited += OnConsoleClosed;
+
             Console.Title = "LocalAdmin v. " + VersionString;
 
             try
@@ -237,6 +240,11 @@ namespace LocalAdmin.V2
             server!.Stop();
             gameProcess!.Kill(); // Forcefully terminating the process
             Environment.Exit(code);
+        }
+
+        public void OnConsoleClosed(object? s, EventArgs e)
+        {
+            Exit(0);
         }
 
         /*private void Restart()
