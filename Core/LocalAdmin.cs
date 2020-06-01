@@ -1,6 +1,7 @@
 ﻿using LocalAdmin.V2.Commands;
 using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
+using LocalAdmin.V2.IO.NativeSignalHandlers;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -35,12 +36,6 @@ namespace LocalAdmin.V2.Core
         private string scpslExecutable = string.Empty;
         private ushort gamePort;
         private bool exit;
-
-        static LocalAdmin()
-        {
-            // Installing the handler once
-            NativeSignalHandler.Setup();
-        }
 
         public void Start(string[] args)
         {
@@ -146,11 +141,13 @@ namespace LocalAdmin.V2.Core
             {
                 scpslExecutable = "SCPSL.exe";
                 LocalAdminExecutable = "LocalAdmin.exe";
+                WindowsNTHandler.Handler.Setup();
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 scpslExecutable = "SCPSL.x86_64";
                 LocalAdminExecutable = "LocalAdmin.x86_x64";
+                UnixHandler.Handler.Setup();
             }
             else
             {
@@ -269,6 +266,9 @@ namespace LocalAdmin.V2.Core
             gameProcess!.Kill();
         }
 
+        /// <summary>
+        ///     Terminates the game and console.
+        /// </summary>
         internal void Exit(int code = -1)
         {
             TerminateGame(); // Forcefully terminating the process
