@@ -24,7 +24,7 @@ namespace LocalAdmin.V2.Core
         * Blue - normal SCPSL log
     */
 
-    internal class LocalAdmin
+    internal sealed class LocalAdmin
     {
         private const string VersionString = "2.2.2";
         public string? LocalAdminExecutable { get; private set; }
@@ -34,7 +34,6 @@ namespace LocalAdmin.V2.Core
         private TcpServer? server;
         private Task? readerTask;
         private string scpslExecutable = string.Empty;
-        private ushort gamePort;
         private bool exit;
 
         public void Start(string[] args)
@@ -43,16 +42,18 @@ namespace LocalAdmin.V2.Core
 
             try
             {
+                ushort port = 0;
                 if (args.Length == 0)
                 {
                     ConsoleUtil.WriteLine("You can pass port number as first startup argument.", ConsoleColor.Green);
-                    Console.WriteLine("");
+                    Console.WriteLine(string.Empty);
                     ConsoleUtil.Write("Port number (default: 7777): ", ConsoleColor.Green);
 
                     ReadInput((input) =>
                     {
-                        if (!string.IsNullOrEmpty(input)) return ushort.TryParse(input, out gamePort);
-                        gamePort = 7777;
+                        if (!string.IsNullOrEmpty(input)) 
+                            return ushort.TryParse(input, out port);
+                        port = 7777;
                         return true;
 
                     }, () => { }, () =>
@@ -62,7 +63,7 @@ namespace LocalAdmin.V2.Core
                 }
                 else
                 {
-                    if (!ushort.TryParse(args[0], out gamePort))
+                    if (!ushort.TryParse(args[0], out port))
                     {
                         ConsoleUtil.WriteLine("Failed - Invalid port!");
 
@@ -70,13 +71,13 @@ namespace LocalAdmin.V2.Core
                     }
                 }
 
-                Console.Title = "LocalAdmin v. " + VersionString + " on port " + gamePort;
+                Console.Title = $"LocalAdmin v. {VersionString} on port {port}";
 
                 SetupPlatform();
                 RegisterCommands();
                 SetupReader();
 
-                StartSession(false);
+                StartSession(port);
 
                 readerTask!.Start();
 
@@ -104,10 +105,10 @@ namespace LocalAdmin.V2.Core
         ///     if the session has already begun,
         ///     then terminates it.
         /// </summary>
-        internal void StartSession(bool isRestart = true)
+        internal void StartSession(ushort port)
         {
-            // Terminate the game, if it's a restart
-            if (isRestart)
+            // Terminate the game, if the game process is exists
+            if (gameProcess != null || !gameProcess!.HasExited)
                 TerminateGame();
 
             Menu();
@@ -120,7 +121,7 @@ namespace LocalAdmin.V2.Core
             while (server!.ConsolePort == 0)
                 Thread.Sleep(200);
 
-            RunScpsl();
+            RunScpsl(port);
         }
 
         private void Menu()
@@ -211,7 +212,7 @@ namespace LocalAdmin.V2.Core
             });
         }
 
-        private void RunScpsl()
+        private void RunScpsl(ushort port)
         {
             if (File.Exists(scpslExecutable))
             {
@@ -220,7 +221,7 @@ namespace LocalAdmin.V2.Core
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = scpslExecutable,
-                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{gamePort} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id}",
+                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{port} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id}",
                     CreateNoWindow = true
                 };
 
