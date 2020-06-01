@@ -7,10 +7,9 @@ namespace LocalAdmin.V2.Commands
     {
         public RestartCommand() : base("Restart") { }
 
-
         internal override void Execute(string[] arguments)
         {
-            Program.localAdmin!.StartSession(true);
+            Program.localAdmin!.StartSession(Program.localAdmin.GamePort);
         }
     }
 }

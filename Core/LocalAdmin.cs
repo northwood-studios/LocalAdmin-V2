@@ -26,8 +26,9 @@ namespace LocalAdmin.V2.Core
 
     internal sealed class LocalAdmin
     {
-        private const string VersionString = "2.2.2";
+        public const string _VersionString = "2.2.2";
         public string? LocalAdminExecutable { get; private set; }
+        public ushort GamePort { get; private set; }
 
         private readonly CommandService commandService = new CommandService();
         private Process? gameProcess;
@@ -38,7 +39,7 @@ namespace LocalAdmin.V2.Core
 
         public void Start(string[] args)
         {
-            Console.Title = "LocalAdmin v. " + VersionString;
+            Console.Title = $"LocalAdmin v. {_VersionString}";
 
             try
             {
@@ -71,7 +72,7 @@ namespace LocalAdmin.V2.Core
                     }
                 }
 
-                Console.Title = $"LocalAdmin v. {VersionString} on port {port}";
+                Console.Title = $"LocalAdmin v. {_VersionString} on port {port}";
 
                 SetupPlatform();
                 RegisterCommands();
@@ -121,19 +122,20 @@ namespace LocalAdmin.V2.Core
             while (server!.ConsolePort == 0)
                 Thread.Sleep(200);
 
+            GamePort = port;
             RunScpsl(port);
         }
 
         private void Menu()
         {
             ConsoleUtil.Clear();
-            ConsoleUtil.WriteLine("SCP: Secret Laboratory - LocalAdmin v. " + VersionString, ConsoleColor.Cyan);
-            ConsoleUtil.WriteLine("");
+            ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {_VersionString}", ConsoleColor.Cyan);
+            ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
             ConsoleUtil.WriteLine("Copyright by KernelError and zabszk, 2019 - 2020", ConsoleColor.Cyan);
-            ConsoleUtil.WriteLine("");
+            ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
-            ConsoleUtil.WriteLine("");
+            ConsoleUtil.WriteLine(string.Empty);
         }
 
         private void SetupPlatform()
