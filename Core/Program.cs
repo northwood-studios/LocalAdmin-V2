@@ -1,14 +1,8 @@
 ﻿namespace LocalAdmin.V2.Core
 {
-    internal class Program
+    static class Program
     {
-        internal static LocalAdmin? localAdmin;
-
-        public static void Main(string[] args)
-        {
-            localAdmin = new LocalAdmin();
-
-            localAdmin.Start(args);
-        }
+        static void Main(string[] args)
+            => LocalAdmin.Singleton.Start(args);
     }
 }

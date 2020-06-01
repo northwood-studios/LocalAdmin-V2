@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LocalAdmin.V2.IO.Logging
+﻿namespace LocalAdmin.V2.IO.Logging
 {
-	/*
+    /*
 	public class ConsoleLogEntry
 	{
 		public readonly string Content;

@@ -1,5 +1,4 @@
 ﻿using LocalAdmin.V2.Commands.Meta;
-using LocalAdmin.V2.Core;
 
 namespace LocalAdmin.V2.Commands
 {
@@ -9,7 +8,7 @@ namespace LocalAdmin.V2.Commands
 
         internal override void Execute(string[] arguments)
         {
-            Program.localAdmin!.StartSession(Program.localAdmin.GamePort);
+            Core.LocalAdmin.Singleton.StartSession(Core.LocalAdmin.Singleton.GamePort);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using LocalAdmin.V2.Core;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace LocalAdmin.V2.IO.NativeSignalHandlers
 {
@@ -24,7 +23,7 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
 
         private bool OnNativeSignal(CtrlTypes ctrl)
         {
-            Program.localAdmin!.Exit(0);
+            Core.LocalAdmin.Singleton.Exit(0);
             return true;
         }
 

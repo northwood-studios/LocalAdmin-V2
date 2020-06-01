@@ -1,5 +1,4 @@
-﻿using LocalAdmin.V2.Core;
-using Mono.Unix;
+﻿using Mono.Unix;
 using Mono.Unix.Native;
 using System.Threading.Tasks;
 
@@ -34,7 +33,7 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
             {
                 // Blocking operation with infinite expectation of any signal
                 UnixSignal.WaitAny(signals, -1);
-                Program.localAdmin!.Exit(0);
+                Core.LocalAdmin.Singleton.Exit(0);
             });
         }
     }

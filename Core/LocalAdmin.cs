@@ -24,9 +24,11 @@ namespace LocalAdmin.V2.Core
         * Blue - normal SCPSL log
     */
 
-    internal sealed class LocalAdmin
+    public sealed class LocalAdmin
     {
         public const string _VersionString = "2.2.2";
+        public static readonly LocalAdmin Singleton = new LocalAdmin();
+
         public string? LocalAdminExecutable { get; private set; }
         public ushort GamePort { get; private set; }
 
@@ -34,7 +36,7 @@ namespace LocalAdmin.V2.Core
         private Process? gameProcess;
         private TcpServer? server;
         private Task? readerTask;
-        private string scpslExecutable = string.Empty;
+        private string? scpslExecutable;
         private bool exit;
 
         public void Start(string[] args)
@@ -52,7 +54,7 @@ namespace LocalAdmin.V2.Core
 
                     ReadInput((input) =>
                     {
-                        if (!string.IsNullOrEmpty(input)) 
+                        if (!string.IsNullOrEmpty(input))
                             return ushort.TryParse(input, out port);
                         port = 7777;
                         return true;
@@ -106,7 +108,7 @@ namespace LocalAdmin.V2.Core
         ///     if the session has already begun,
         ///     then terminates it.
         /// </summary>
-        internal void StartSession(ushort port)
+        public void StartSession(ushort port)
         {
             // Terminate the game, if the game process is exists
             if (gameProcess != null || !gameProcess!.HasExited)
@@ -168,7 +170,7 @@ namespace LocalAdmin.V2.Core
                 if (!byte.TryParse(line.AsSpan(0, 1), NumberStyles.HexNumber, null, out var colorValue))
                     colorValue = (byte)ConsoleColor.Gray;
 
-                ConsoleUtil.WriteLine(line.Substring(1, line.Length - 1), (ConsoleColor)colorValue);
+                ConsoleUtil.WriteLine(line[1..], (ConsoleColor)colorValue);
             };
             server.Start();
         }
@@ -272,7 +274,7 @@ namespace LocalAdmin.V2.Core
         /// <summary>
         ///     Terminates the game and console.
         /// </summary>
-        internal void Exit(int code = -1)
+        public void Exit(int code = -1)
         {
             TerminateGame(); // Forcefully terminating the process
             Environment.Exit(code);

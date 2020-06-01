@@ -31,7 +31,7 @@ namespace LocalAdmin.V2.Core
                 exit = false;
 
                 listener.Start();
-                ConsolePort = (ushort) ((IPEndPoint) (listener.LocalEndpoint)).Port;
+                ConsolePort = (ushort)((IPEndPoint)(listener.LocalEndpoint)).Port;
                 listener.BeginAcceptTcpClient(result =>
                 {
                     client = listener.EndAcceptTcpClient(result);
@@ -86,7 +86,7 @@ namespace LocalAdmin.V2.Core
         {
             lock (lck)
             {
-                if (exit) return; 
+                if (exit) return;
                 const int offset = sizeof(int);
 
                 var buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(input.Length) + offset);
