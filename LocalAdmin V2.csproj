@@ -30,6 +30,13 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Windows x64' ">
     <Optimize>true</Optimize>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove=".gitignore" />
+    <None Remove="LICENSE" />
+    <None Remove="LocalAdmin V2.sln.DotSettings" />
+    <None Remove="nuget.config" />
+    <None Remove="README.md" />
+  </ItemGroup>
    <ItemGroup>
     <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
   </ItemGroup>
