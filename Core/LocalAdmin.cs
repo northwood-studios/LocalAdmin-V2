@@ -89,8 +89,11 @@ namespace LocalAdmin.V2.Core
 
                 Exit(0); // After the readerTask is completed this will happen
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // Using the ISO8601 format for time
+                File.WriteAllText($"{DateTimeOffset.Now:o}-crash.txt", ex.ToString());
+
                 /*
                 Logger.Log("|===| Exception |===|");
                 Logger.Log("Time: " + DateTime.Now);
