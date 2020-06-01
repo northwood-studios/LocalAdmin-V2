@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LocalAdmin.V2
+namespace LocalAdmin.V2.Core
 {
     public class TcpServer
     {

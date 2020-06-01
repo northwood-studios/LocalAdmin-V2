@@ -1,4 +1,7 @@
-﻿using System;
+﻿using LocalAdmin.V2.Commands.Meta;
+using LocalAdmin.V2.Core;
+using LocalAdmin.V2.IO;
+using System;
 using System.Diagnostics;
 
 namespace LocalAdmin.V2.Commands
@@ -9,11 +12,9 @@ namespace LocalAdmin.V2.Commands
 
         internal override void Execute(string[] arguments)
         {
-            ushort port = 7777;
-
             if (arguments.Length == 1)
             {
-                if (ushort.TryParse(arguments[0], out port))
+                if (ushort.TryParse(arguments[0], out var port))
                     StartNew(port);
                 else
                     ConsoleUtil.WriteLine("Usage: new port", ConsoleColor.Yellow);

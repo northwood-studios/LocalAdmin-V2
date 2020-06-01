@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace LocalAdmin.V2.NativeExitSignal
+namespace LocalAdmin.V2.Core
 {
     public static class NativeSignalHandler
     {

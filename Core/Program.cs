@@ -1,4 +1,4 @@
-﻿namespace LocalAdmin.V2
+﻿namespace LocalAdmin.V2.Core
 {
     internal class Program
     {

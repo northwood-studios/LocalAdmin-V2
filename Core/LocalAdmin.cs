@@ -1,5 +1,7 @@
 ﻿using LocalAdmin.V2.Commands;
-using LocalAdmin.V2.NativeExitSignal;
+using LocalAdmin.V2.Commands.Meta;
+using LocalAdmin.V2.IO;
+using LocalAdmin.V2.IO.Logging;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -9,7 +11,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LocalAdmin.V2
+namespace LocalAdmin.V2.Core
 {
     /*
         * Console colors:

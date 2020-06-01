@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LocalAdmin.V2
+namespace LocalAdmin.V2.IO
 {
     public static class ConsoleUtil
     {

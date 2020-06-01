@@ -1,4 +1,4 @@
-﻿namespace LocalAdmin.V2
+﻿namespace LocalAdmin.V2.IO.Logging
 {
     public static class Logger
     {

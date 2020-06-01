@@ -1,4 +1,7 @@
-﻿namespace LocalAdmin.V2.Commands
+﻿using LocalAdmin.V2.Commands.Meta;
+using LocalAdmin.V2.Core;
+
+namespace LocalAdmin.V2.Commands
 {
     internal sealed class RestartCommand : CommandBase
     {

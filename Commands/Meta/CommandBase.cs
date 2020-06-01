@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace LocalAdmin.V2
+namespace LocalAdmin.V2.Commands.Meta
 {
     internal abstract class CommandBase
     {
