@@ -191,7 +191,7 @@ namespace LocalAdmin.V2.Core
                     var currentLineCursor = Console.CursorTop;
 
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    ConsoleUtil.Write(new string(' ', Console.WindowWidth));
+                    ConsoleUtil.Write(string.Empty.PadLeft(Console.WindowWidth));
                     ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
                     Console.SetCursorPosition(0, currentLineCursor);
 
@@ -203,7 +203,7 @@ namespace LocalAdmin.V2.Core
 
                     if (gameProcess != null && gameProcess.HasExited)
                     {
-                        Console.WriteLine("The game process has terminated...");
+                        ConsoleUtil.WriteLine("The game process was terminated...", ConsoleColor.Yellow);
                         // Block console closing
                         Console.Read();
                         exit = true;
@@ -223,7 +223,8 @@ namespace LocalAdmin.V2.Core
                         command.Execute(arguments);
                     else if (server.Connected)
                         server.WriteLine(input);
-                    else ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
+                    else 
+                        ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
                 }
             });
         }
