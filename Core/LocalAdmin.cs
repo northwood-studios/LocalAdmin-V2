@@ -203,7 +203,7 @@ namespace LocalAdmin.V2.Core
 
                     if (gameProcess != null && gameProcess.HasExited)
                     {
-                        ConsoleUtil.WriteLine("The game process was terminated...", ConsoleColor.Yellow);
+                        ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
                         // Block console closing
                         Console.Read();
                         exit = true;
