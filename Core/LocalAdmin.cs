@@ -192,19 +192,32 @@ namespace LocalAdmin.V2.Core
 
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
                     ConsoleUtil.Write(new string(' ', Console.WindowWidth));
-                    ConsoleUtil.WriteLine(">>> " + input, ConsoleColor.DarkMagenta, -1);
+                    ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
                     Console.SetCursorPosition(0, currentLineCursor);
+
+                    if (input.StartsWith("exit", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        exit = true;
+                        continue;
+                    }
+
+                    if (gameProcess != null && gameProcess.HasExited)
+                    {
+                        Console.WriteLine("The game process has terminated...");
+                        // Block console closing
+                        Console.Read();
+                        exit = true;
+                        continue;
+                    }
 
                     var split = input.Split(' ');
 
-                    if (split.Length == 0) continue;
-                    var name = split[0].ToUpper(CultureInfo.InvariantCulture);
+                    if (split.Length == 0) 
+                        continue;
+                    var name = split[0].ToUpperInvariant();
                     var arguments = split.Skip(1).ToArray();
 
                     var command = commandService.GetCommandByName(name);
-
-                    if (input.Equals("exit", StringComparison.InvariantCultureIgnoreCase))
-                        exit = true;
 
                     if (command != null)
                         command.Execute(arguments);
