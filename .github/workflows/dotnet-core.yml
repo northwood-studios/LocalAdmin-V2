@@ -25,8 +25,8 @@ jobs:
        
     - if: matrix.os == 'windows-latest'
       name: Build Windows
-      run: dotnet publish -r win-x64 -c release
+      run: dotnet publish -r win-x64 -c release -v d
       
     - if: matrix.os != 'windows-latest'
       name: Build Linux
-      run: dotnet publish -r linux-x64 -c release
+      run: dotnet publish -r linux-x64 -c release -v d
