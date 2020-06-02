@@ -23,10 +23,10 @@ jobs:
     - name: Install dependencies
       run: dotnet restore
        
-    - name: Build Windows
-      if: matrix.os == 'windows-latest'
+    - if: matrix.os == 'windows-latest'
+      name: Build Windows
       run: dotnet publish -r win-x64 -c release
       
-    - name: Build Linux
-      if: matrix.os != 'windows-latest'
+    - if: matrix.os != 'windows-latest'
+      name: Build Linux
       run: dotnet publish -r linux-x64 -c release
