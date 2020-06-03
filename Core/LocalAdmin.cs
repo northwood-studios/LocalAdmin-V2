@@ -252,8 +252,6 @@ namespace LocalAdmin.V2.Core
             else
             {
                 ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
-                ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
-
                 Exit(ECUtil.Parse(currentPlatform, ErrorType.ERROR_FILE_NOT_FOUND), true);
             }
         }
@@ -298,7 +296,10 @@ namespace LocalAdmin.V2.Core
         {
             TerminateGame(); // Forcefully terminating the process
             if (waitForKey)
+            {
+                ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
                 Console.Read();
+            }
             Environment.Exit(code);
         }
     }
