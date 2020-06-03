@@ -2,6 +2,6 @@
 {
     internal interface INativeSignalHandler
     {
-        public void Setup();
+        void Setup();
     }
 }
