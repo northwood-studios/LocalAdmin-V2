@@ -93,7 +93,7 @@ namespace LocalAdmin.V2.Core
             }
             catch (Exception ex)
             {
-                File.WriteAllText($"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH-mm-ssZ}-crash.txt", ex.ToString());
+                File.WriteAllText($"{DateTime.UtcNow:yyyy-MM-ddTHH-mm-ssZ}-crash.txt", ex.ToString());
 
                 /*
                 Logger.Log("|===| Exception |===|");
