@@ -293,13 +293,16 @@ namespace LocalAdmin.V2.Core
         /// </summary>
         public void Exit(int code = -1, bool waitForKey = false)
         {
-            TerminateGame(); // Forcefully terminating the process
-            if (waitForKey)
+            lock (this)
             {
-                ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
-                Console.Read();
+                TerminateGame(); // Forcefully terminating the process
+                if (waitForKey)
+                {
+                    ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
+                    Console.Read();
+                }
+                Environment.Exit(code);
             }
-            Environment.Exit(code);
         }
     }
 }

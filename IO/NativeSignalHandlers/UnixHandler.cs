@@ -1,6 +1,6 @@
 ﻿using Mono.Unix;
 using Mono.Unix.Native;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace LocalAdmin.V2.IO.NativeSignalHandlers
 {
@@ -27,12 +27,12 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
 
         public void Setup()
         {
-            Task.Run(() =>
+            new Thread(() =>
             {
                 // Blocking operation with infinite expectation of any signal
                 UnixSignal.WaitAny(signals, -1);
                 Core.LocalAdmin.Singleton.Exit(0);
-            });
+            }).Start();
         }
     }
 }
