@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace LocalAdmin.V2.IO.NativeSignalHandlers
 {
@@ -16,7 +17,10 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
 
         public void Setup()
         {
-            SetConsoleCtrlHandler(OnNativeSignal, true);
+            if (!SetConsoleCtrlHandler(OnNativeSignal, true))
+            {
+                throw new InvalidOperationException("Console logout handler couldn't be installed");
+            }
         }
 
         private bool OnNativeSignal(CtrlTypes ctrl)
