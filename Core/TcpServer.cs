@@ -34,6 +34,9 @@ namespace LocalAdmin.V2.Core
                 ConsolePort = (ushort)((IPEndPoint)(listener.LocalEndpoint)).Port;
                 listener.BeginAcceptTcpClient(result =>
                 {
+                    if (exit)
+                        return;
+
                     client = listener.EndAcceptTcpClient(result);
                     networkStream = client.GetStream();
                     Connected = true;
@@ -74,7 +77,8 @@ namespace LocalAdmin.V2.Core
         {
             lock (lck)
             {
-                if (exit) return;
+                if (exit) 
+                    return;
                 exit = true;
 
                 listener.Stop();
