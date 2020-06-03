@@ -71,6 +71,9 @@ namespace LocalAdmin.V2.Core
                     {
                         ConsoleUtil.WriteLine("Failed - Invalid port!");
 
+                        // No waiting here
+                        // Most often with arguments launched from the console,
+                        // the user will see an error
                         Exit(ECUtil.Parse(currentPlatform, ErrorType.INVALID_PORT_GIVEN));
                     }
                 }
@@ -85,7 +88,8 @@ namespace LocalAdmin.V2.Core
 
                 Task.WaitAll(readerTask);
 
-                Exit(0); // After the readerTask is completed this will happen
+                // If the game was terminated intentionally, then wait, otherwise no
+                Exit(0, gameProcess != null && gameProcess.HasExited); // After the readerTask is completed this will happen
             }
             catch (Exception ex)
             {
@@ -160,7 +164,7 @@ namespace LocalAdmin.V2.Core
             {
                 ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
 
-                Exit(ECUtil.Parse(currentPlatform, ErrorType.UNSUPPORTED_PLATFORM));
+                Exit(ECUtil.Parse(currentPlatform, ErrorType.UNSUPPORTED_PLATFORM), true);
             }
         }
 
@@ -207,8 +211,6 @@ namespace LocalAdmin.V2.Core
                     if (gameProcess != null && gameProcess.HasExited)
                     {
                         ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
-                        // Block console closing
-                        Console.Read();
                         exit = true;
                         continue;
                     }
@@ -252,7 +254,7 @@ namespace LocalAdmin.V2.Core
                 ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
                 ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
 
-                Exit(ECUtil.Parse(currentPlatform, ErrorType.ERROR_FILE_NOT_FOUND));
+                Exit(ECUtil.Parse(currentPlatform, ErrorType.ERROR_FILE_NOT_FOUND), true);
             }
         }
 
@@ -291,9 +293,11 @@ namespace LocalAdmin.V2.Core
         /// <summary>
         ///     Terminates the game and console.
         /// </summary>
-        public void Exit(int code = -1)
+        public void Exit(int code = -1, bool waitForKey = false)
         {
             TerminateGame(); // Forcefully terminating the process
+            if (waitForKey)
+                Console.Read();
             Environment.Exit(code);
         }
     }
