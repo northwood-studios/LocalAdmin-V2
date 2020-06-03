@@ -285,9 +285,10 @@ namespace LocalAdmin.V2.Core
         /// </summary>
         private void TerminateGame()
         {
-            server!.Stop();
-            if (!gameProcess!.HasExited)
-                gameProcess!.Kill();
+            if (server != null)
+                server.Stop();
+            if (gameProcess != null && !gameProcess!.HasExited)
+                gameProcess.Kill();
         }
 
         /// <summary>
