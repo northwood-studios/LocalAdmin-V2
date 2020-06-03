@@ -25,8 +25,6 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
             };
         }
 
-        private UnixHandler() { }
-
         public void Setup()
         {
             Task.Run(() =>

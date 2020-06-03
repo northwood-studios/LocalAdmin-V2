@@ -14,8 +14,6 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
             Handler = new WindowsNTHandler();
         }
 
-        private WindowsNTHandler() { }
-
         public void Setup()
         {
             SetConsoleCtrlHandler(OnNativeSignal, true);
