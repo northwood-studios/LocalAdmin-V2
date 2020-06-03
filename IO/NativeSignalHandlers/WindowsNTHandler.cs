@@ -19,7 +19,7 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
         {
             if (!SetConsoleCtrlHandler(OnNativeSignal, true))
             {
-                throw new InvalidOperationException("Console logout handler couldn't be installed");
+                throw new Win32Exception();
             }
         }
 
@@ -31,7 +31,7 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
 
         #region Native
 
-        [DllImport("Kernel32")]
+        [DllImport("Kernel32", SetLastError = true)]
         private static extern bool SetConsoleCtrlHandler(HandlerRoutine handler, bool add);
 
         private delegate bool HandlerRoutine(CtrlTypes CtrlType);
