@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace LocalAdmin.V2.IO.NativeSignalHandlers
