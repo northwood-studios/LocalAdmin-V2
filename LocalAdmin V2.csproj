@@ -1,5 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-	
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -12,31 +12,32 @@
         <Copyright>Copyright by KernelError and Łukasz Jurczyk, 2019 - 2020</Copyright>
         <Platforms>AnyCPU;x64</Platforms>
         <AssemblyName>LocalAdmin</AssemblyName>
-	    <LangVersion>8</LangVersion>
-	    <Nullable>enable</Nullable>
+        <LangVersion>8</LangVersion>
+        <Nullable>enable</Nullable>
 
-	    <CrossGenDuringPublish>false</CrossGenDuringPublish>
-	    <TrimUnusedDependencies>true</TrimUnusedDependencies>
-	    <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
-	    <IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
-	    <IlcDisableReflection>false</IlcDisableReflection>
-	    <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
-	    <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
-	    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-	    <Optimize>true</Optimize>
+        <CrossGenDuringPublish>false</CrossGenDuringPublish>
+        <TrimUnusedDependencies>true</TrimUnusedDependencies>
+        <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
+        <IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
+        <IlcDisableReflection>false</IlcDisableReflection>
+        <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
+        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+        <Optimize>true</Optimize>
     </PropertyGroup>
 
     <PropertyGroup>
-		<!-- Disable automatic generation of version attribute -->
-		<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+        <!-- Disable automatic generation of version attribute -->
+        <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
     </PropertyGroup>
-	
+
     <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-		<DefineConstants>DEBUG</DefineConstants>
-		<Optimize>false</Optimize>
+        <DefineConstants>DEBUG</DefineConstants>
+        <Optimize>false</Optimize>
     </PropertyGroup>
-	
+
     <ItemGroup>
+        <None Remove=".editorconfig" />
         <None Remove=".gitignore" />
         <None Remove="LICENSE" />
         <None Remove="LocalAdmin V2.sln.DotSettings" />

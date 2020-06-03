@@ -38,6 +38,7 @@ namespace LocalAdmin.V2.Core
         private Task? readerTask;
         private string? scpslExecutable;
         private bool exit;
+        private OSPlatform currentPlatform;
 
         public void Start(string[] args)
         {
@@ -70,7 +71,7 @@ namespace LocalAdmin.V2.Core
                     {
                         ConsoleUtil.WriteLine("Failed - Invalid port!");
 
-                        Exit();
+                        Exit(ECUtil.Parse(currentPlatform, ErrorType.INVALID_PORT_GIVEN));
                     }
                 }
 
@@ -143,12 +144,14 @@ namespace LocalAdmin.V2.Core
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
+                currentPlatform = OSPlatform.Windows;
                 scpslExecutable = "SCPSL.exe";
                 LocalAdminExecutable = "LocalAdmin.exe";
                 WindowsNTHandler.Handler.Setup();
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
+                currentPlatform = OSPlatform.Linux;
                 scpslExecutable = "SCPSL.x86_64";
                 LocalAdminExecutable = "LocalAdmin.x86_x64";
                 UnixHandler.Handler.Setup();
@@ -157,7 +160,7 @@ namespace LocalAdmin.V2.Core
             {
                 ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
 
-                Exit(10); // According to MSDN, it's the ERROR_BAD_ENVIRONMENT error code
+                Exit(ECUtil.Parse(currentPlatform, ErrorType.UNSUPPORTED_PLATFORM));
             }
         }
 
@@ -249,7 +252,7 @@ namespace LocalAdmin.V2.Core
                 ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
                 ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
 
-                Exit(2); // According to MSDN, it's the ERROR_FILE_NOT_FOUND error code
+                Exit(ECUtil.Parse(currentPlatform, ErrorType.ERROR_FILE_NOT_FOUND));
             }
         }
 
