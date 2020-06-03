@@ -83,7 +83,7 @@ namespace LocalAdmin.V2.Core
 
                 listener.Stop();
                 if (client != null)
-                    client.Close();
+                    client?.Close();
             }
         }
 
