@@ -38,7 +38,6 @@ namespace LocalAdmin.V2.Core
         private Task? readerTask;
         private string? scpslExecutable;
         private bool exit;
-        private OSPlatform currentPlatform;
 
         public void Start(string[] args)
         {
@@ -74,7 +73,12 @@ namespace LocalAdmin.V2.Core
                         // No waiting here
                         // Most often with arguments launched from the console,
                         // the user will see an error
-                        Exit(ECUtil.Parse(currentPlatform, ErrorType.INVALID_PORT_GIVEN));
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                            Exit((int)WindowsErrorCode.INVALID_PORT_GIVEN);
+                        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                            Exit((int)UnixErrorCode.INVALID_PORT_GIVEN);
+                        else
+                            Exit(1);
                     }
                 }
 
@@ -148,14 +152,12 @@ namespace LocalAdmin.V2.Core
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                currentPlatform = OSPlatform.Windows;
                 scpslExecutable = "SCPSL.exe";
                 LocalAdminExecutable = "LocalAdmin.exe";
                 WindowsNTHandler.Handler.Setup();
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                currentPlatform = OSPlatform.Linux;
                 scpslExecutable = "SCPSL.x86_64";
                 LocalAdminExecutable = "LocalAdmin.x86_x64";
                 UnixHandler.Handler.Setup();
@@ -164,7 +166,7 @@ namespace LocalAdmin.V2.Core
             {
                 ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
 
-                Exit(ECUtil.Parse(currentPlatform, ErrorType.UNSUPPORTED_PLATFORM), true);
+                Exit(1);
             }
         }
 
@@ -252,7 +254,12 @@ namespace LocalAdmin.V2.Core
             else
             {
                 ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
-                Exit(ECUtil.Parse(currentPlatform, ErrorType.ERROR_FILE_NOT_FOUND), true);
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    Exit((int)WindowsErrorCode.ERROR_FILE_NOT_FOUND, true);
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    Exit((int)UnixErrorCode.ERROR_FILE_NOT_FOUND, true);
+                else
+                    Exit();
             }
         }
 
