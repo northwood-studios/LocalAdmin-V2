@@ -219,7 +219,7 @@ namespace LocalAdmin.V2.Core
 
                     var split = input.Split(' ');
 
-                    if (split.Length == 0) 
+                    if (split.Length == 0)
                         continue;
                     var name = split[0].ToUpperInvariant();
                     var arguments = split.Skip(1).ToArray();
@@ -230,7 +230,7 @@ namespace LocalAdmin.V2.Core
                         command.Execute(arguments);
                     else if (server.Connected)
                         server.WriteLine(input);
-                    else 
+                    else
                         ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
                 }
             });
@@ -259,7 +259,7 @@ namespace LocalAdmin.V2.Core
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     Exit((int)UnixErrorCode.ERROR_FILE_NOT_FOUND, true);
                 else
-                    Exit();
+                    Exit(1);
             }
         }
 
