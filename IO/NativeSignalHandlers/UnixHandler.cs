@@ -9,21 +9,16 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
     /// </summary>
     internal sealed class UnixHandler : INativeSignalHandler
     {
-        public static readonly UnixHandler Handler;
-        private static readonly UnixSignal[] signals;
-
-        static UnixHandler()
+        public static readonly UnixHandler Handler = new UnixHandler();
+        private static readonly UnixSignal[] signals = new UnixSignal[]
         {
-            Handler = new UnixHandler();
-            signals = new UnixSignal[]
-            {
-                new UnixSignal(Signum.SIGINT),  // CTRL + C pressed
-                new UnixSignal(Signum.SIGTERM), // Sending KILL
-                new UnixSignal(Signum.SIGUSR1),
-                new UnixSignal(Signum.SIGUSR2),
-                new UnixSignal(Signum.SIGHUP)   // Terminal is closed
-            };
-        }
+            new UnixSignal(Signum.SIGINT),  // CTRL + C pressed
+            new UnixSignal(Signum.SIGTERM), // Sending KILL
+            new UnixSignal(Signum.SIGUSR1),
+            new UnixSignal(Signum.SIGUSR2),
+            new UnixSignal(Signum.SIGHUP)   // Terminal is closed
+        };
+
 
         public void Setup()
         {

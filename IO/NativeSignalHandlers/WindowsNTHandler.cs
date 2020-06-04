@@ -8,12 +8,7 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
     /// </summary>
     internal sealed class WindowsNTHandler : INativeSignalHandler
     {
-        public static readonly WindowsNTHandler Handler;
-
-        static WindowsNTHandler()
-        {
-            Handler = new WindowsNTHandler();
-        }
+        public static readonly WindowsNTHandler Handler = new WindowsNTHandler();
 
         public void Setup()
         {
