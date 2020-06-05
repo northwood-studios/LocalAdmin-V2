@@ -52,14 +52,14 @@ jobs:
         path: ${{ github.workspace }}/bin/Release/netcoreapp${{ matrix.framework }}/linux-x64/native/LocalAdmin
     
     - if: matrix.os == 'windows-latest'
-      name: Upload Windows Build
+      name: Upload Windows Build to bundle
       uses: actions/upload-artifact@v2
       with:
         name: LocalAdmin-all
         path: ${{ github.workspace }}\bin\Release\netcoreapp${{ matrix.framework }}\win-x64\native\LocalAdmin.exe
       
     - if: matrix.os == 'ubuntu-latest'
-      name: Upload Linux Build
+      name: Upload Linux Build to bundle
       uses: actions/upload-artifact@v2
       with:
         name: LocalAdmin-all
