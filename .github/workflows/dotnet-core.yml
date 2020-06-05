@@ -36,3 +36,17 @@ jobs:
     - if: matrix.os == 'ubuntu-latest'
       name: Build Linux
       run: dotnet publish -r linux-x64 -c release
+    
+    - if: matrix.os == 'windows-latest'
+      name: Upload Windows Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: LocalAdmin
+        path: ${{ github.workspace }}\LocalAdmin-V2\bin\Release\netcoreapp3.1\win-x64\native\LocalAdmin.exe
+      
+    - if: matrix.os == 'ubuntu-latest'
+      name: Upload Linux Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: LocalAdmin
+        path: ${{ github.workspace }}/LocalAdmin-V2/bin/Release/netcoreapp3.1/linux-x64/native/LocalAdmin
