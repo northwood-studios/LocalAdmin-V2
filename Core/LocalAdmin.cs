@@ -204,7 +204,7 @@ namespace LocalAdmin.V2.Core
                     ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
                     Console.SetCursorPosition(0, currentLineCursor);
 
-                    if (input.StartsWith("exit", StringComparison.InvariantCultureIgnoreCase))
+                    if (input.StartsWith("exit", StringComparison.OrdinalIgnoreCase))
                     {
                         exit = true;
                         continue;
