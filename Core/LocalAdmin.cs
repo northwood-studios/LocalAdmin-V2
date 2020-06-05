@@ -26,7 +26,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin
     {
-        public const string _VersionString = "2.2.2";
+        public const string VersionString = "2.2.2";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
 
         public string? LocalAdminExecutable { get; private set; }
