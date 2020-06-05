@@ -41,7 +41,7 @@ namespace LocalAdmin.V2.Core
 
         public void Start(string[] args)
         {
-            Console.Title = $"LocalAdmin v. {_VersionString}";
+            Console.Title = $"LocalAdmin v. {VersionString}";
 
             try
             {
@@ -122,7 +122,7 @@ namespace LocalAdmin.V2.Core
 
             Menu();
 
-            Console.Title = $"LocalAdmin v. {_VersionString} on port {port}";
+            Console.Title = $"LocalAdmin v. {VersionString} on port {port}";
 
             ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
             ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
@@ -139,7 +139,7 @@ namespace LocalAdmin.V2.Core
         private void Menu()
         {
             ConsoleUtil.Clear();
-            ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {_VersionString}", ConsoleColor.Cyan);
+            ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
             ConsoleUtil.WriteLine("Copyright by KernelError and zabszk, 2019 - 2020", ConsoleColor.Cyan);
