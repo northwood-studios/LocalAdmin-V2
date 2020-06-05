@@ -1,0 +1,66 @@
+name: .NET Core CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: .Net Core ${{ matrix.framework }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        framework: ['3.1']
+    timeout-minutes: 30
+    
+    steps:
+    - uses: actions/checkout@v2.2.0
+      
+    - if: matrix.os == 'ubuntu-latest'
+      name: Install Linux packages
+      run: | 
+       sudo apt-get update
+       sudo apt-get install -y build-essential libkrb5-dev make gcc libc-dev cmake llvm
+       
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1.5.0
+      with:
+        dotnet-version: ${{ matrix.framework }}
+        
+    - name: Install dependencies
+      run: dotnet restore
+     
+    - if: matrix.os == 'windows-latest'
+      name: Build Windows
+      run: dotnet publish -r win-x64 -c release
+      
+    - if: matrix.os == 'ubuntu-latest'
+      name: Build Linux
+      run: dotnet publish -r linux-x64 -c release
+    
+    - if: matrix.os == 'windows-latest'
+      name: Upload Windows Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: LocalAdmin-windows
+        path: ${{ github.workspace }}\bin\Release\netcoreapp${{ matrix.framework }}\win-x64\native\LocalAdmin.exe
+      
+    - if: matrix.os == 'ubuntu-latest'
+      name: Upload Linux Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: LocalAdmin-linux
+        path: ${{ github.workspace }}/bin/Release/netcoreapp${{ matrix.framework }}/linux-x64/native/LocalAdmin
+    
+    - if: matrix.os == 'windows-latest'
+      name: Upload Windows Build to bundle
+      uses: actions/upload-artifact@v2
+      with:
+        name: LocalAdmin-all
+        path: ${{ github.workspace }}\bin\Release\netcoreapp${{ matrix.framework }}\win-x64\native\LocalAdmin.exe
+      
+    - if: matrix.os == 'ubuntu-latest'
+      name: Upload Linux Build to bundle
+      uses: actions/upload-artifact@v2
+      with:
+        name: LocalAdmin-all
+        path: ${{ github.workspace }}/bin/Release/netcoreapp${{ matrix.framework }}/linux-x64/native/LocalAdmin
