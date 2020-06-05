@@ -41,12 +41,26 @@ jobs:
       name: Upload Windows Build
       uses: actions/upload-artifact@v2
       with:
-        name: LocalAdmin
-        path: ${{ github.workspace }}\bin\Release\netcoreapp3.1\win-x64\native\LocalAdmin.exe
+        name: LocalAdmin-windows
+        path: ${{ github.workspace }}\bin\Release\netcoreapp${{ matrix.framework }}\win-x64\native\LocalAdmin.exe
       
     - if: matrix.os == 'ubuntu-latest'
       name: Upload Linux Build
       uses: actions/upload-artifact@v2
       with:
-        name: LocalAdmin
-        path: ${{ github.workspace }}/bin/Release/netcoreapp3.1/linux-x64/native/LocalAdmin
+        name: LocalAdmin-linux
+        path: ${{ github.workspace }}/bin/Release/netcoreapp${{ matrix.framework }}/linux-x64/native/LocalAdmin
+    
+    - if: matrix.os == 'windows-latest'
+      name: Upload Windows Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: LocalAdmin-all
+        path: ${{ github.workspace }}\bin\Release\netcoreapp${{ matrix.framework }}\win-x64\native\LocalAdmin.exe
+      
+    - if: matrix.os == 'ubuntu-latest'
+      name: Upload Linux Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: LocalAdmin-all
+        path: ${{ github.workspace }}/bin/Release/netcoreapp${{ matrix.framework }}/linux-x64/native/LocalAdmin
