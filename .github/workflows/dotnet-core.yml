@@ -25,10 +25,10 @@ jobs:
       
     - if: matrix.os != 'windows-latest'
       name: Install Linux packages
-      run: |
+      run: | 
        apt-get update
        apt-get install -y build-essential libkrb5-dev make gcc libc-dev cmake llvm
-       
+     
     - if: matrix.os == 'windows-latest'
       name: Build Windows
       run: dotnet publish -r win-x64 -c release -v n
