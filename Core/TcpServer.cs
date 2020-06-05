@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LocalAdmin.V2
+namespace LocalAdmin.V2.Core
 {
     public class TcpServer
     {
@@ -31,9 +31,15 @@ namespace LocalAdmin.V2
                 exit = false;
 
                 listener.Start();
-                ConsolePort = (ushort) ((IPEndPoint) (listener.LocalEndpoint)).Port;
+                ConsolePort = (ushort)((IPEndPoint)(listener.LocalEndpoint)).Port;
                 listener.BeginAcceptTcpClient(result =>
                 {
+                    lock (lck)
+                    {
+                        if (exit)
+                            return;
+                    }
+
                     client = listener.EndAcceptTcpClient(result);
                     networkStream = client.GetStream();
                     Connected = true;
@@ -74,11 +80,12 @@ namespace LocalAdmin.V2
         {
             lock (lck)
             {
-                if (exit) return;
+                if (exit) 
+                    return;
                 exit = true;
 
                 listener.Stop();
-                client!.Close();
+                client?.Close();
             }
         }
 
@@ -86,7 +93,7 @@ namespace LocalAdmin.V2
         {
             lock (lck)
             {
-                if (exit) return; 
+                if (exit) return;
                 const int offset = sizeof(int);
 
                 var buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(input.Length) + offset);

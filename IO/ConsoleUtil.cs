@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LocalAdmin.V2
+namespace LocalAdmin.V2.IO
 {
     public static class ConsoleUtil
     {
@@ -51,7 +51,7 @@ namespace LocalAdmin.V2
             lock (_lck)
             {
                 content = content.Trim().Trim(ToTrim);
-                content = string.IsNullOrEmpty(content) ? "" : $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {content}";
+                content = string.IsNullOrEmpty(content) ? string.Empty : $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {content}";
 
                 Console.BackgroundColor = ConsoleColor.Black;
 
@@ -75,5 +75,5 @@ namespace LocalAdmin.V2
                 //Logger.Log(content);
             }
         }
-	}
+    }
 }

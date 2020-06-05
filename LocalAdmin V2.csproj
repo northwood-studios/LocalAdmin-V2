@@ -1,36 +1,52 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>LocalAdmin.V2</RootNamespace>
-    <Configurations>Debug;Release;Windows x64</Configurations>
-    <Authors>KernelError, zabszk</Authors>
-    <Product>LocalAdmin V2</Product>
-    <Company>Northwood Studios</Company>
-    <PackageId>LocalAdmin V2</PackageId>
-    <Copyright>Copyright by KernelError and Łukasz Jurczyk, 2019 - 2020</Copyright>
-    <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyName>LocalAdmin</AssemblyName>
-	<CrossGenDuringPublish>false</CrossGenDuringPublish>
-	<TrimUnusedDependencies>true</TrimUnusedDependencies>
-	<Version>2.2.0</Version>
-	<RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
-	<IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
-	<IlcDisableReflection>false</IlcDisableReflection>
-	<IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
-	<IlcOptimizationPreference>Speed</IlcOptimizationPreference>
-	<IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-	<LangVersion>8</LangVersion>
-	<Nullable>enable</Nullable>
-	<PackageVersion>2.2.2</PackageVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <DefineConstants />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Windows x64' ">
-    <Optimize>true</Optimize>
-  </PropertyGroup>
-   <ItemGroup>
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
-  </ItemGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <RootNamespace>LocalAdmin.V2</RootNamespace>
+        <Configurations>Debug;Release;Windows x64</Configurations>
+        <Authors>KernelError, zabszk</Authors>
+        <Product>LocalAdmin V2</Product>
+        <Company>Northwood Studios</Company>
+        <PackageId>LocalAdmin V2</PackageId>
+        <Copyright>Copyright by KernelError and Łukasz Jurczyk, 2019 - 2020</Copyright>
+        <Platforms>AnyCPU;x64</Platforms>
+        <AssemblyName>LocalAdmin</AssemblyName>
+        <LangVersion>8</LangVersion>
+        <Nullable>enable</Nullable>
+
+        <CrossGenDuringPublish>false</CrossGenDuringPublish>
+        <TrimUnusedDependencies>true</TrimUnusedDependencies>
+        <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
+        <IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
+        <IlcDisableReflection>false</IlcDisableReflection>
+        <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
+        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+        <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <!-- Disable automatic generation of version attribute -->
+        <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+        <DefineConstants>DEBUG</DefineConstants>
+        <Optimize>false</Optimize>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Remove=".editorconfig" />
+        <None Remove=".gitignore" />
+        <None Remove="LICENSE" />
+        <None Remove="LocalAdmin V2.sln.DotSettings" />
+        <None Remove="nuget.config" />
+        <None Remove="Properties\launchSettings.json" />
+        <None Remove="README.md" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
+        <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
+    </ItemGroup>
 </Project>

@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LocalAdmin.V2
+﻿namespace LocalAdmin.V2.IO.Logging
 {
+    /*
 	public class ConsoleLogEntry
 	{
 		public readonly string Content;
@@ -17,4 +14,5 @@ namespace LocalAdmin.V2
 			Height = h;
 		}
 	}
+	*/
 }

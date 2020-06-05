@@ -1,31 +1,24 @@
-﻿using System;
-using System.Diagnostics;
+﻿using LocalAdmin.V2.Commands.Meta;
+using LocalAdmin.V2.IO;
+using System;
 
 namespace LocalAdmin.V2.Commands
 {
     internal class NewCommand : CommandBase
     {
-        private string _executable;
-
-        public NewCommand(string executable) : base("New")
-        {
-            _executable = executable;
-        }
+        public NewCommand() : base("New") { }
 
         internal override void Execute(string[] arguments)
         {
             if (arguments.Length == 1)
             {
-                var port = -1;
-                if (int.TryParse(arguments[0], out port))
-                    Process.Start(new ProcessStartInfo(_executable, Convert.ToString(port)));
+                if (ushort.TryParse(arguments[0], out var port))
+                    Core.LocalAdmin.Singleton.StartSession(port);
                 else
                     ConsoleUtil.WriteLine("Usage: new port", ConsoleColor.Yellow);
             }
             else
-            {
                 ConsoleUtil.WriteLine("Usage: new port", ConsoleColor.Yellow);
-            }
         }
     }
 }

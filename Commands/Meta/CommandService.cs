@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
 
-namespace LocalAdmin.V2
+namespace LocalAdmin.V2.Commands.Meta
 {
     internal class CommandService
     {
