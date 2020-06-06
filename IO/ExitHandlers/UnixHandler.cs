@@ -2,16 +2,15 @@
 using Mono.Unix.Native;
 using System.Threading;
 
-namespace LocalAdmin.V2.IO.NativeSignalHandlers
+namespace LocalAdmin.V2.IO.ExitHandlers
 {
     /// <summary>
     ///     Native signal processing on Unix systems.
     /// </summary>
-    internal sealed class UnixHandler : INativeSignalHandler
+    internal sealed class UnixHandler : IExitHandler
     {
         public static readonly UnixHandler Handler = new UnixHandler();
-        private static readonly UnixSignal[] signals = new UnixSignal[]
-        {
+        private static readonly UnixSignal[] Signals = {
             new UnixSignal(Signum.SIGINT),  // CTRL + C pressed
             new UnixSignal(Signum.SIGTERM), // Sending KILL
             new UnixSignal(Signum.SIGUSR1),
@@ -25,7 +24,7 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
             new Thread(() =>
             {
                 // Blocking operation with infinite expectation of any signal
-                UnixSignal.WaitAny(signals, -1);
+                UnixSignal.WaitAny(Signals, -1);
                 Core.LocalAdmin.Singleton.Exit(0);
             }).Start();
         }
