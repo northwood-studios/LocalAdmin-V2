@@ -10,6 +10,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         framework: ['3.1']
+        include: 
+        - os: ubuntu-latest
+          target: linux-x64
+        - os: windows-latest
+          target: win-x64
     timeout-minutes: 30
     
     steps:
@@ -28,39 +33,19 @@ jobs:
         
     - name: Install dependencies
       run: dotnet restore
-     
-    - if: matrix.os == 'windows-latest'
-      name: Build Windows
-      run: dotnet publish -r win-x64 -c release
-      
-    - if: matrix.os == 'ubuntu-latest'
-      name: Build Linux
-      run: dotnet publish -r linux-x64 -c release
-    
-    - if: matrix.os == 'windows-latest'
-      name: Upload Windows Build
+   
+    - name: Build ${{ matrix.target }}
+      run: dotnet publish -r ${{ matrix.target }} -c release -o ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}
+  
+    - name: Upload ${{ matrix.target }} Build
       uses: actions/upload-artifact@v2
       with:
-        name: LocalAdmin-windows
-        path: ${{ github.workspace }}\bin\Release\netcoreapp${{ matrix.framework }}\win-x64\native\LocalAdmin.exe
-      
-    - if: matrix.os == 'ubuntu-latest'
-      name: Upload Linux Build
-      uses: actions/upload-artifact@v2
-      with:
-        name: LocalAdmin-linux
-        path: ${{ github.workspace }}/bin/Release/netcoreapp${{ matrix.framework }}/linux-x64/native/LocalAdmin
-    
-    - if: matrix.os == 'windows-latest'
-      name: Upload Windows Build to bundle
+        name: LocalAdmin-${{ matrix.target }}
+        path: ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}/native
+  
+    - name: Upload ${{ matrix.target }} Build to bundle
       uses: actions/upload-artifact@v2
       with:
         name: LocalAdmin-all
-        path: ${{ github.workspace }}\bin\Release\netcoreapp${{ matrix.framework }}\win-x64\native\LocalAdmin.exe
+        path: ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}/native
       
-    - if: matrix.os == 'ubuntu-latest'
-      name: Upload Linux Build to bundle
-      uses: actions/upload-artifact@v2
-      with:
-        name: LocalAdmin-all
-        path: ${{ github.workspace }}/bin/Release/netcoreapp${{ matrix.framework }}/linux-x64/native/LocalAdmin
