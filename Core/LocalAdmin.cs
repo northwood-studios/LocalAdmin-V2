@@ -38,6 +38,7 @@ namespace LocalAdmin.V2.Core
         private Task? readerTask;
         private string? scpslExecutable;
         private bool exit;
+        private volatile bool _processClosing;
 
         public void Start(string[] args)
         {
@@ -356,6 +357,12 @@ namespace LocalAdmin.V2.Core
         {
             lock (this)
             {
+                if (_processClosing)
+                {
+                    return;
+                }
+
+                _processClosing = true;
                 TerminateGame(); // Forcefully terminating the process
                 if (waitForKey)
                 {
