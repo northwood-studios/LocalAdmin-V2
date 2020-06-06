@@ -89,7 +89,7 @@ namespace LocalAdmin.V2.Core
                 }
                 catch (Exception ex)
                 {
-                    ConsoleUtil.WriteLine($"Starting exit handlers threw {ex}. Game process will NOT be closed on console closing!");
+                    ConsoleUtil.WriteLine($"Starting exit handlers threw {ex}. Game process will NOT be closed on console closing!", ConsoleColor.Yellow);
                 }
 
                 RegisterCommands();
@@ -179,6 +179,9 @@ namespace LocalAdmin.V2.Core
 
         private static void SetupExitHandlers()
         {
+            ProcessHandler.Handler.Setup();
+            AppDomainHandler.Handler.Setup();
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 WindowsHandler.Handler.Setup();
@@ -212,15 +215,12 @@ namespace LocalAdmin.V2.Core
                     }
                 }
             }
-
-            ProcessHandler.Handler.Setup();
-            AppDomainHandler.Handler.Setup();
         }
 
         private static bool CheckMonoException(Exception ex)
         {
             if (!ex.Message.Contains("MonoPosixHelper")) return false;
-            ConsoleUtil.WriteLine("Native exit handling for Linux requires Mono to be installed!");
+            ConsoleUtil.WriteLine("Native exit handling for Linux requires Mono to be installed!", ConsoleColor.Yellow);
             return true;
         }
 
