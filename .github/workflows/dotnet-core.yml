@@ -40,12 +40,12 @@ jobs:
     - name: Upload ${{ matrix.target }} Build
       uses: actions/upload-artifact@v2
       with:
-        name: LocalAdmin-${{ matrix.target }}
+        name: LocalAdmin-${{ matrix.target }}-${{ matrix.framework }}
         path: ${{ github.workspace }}/builds/${{ matrix.framework }}
   
     - name: Upload ${{ matrix.target }} Build to bundle
       uses: actions/upload-artifact@v2
       with:
-        name: LocalAdmin-all
+        name: LocalAdmin-all-${{ matrix.framework }}
         path: ${{ github.workspace }}/builds/${{ matrix.framework }}
       
