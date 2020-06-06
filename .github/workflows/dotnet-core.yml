@@ -35,7 +35,7 @@ jobs:
       run: dotnet restore
    
     - name: Build ${{ matrix.target }}
-      run: dotnet publish -r ${{ matrix.target }} -c release -o ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}
+      run: dotnet publish -r ${{ matrix.target }} -c release -o "${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}"
   
     - name: Upload ${{ matrix.target }} Build
       uses: actions/upload-artifact@v2
