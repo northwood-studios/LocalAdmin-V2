@@ -1,4 +1,5 @@
-﻿using Mono.Unix;
+﻿#if LINUX_SIGNALS
+using Mono.Unix;
 using Mono.Unix.Native;
 using System.Threading;
 
@@ -30,3 +31,4 @@ namespace LocalAdmin.V2.IO.ExitHandlers
         }
     }
 }
+#endif

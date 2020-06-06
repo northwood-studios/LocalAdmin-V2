@@ -189,6 +189,7 @@ namespace LocalAdmin.V2.Core
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
+#if LINUX_SIGNALS
                 try
                 {
                     UnixHandler.Handler.Setup();
@@ -215,6 +216,9 @@ namespace LocalAdmin.V2.Core
                             throw;
                     }
                 }
+#else
+                ConsoleUtil.WriteLine("Invalid Linux build! Please download LocalAdmin from an official source!", ConsoleColor.Red);
+#endif
             }
         }
 
