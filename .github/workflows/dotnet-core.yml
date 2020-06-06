@@ -13,10 +13,8 @@ jobs:
         include: 
         - os: ubuntu-latest
           target: linux-x64
-          executable: LocalAdmin
         - os: windows-latest
           target: win-x64
-          executable: LocalAdmin
     timeout-minutes: 30
     
     steps:
@@ -43,11 +41,11 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: LocalAdmin-${{ matrix.target }}
-        path: ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}/${{ matrix.executable }}
+        path: ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}
   
     - name: Upload ${{ matrix.target }} Build to bundle
       uses: actions/upload-artifact@v2
       with:
         name: LocalAdmin-all
-        path: ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}/${{ matrix.executable }}
+        path: ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}
       
