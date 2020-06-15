@@ -1,24 +1,27 @@
 ﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace LocalAdmin.V2.IO.NativeSignalHandlers
+namespace LocalAdmin.V2.IO.ExitHandlers
 {
     /// <summary>
     ///     Native signal processing on Windows NT systems.
     /// </summary>
-    internal sealed class WindowsNTHandler : INativeSignalHandler
+    internal sealed class WindowsHandler : IExitHandler
     {
-        public static readonly WindowsNTHandler Handler = new WindowsNTHandler();
+        public static readonly WindowsHandler Handler = new WindowsHandler();
+
+        // .Net Core sometimes crashes when the delegate isn't in a field
+        private static readonly HandlerRoutine Routine = OnNativeSignal;
 
         public void Setup()
         {
-            if (!SetConsoleCtrlHandler(OnNativeSignal, true))
+            if (!SetConsoleCtrlHandler(Routine, true))
             {
                 throw new Win32Exception();
             }
         }
 
-        private bool OnNativeSignal(CtrlTypes ctrl)
+        private static bool OnNativeSignal(CtrlTypes ctrl)
         {
             Core.LocalAdmin.Singleton.Exit(0);
             return true;
@@ -29,7 +32,7 @@ namespace LocalAdmin.V2.IO.NativeSignalHandlers
         [DllImport("Kernel32", SetLastError = true)]
         private static extern bool SetConsoleCtrlHandler(HandlerRoutine handler, bool add);
 
-        private delegate bool HandlerRoutine(CtrlTypes CtrlType);
+        private delegate bool HandlerRoutine(CtrlTypes ctrlType);
 
         private enum CtrlTypes
         {

@@ -1,22 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <RootNamespace>LocalAdmin.V2</RootNamespace>
-        <Configurations>Debug;Release;Windows x64</Configurations>
-        <Authors>KernelError, zabszk</Authors>
-        <Product>LocalAdmin V2</Product>
-        <Company>Northwood Studios</Company>
-        <PackageId>LocalAdmin V2</PackageId>
-        <Copyright>Copyright by KernelError and Łukasz Jurczyk, 2019 - 2020</Copyright>
-        <Platforms>AnyCPU;x64</Platforms>
-        <AssemblyName>LocalAdmin</AssemblyName>
         <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
+        <AssemblyName>LocalAdmin</AssemblyName>
+        <Product>LocalAdmin V2</Product>
+        <PackageId>LocalAdmin V2</PackageId>
+        <Company>Northwood Studios</Company>
+        <Authors>KernelError, zabszk</Authors>
+        <Copyright>Copyright by KernelError and Łukasz Jurczyk, 2019 - 2020</Copyright>
 
-        <CrossGenDuringPublish>false</CrossGenDuringPublish>
-        <TrimUnusedDependencies>true</TrimUnusedDependencies>
         <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
         <IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
         <IlcDisableReflection>false</IlcDisableReflection>
@@ -32,11 +27,14 @@
         <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
         <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-        <DefineConstants>DEBUG</DefineConstants>
-        <Optimize>false</Optimize>
+	
+     <!-- Linux only exit handling -->
+    <PropertyGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
+        <DefineConstants>LINUX_SIGNALS</DefineConstants>
     </PropertyGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
+        <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
+    </ItemGroup>
 
     <ItemGroup>
         <None Remove=".editorconfig" />
@@ -49,6 +47,5 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
-        <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
     </ItemGroup>
 </Project>

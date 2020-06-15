@@ -1,7 +1,7 @@
 ﻿using LocalAdmin.V2.Commands;
 using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
-using LocalAdmin.V2.IO.NativeSignalHandlers;
+using LocalAdmin.V2.IO.ExitHandlers;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -26,7 +26,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin
     {
-        public const string VersionString = "2.2.3";
+        public const string VersionString = "2.2.4";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
 
         public string? LocalAdminExecutable { get; private set; }
@@ -38,6 +38,7 @@ namespace LocalAdmin.V2.Core
         private Task? readerTask;
         private string? scpslExecutable;
         private bool exit;
+        private volatile bool _processClosing;
 
         public void Start(string[] args)
         {
@@ -83,6 +84,15 @@ namespace LocalAdmin.V2.Core
                 }
 
                 SetupPlatform();
+                try
+                {
+                    SetupExitHandlers();
+                }
+                catch (Exception ex)
+                {
+                    ConsoleUtil.WriteLine($"Starting exit handlers threw {ex}. Game process will NOT be closed on console closing!", ConsoleColor.Yellow);
+                }
+
                 RegisterCommands();
                 SetupReader();
 
@@ -154,13 +164,11 @@ namespace LocalAdmin.V2.Core
             {
                 scpslExecutable = "SCPSL.exe";
                 LocalAdminExecutable = "LocalAdmin.exe";
-                WindowsNTHandler.Handler.Setup();
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 scpslExecutable = "SCPSL.x86_64";
                 LocalAdminExecutable = "LocalAdmin.x86_x64";
-                UnixHandler.Handler.Setup();
             }
             else
             {
@@ -168,6 +176,57 @@ namespace LocalAdmin.V2.Core
 
                 Exit(1);
             }
+        }
+
+        private static void SetupExitHandlers()
+        {
+            ProcessHandler.Handler.Setup();
+            AppDomainHandler.Handler.Setup();
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                WindowsHandler.Handler.Setup();
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+#if LINUX_SIGNALS
+                try
+                {
+                    UnixHandler.Handler.Setup();
+                }
+                catch (DllNotFoundException ex)
+                {
+                    if (!CheckMonoException(ex)) throw;
+                }
+                catch (EntryPointNotFoundException ex)
+                {
+                    if (!CheckMonoException(ex)) throw;
+                }
+                catch (TypeInitializationException ex)
+                {
+                    switch (ex.InnerException)
+                    {
+                        case DllNotFoundException dll:
+                            if (!CheckMonoException(dll)) throw;
+                            break;
+                        case EntryPointNotFoundException dll:
+                            if (!CheckMonoException(dll)) throw;
+                            break;
+                        default:
+                            throw;
+                    }
+                }
+#else
+                ConsoleUtil.WriteLine("Invalid Linux build! Please download LocalAdmin from an official source!", ConsoleColor.Red);
+#endif
+            }
+        }
+
+        private static bool CheckMonoException(Exception ex)
+        {
+            if (!ex.Message.Contains("MonoPosixHelper")) return false;
+            ConsoleUtil.WriteLine("Native exit handling for Linux requires Mono to be installed!", ConsoleColor.Yellow);
+            return true;
         }
 
         private void SetupServer()
@@ -302,6 +361,12 @@ namespace LocalAdmin.V2.Core
         {
             lock (this)
             {
+                if (_processClosing)
+                {
+                    return;
+                }
+
+                _processClosing = true;
                 TerminateGame(); // Forcefully terminating the process
                 if (waitForKey)
                 {
