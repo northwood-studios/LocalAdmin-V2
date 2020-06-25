@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.Core
 {
@@ -42,7 +43,7 @@ namespace LocalAdmin.V2.Core
 
         public void Start(string[] args)
         {
-            Console.Title = $"LocalAdmin v. {VersionString}";
+            Console.Title = $"LocalAdmin {VersionString}";
 
             try
             {
@@ -83,6 +84,7 @@ namespace LocalAdmin.V2.Core
                     }
                 }
 
+                Logger.Setup(port);
                 SetupPlatform();
                 try
                 {
@@ -132,7 +134,7 @@ namespace LocalAdmin.V2.Core
 
             Menu();
 
-            Console.Title = $"LocalAdmin v. {VersionString} on port {port}";
+            Console.Title = $"LocalAdmin {VersionString} | Port {port}";
 
             ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
             ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
@@ -149,7 +151,7 @@ namespace LocalAdmin.V2.Core
         private void Menu()
         {
             ConsoleUtil.Clear();
-            ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
+            ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin {VersionString}", ConsoleColor.Cyan);
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
             ConsoleUtil.WriteLine("Copyright by KernelError and zabszk, 2019 - 2020", ConsoleColor.Cyan);
@@ -305,10 +307,17 @@ namespace LocalAdmin.V2.Core
                 {
                     FileName = scpslExecutable,
                     Arguments = $"-batchmode -nographics -nodedicateddelete -port{port} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id}",
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true
                 };
 
                 gameProcess = Process.Start(startInfo);
+
+                gameProcess.OutputDataReceived += (sender, args) =>
+                {
+                    Logger.LogLine($"[SCPSL] {args.Data}");
+                };
+                gameProcess.BeginOutputReadLine();
             }
             else
             {
