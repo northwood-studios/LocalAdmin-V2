@@ -255,13 +255,15 @@ namespace LocalAdmin.V2.Core
                 {
                     var input = Console.ReadLine();
 
+                    if (_processClosing)
+                        break;
+
                     if (string.IsNullOrWhiteSpace(input))
                         continue;
 
                     var currentLineCursor = Console.CursorTop;
 
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    ConsoleUtil.Write(string.Empty.PadLeft(Console.WindowWidth));
                     ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
                     Console.SetCursorPosition(0, currentLineCursor);
 
@@ -318,6 +320,13 @@ namespace LocalAdmin.V2.Core
                     Logger.LogLine($"[SCPSL] {args.Data}");
                 };
                 gameProcess.BeginOutputReadLine();
+
+                gameProcess.Exited += (sender, args) =>
+                {
+                    ConsoleUtil.WriteLine("The game process was terminated...", ConsoleColor.Red);
+                    Exit(0, true);
+                };
+                gameProcess.EnableRaisingEvents = true;
             }
             else
             {
