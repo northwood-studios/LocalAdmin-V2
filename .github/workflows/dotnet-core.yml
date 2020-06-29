@@ -10,42 +10,42 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         framework: ['3.1']
-        include: 
+        include:
         - os: ubuntu-latest
           target: linux-x64
         - os: windows-latest
           target: win-x64
     timeout-minutes: 30
-    
+
     steps:
     - uses: actions/checkout@v2.2.0
-      
+
     - if: matrix.os == 'ubuntu-latest'
       name: Install Linux packages
-      run: | 
+      run: |
        sudo apt-get update
        sudo apt-get install -y build-essential libkrb5-dev make gcc libc-dev cmake llvm
-       
+
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1.5.0
       with:
         dotnet-version: ${{ matrix.framework }}
-        
-    - name: Install dependencies
-      run: dotnet restore
-   
+
+    - name: Install dependencies for ${{ matrix.target }}
+      run: dotnet restore -r ${{ matrix.target }}
+
     - name: Build ${{ matrix.target }}
       run: dotnet publish -r ${{ matrix.target }} -c release -o "${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}"
-  
+
     - name: Upload ${{ matrix.target }} Build
       uses: actions/upload-artifact@v2
       with:
         name: LocalAdmin-${{ matrix.target }}-${{ matrix.framework }}
         path: ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}
-  
+
     - name: Upload ${{ matrix.target }} Build to bundle
       uses: actions/upload-artifact@v2
       with:
         name: LocalAdmin-all-${{ matrix.framework }}
         path: ${{ github.workspace }}/builds/${{ matrix.framework }}
-      
+
