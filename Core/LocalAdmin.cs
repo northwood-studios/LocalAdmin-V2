@@ -26,7 +26,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin
     {
-        public const string VersionString = "2.2.4";
+        public const string VersionString = "2.2.5";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
         public ushort GamePort { get; private set; }
 
