@@ -28,8 +28,6 @@ namespace LocalAdmin.V2.Core
     {
         public const string VersionString = "2.2.4";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
-
-        public string? LocalAdminExecutable { get; private set; }
         public ushort GamePort { get; private set; }
 
         private readonly CommandService commandService = new CommandService();
@@ -37,8 +35,10 @@ namespace LocalAdmin.V2.Core
         private TcpServer? server;
         private Task? readerTask;
         private string? scpslExecutable;
+        private string gameArguments = string.Empty;
         private bool exit;
-        private volatile bool _processClosing;
+        internal static bool NoSetCursor;
+        private volatile bool processClosing;
 
         public void Start(string[] args)
         {
@@ -47,7 +47,7 @@ namespace LocalAdmin.V2.Core
             try
             {
                 ushort port = 0;
-                if (args.Length == 0)
+                if (args.Length == 0 || !ushort.TryParse(args[0], out port))
                 {
                     ConsoleUtil.WriteLine("You can pass port number as first startup argument.", ConsoleColor.Green);
                     Console.WriteLine(string.Empty);
@@ -65,21 +65,26 @@ namespace LocalAdmin.V2.Core
                         ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red);
                     });
                 }
-                else
-                {
-                    if (!ushort.TryParse(args[0], out port))
-                    {
-                        ConsoleUtil.WriteLine("Failed - Invalid port!");
 
-                        // No waiting here
-                        // Most often with arguments launched from the console,
-                        // the user will see an error
-                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                            Exit((int)WindowsErrorCode.INVALID_PORT_GIVEN);
-                        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                            Exit((int)UnixErrorCode.INVALID_PORT_GIVEN);
-                        else
-                            Exit(1);
+                var passArgs = false;
+                foreach (var arg in args)
+                {
+                    if (passArgs)
+                    {
+                        gameArguments += $"\"{arg}\" ";
+                        continue;
+                    }
+
+                    switch (arg)
+                    {
+                        case "-c":
+                        case "--noSetCursor":
+                            NoSetCursor = true;
+                            break;
+                        
+                        case "--":
+                            passArgs = true;
+                            break;
                     }
                 }
 
@@ -161,15 +166,9 @@ namespace LocalAdmin.V2.Core
         private void SetupPlatform()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
                 scpslExecutable = "SCPSL.exe";
-                LocalAdminExecutable = "LocalAdmin.exe";
-            }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
                 scpslExecutable = "SCPSL.x86_64";
-                LocalAdminExecutable = "LocalAdmin.x86_x64";
-            }
             else
             {
                 ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
@@ -222,12 +221,14 @@ namespace LocalAdmin.V2.Core
             }
         }
 
+#if LINUX_SIGNALS
         private static bool CheckMonoException(Exception ex)
         {
             if (!ex.Message.Contains("MonoPosixHelper")) return false;
             ConsoleUtil.WriteLine("Native exit handling for Linux requires Mono to be installed!", ConsoleColor.Yellow);
             return true;
         }
+#endif
 
         private void SetupServer()
         {
@@ -258,10 +259,15 @@ namespace LocalAdmin.V2.Core
 
                     var currentLineCursor = Console.CursorTop;
 
-                    Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    ConsoleUtil.Write(string.Empty.PadLeft(Console.WindowWidth));
-                    ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
-                    Console.SetCursorPosition(0, currentLineCursor);
+                    if (!NoSetCursor && currentLineCursor > 0)
+                    {
+                        Console.SetCursorPosition(0, currentLineCursor - 1);
+                        ConsoleUtil.Write(string.Empty.PadLeft(Console.WindowWidth));
+                        ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
+                        Console.SetCursorPosition(0, currentLineCursor);
+                    }
+                    else
+                        ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
 
                     if (input.StartsWith("exit", StringComparison.OrdinalIgnoreCase))
                     {
@@ -304,7 +310,7 @@ namespace LocalAdmin.V2.Core
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = scpslExecutable,
-                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{port} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id}",
+                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{port} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id} {gameArguments}",
                     CreateNoWindow = true
                 };
 
@@ -361,12 +367,12 @@ namespace LocalAdmin.V2.Core
         {
             lock (this)
             {
-                if (_processClosing)
+                if (processClosing)
                 {
                     return;
                 }
 
-                _processClosing = true;
+                processClosing = true;
                 TerminateGame(); // Forcefully terminating the process
                 if (waitForKey)
                 {
