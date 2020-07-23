@@ -32,7 +32,7 @@ namespace LocalAdmin.V2.IO
                     Console.ForegroundColor = ConsoleColor.White;
                 }
 
-                if (height > 0)
+                if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                     Console.CursorTop += height;
 
                 Console.Write(content);

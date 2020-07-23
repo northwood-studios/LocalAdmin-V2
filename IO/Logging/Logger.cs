@@ -6,7 +6,8 @@ namespace LocalAdmin.V2.IO.Logging
 {
     public static class Logger
     {
-        public static TextWriter? Writer { get; private set; }
+        public static StreamWriter? Writer { get; private set; }
+        private static object _lock = new object();
 
         public static void Setup(ushort port)
         {
@@ -33,21 +34,28 @@ namespace LocalAdmin.V2.IO.Logging
             Writer = File.AppendText(filePath);
         }
 
-        public static void Log(object obj)
+        public static void Dispose()
         {
-            if (Writer == null)
-                return;
-
-            var content = obj.ToString();
-            content = string.IsNullOrEmpty(content) ? string.Empty : $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {content}";
-
-            Writer.Write(content);
-            Writer.Flush();
+            Writer?.Dispose();
         }
 
-        public static void LogLine(object obj)
+        public static void Log(string content)
         {
-            Log(obj + Environment.NewLine);
+            lock (_lock)
+            {
+                if (Writer == null)
+                    return;
+
+                content = string.IsNullOrEmpty(content) ? string.Empty : $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {content}";
+
+                Writer.Write(content);
+                Writer.Flush();
+            }
+        }
+
+        public static void LogLine(string content)
+        {
+            Log(content + Environment.NewLine);
         }
     }
 }
