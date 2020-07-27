@@ -322,12 +322,18 @@ namespace LocalAdmin.V2.Core
 
                 gameProcess.OutputDataReceived += (sender, args) =>
                 {
+                    if (string.IsNullOrWhiteSpace(args.Data))
+                        return;
+                    
                     Logger.LogLine($"[SCPSL] {args.Data}");
                 };
                 gameProcess.BeginOutputReadLine();
 
                 gameProcess.Exited += (sender, args) =>
                 {
+                    if (processClosing)
+                        return;
+                    
                     ConsoleUtil.WriteLine("The game process was terminated...", ConsoleColor.Red);
                     Exit(0, true);
                 };
