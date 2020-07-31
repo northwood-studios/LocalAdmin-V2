@@ -36,6 +36,7 @@ namespace LocalAdmin.V2.IO.Logging
 
         public static void Dispose()
         {
+            Writer?.Flush();
             Writer?.Dispose();
         }
 
@@ -49,7 +50,6 @@ namespace LocalAdmin.V2.IO.Logging
                 content = string.IsNullOrEmpty(content) ? string.Empty : $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {content}";
 
                 Writer.Write(content);
-                Writer.Flush();
             }
         }
 

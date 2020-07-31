@@ -315,6 +315,7 @@ namespace LocalAdmin.V2.Core
                     FileName = scpslExecutable,
                     Arguments = $"-batchmode -nographics -nodedicateddelete -port{port} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id}",
                     CreateNoWindow = true,
+                    UseShellExecute = false,
                     RedirectStandardOutput = true
                 };
 
