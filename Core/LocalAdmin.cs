@@ -313,7 +313,7 @@ namespace LocalAdmin.V2.Core
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = scpslExecutable,
-                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{port} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id}",
+                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{port} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id} {gameArguments}",
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardOutput = true
