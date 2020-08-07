@@ -26,7 +26,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin
     {
-        public const string VersionString = "2.2.5";
+        public const string VersionString = "2.2.6";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
         public ushort GamePort { get; private set; }
 
@@ -287,13 +287,17 @@ namespace LocalAdmin.V2.Core
                     if (split.Length == 0)
                         continue;
                     var name = split[0].ToUpperInvariant();
-                    var arguments = split.Skip(1).ToArray();
 
                     var command = commandService.GetCommandByName(name);
 
                     if (command != null)
-                        command.Execute(arguments);
-                    else if (server.Connected)
+                    {
+                        command.Execute(split.Skip(1).ToArray());
+                        if (!command.SendToGame)
+                            continue;
+                    }
+
+                    if (server.Connected)
                         server.WriteLine(input);
                     else
                         ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
