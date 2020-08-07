@@ -6,7 +6,7 @@ namespace LocalAdmin.V2.Commands
 {
     internal class HelpCommand : CommandBase
     {
-        public HelpCommand() : base("Help") { }
+        public HelpCommand() : base("Help", true) { }
 
         internal override void Execute(string[] arguments)
         {
