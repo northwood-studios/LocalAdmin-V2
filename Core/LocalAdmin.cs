@@ -291,8 +291,13 @@ namespace LocalAdmin.V2.Core
                     var command = commandService.GetCommandByName(name);
 
                     if (command != null)
+                    {
                         command.Execute(split.Skip(1).ToArray());
-                    else if (server.Connected && (command == null || command.SendToGame))
+                        if (!command.SendToGame)
+                            continue;
+                    }
+
+                    if (server.Connected)
                         server.WriteLine(input);
                     else
                         ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
