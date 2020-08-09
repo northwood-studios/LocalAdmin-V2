@@ -6,8 +6,8 @@ namespace LocalAdmin.V2.IO.Logging
 {
     public static class Logger
     {
-        public static StreamWriter? Writer { get; private set; }
-        private static object _lock = new object();
+        private static StreamWriter? Writer { get; set; }
+        private static readonly object _lock = new object();
 
         public static void Setup(ushort port)
         {
@@ -36,7 +36,6 @@ namespace LocalAdmin.V2.IO.Logging
 
         public static void Dispose()
         {
-            Writer?.Flush();
             Writer?.Dispose();
         }
 

@@ -5,11 +5,11 @@ namespace LocalAdmin.V2.IO
 {
     public static class ConsoleUtil
     {
-        private static object _lck = new object();
+        private static readonly object _lock = new object();
 
         public static void Clear()
         {
-            lock (_lck)
+            lock (_lock)
             {
                 Console.Clear();
             }
@@ -17,10 +17,10 @@ namespace LocalAdmin.V2.IO
 
         public static void Write(string content, ConsoleColor color = ConsoleColor.White, int height = 0)
         {
-            lock (_lck)
+            lock (_lock)
             {
                 Console.ResetColor();
-                
+
                 Console.Write($"[{DateTime.Now:HH:mm:ss.fff}] ");
 
                 try
