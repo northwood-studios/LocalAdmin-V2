@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
+    <PropertyGroup>
         <OutputType>Exe</OutputType>
         <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
         <TargetFramework Condition="$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net5.0-windows</TargetFramework>
