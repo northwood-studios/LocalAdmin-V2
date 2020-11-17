@@ -24,9 +24,9 @@ namespace LocalAdmin.V2.Core
         * Blue - normal SCPSL log
     */
 
-    public sealed class LocalAdmin
+    public sealed class LocalAdmin : IDisposable
     {
-        public const string VersionString = "2.2.6";
+        public const string VersionString = "2.3.0";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
         public ushort GamePort { get; private set; }
 
@@ -34,11 +34,26 @@ namespace LocalAdmin.V2.Core
         private Process? gameProcess;
         private TcpServer? server;
         private Task? readerTask;
-        private string? scpslExecutable;
+        private readonly string scpslExecutable;
         private string gameArguments = string.Empty;
         private bool exit;
         internal static bool NoSetCursor;
         private volatile bool processClosing;
+
+        private LocalAdmin()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                scpslExecutable = "SCPSL.exe";
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                scpslExecutable = "SCPSL.x86_64";
+            else
+            {
+                ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
+                // shut up dotnet
+                scpslExecutable = "";
+                Exit(1);
+            }
+        }
 
         public void Start(string[] args)
         {
@@ -88,7 +103,6 @@ namespace LocalAdmin.V2.Core
                     }
                 }
 
-                SetupPlatform();
                 try
                 {
                     SetupExitHandlers();
@@ -161,20 +175,6 @@ namespace LocalAdmin.V2.Core
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
             ConsoleUtil.WriteLine(string.Empty);
-        }
-
-        private void SetupPlatform()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                scpslExecutable = "SCPSL.exe";
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                scpslExecutable = "SCPSL.x86_64";
-            else
-            {
-                ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
-
-                Exit(1);
-            }
         }
 
         private static void SetupExitHandlers()
@@ -340,7 +340,7 @@ namespace LocalAdmin.V2.Core
             commandService.RegisterCommand(new LicenseCommand());
         }
 
-        private static void ReadInput(Func<string, bool> checkInput, Action validInputAction, Action invalidInputAction)
+        private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)
         {
             var input = Console.ReadLine();
 
@@ -360,7 +360,7 @@ namespace LocalAdmin.V2.Core
         private void TerminateGame()
         {
             server?.Stop();
-            if (gameProcess != null && !gameProcess!.HasExited)
+            if (gameProcess != null && !gameProcess.HasExited)
                 gameProcess.Kill();
         }
 
@@ -378,6 +378,8 @@ namespace LocalAdmin.V2.Core
 
                 processClosing = true;
                 TerminateGame(); // Forcefully terminating the process
+                gameProcess?.Dispose();
+                readerTask?.Dispose();
                 if (waitForKey)
                 {
                     ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
@@ -385,6 +387,20 @@ namespace LocalAdmin.V2.Core
                 }
                 Environment.Exit(code);
             }
+        }
+
+        /// <summary>
+        ///     Releases resources used by the program
+        /// </summary>
+        public void Dispose()
+        {
+            Exit(0);
+            GC.SuppressFinalize(this);
+        }
+
+        ~LocalAdmin()
+        {
+            Exit(0);
         }
     }
 }

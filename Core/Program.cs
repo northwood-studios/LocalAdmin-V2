@@ -3,6 +3,11 @@
     static class Program
     {
         static void Main(string[] args)
-            => LocalAdmin.Singleton.Start(args);
+        {
+            using (var la = LocalAdmin.Singleton)
+            {
+                la.Start(args);
+            }
+        }
     }
 }
