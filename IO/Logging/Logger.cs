@@ -1,29 +1,42 @@
-﻿namespace LocalAdmin.V2.IO.Logging
+﻿using System;
+using System.IO;
+
+namespace LocalAdmin.V2.IO.Logging
 {
-    /*
     public static class Logger
     {
-        public static void Log(string text)
+        private static StreamWriter? _sw;
+        private const string LogFolderName = "LocalAdminLogs";
+        
+        public static void Initialize()
         {
-            if (!File.Exists("localadmin.log")) File.Create("localadmin.log");
+            if (!Core.LocalAdmin.EnableLogging)
+                return;
+            if (_sw != null)
+                EndLogging();
+            
+            string dir = Core.LocalAdmin.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.Singleton.GamePort;
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
 
-            using (var streamWriter = new StreamWriter("localadmin.log"))
-            {
-                streamWriter.WriteLine(File.ReadAllText("localadmin.log"));
-                streamWriter.WriteLine(text);
-            }
+            _sw = new StreamWriter(dir + Path.DirectorySeparatorChar +
+                                   $"LocalAdmin Log {DateTime.Now:yyyy-MM-dd HH.mm.ss}.txt") {AutoFlush = Core.LocalAdmin.AutoFlush};
+            
+            Log($"{ConsoleUtil.GetTimestamp()} Logging started.");
         }
 
-        public static void Log(object obj)
+        public static void EndLogging()
         {
-            if (!File.Exists("localadmin.log")) File.Create("localadmin.log");
+            if (_sw == null) return;
+            Log($"{ConsoleUtil.GetTimestamp()} --- END OF LOG ---");
 
-            using (var streamWriter = new StreamWriter("localadmin.log"))
-            {
-                streamWriter.WriteLine(File.ReadAllText("localadmin.log"));
-                streamWriter.WriteLine(obj.ToString());
-            }
+            _sw.Close();
+            _sw.Dispose();
+            _sw = null;
         }
+        
+        public static void Log(string text) => _sw?.WriteLine(text);
+
+        public static void Log(object obj) => _sw?.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {obj}");
     }
-    */
 }
