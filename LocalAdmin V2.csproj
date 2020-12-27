@@ -1,10 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
+    <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
-        <RootNamespace>LocalAdmin.V2</RootNamespace>
+        <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
+        <TargetFramework Condition="$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net5.0-windows</TargetFramework>
+        <TargetFramework Condition="!$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net5.0</TargetFramework>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
         <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
+        <RootNamespace>LocalAdmin.V2</RootNamespace>
         <AssemblyName>LocalAdmin</AssemblyName>
         <Product>LocalAdmin V2</Product>
         <PackageId>LocalAdmin V2</PackageId>
@@ -29,10 +32,10 @@
     </PropertyGroup>
 	
      <!-- Linux only exit handling -->
-    <PropertyGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
+    <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('linux', StringComparison.OrdinalIgnoreCase))">
         <DefineConstants>LINUX_SIGNALS</DefineConstants>
     </PropertyGroup>
-    <ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
+    <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('linux', StringComparison.OrdinalIgnoreCase))">
         <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
     </ItemGroup>
 
@@ -46,6 +49,6 @@
         <None Remove="README.md" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
+        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
     </ItemGroup>
 </Project>
