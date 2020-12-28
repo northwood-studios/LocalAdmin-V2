@@ -73,7 +73,8 @@ namespace LocalAdmin.V2.IO.Logging
 
                                 stage = "Processing file name";
                                 var name = Path.GetFileName(file);
-                                if (name.Length < 25 || !name.StartsWith("Round ", StringComparison.Ordinal))
+                                if (name.Length < 25 || !name.StartsWith("Round ", StringComparison.Ordinal) ||
+                                    !name.EndsWith(".txt", StringComparison.Ordinal))
                                     continue;
 
                                 var d = name.Substring(6, 10);
@@ -81,7 +82,7 @@ namespace LocalAdmin.V2.IO.Logging
                                     CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var date))
                                     continue;
 
-                                var diff = (now - date);
+                                var diff = now - date;
 
                                 stage = "File name processed";
                                 if (Core.LocalAdmin.Configuration!.DeleteOldRoundLogs && diff.TotalDays >
@@ -109,6 +110,45 @@ namespace LocalAdmin.V2.IO.Logging
                             catch (Exception e)
                             {
                                 ConsoleUtil.WriteLine($"[Log Maintenance] Failed to process old round log {file}. Processing stage: {stage}. Exception: {e.Message}", ConsoleColor.Red);
+                            }
+                        }
+                        
+                        foreach (var file in Directory.GetFiles(root, "Round Logs Archive *", SearchOption.TopDirectoryOnly))
+                        {
+                            string stage = string.Empty;
+                            
+                            try
+                            {
+                                if (_abort)
+                                    return;
+
+                                stage = "Processing file name";
+                                var name = Path.GetFileName(file);
+                                if (name.Length < 29 || !name.StartsWith("Round Logs Archive ", StringComparison.Ordinal) ||
+                                    !name.EndsWith(".zip", StringComparison.Ordinal))
+                                    continue;
+
+                                var d = name.Substring(19, 10);
+                                if (!DateTime.TryParseExact(d, "yyyy-MM-dd",
+                                    CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var date))
+                                    continue;
+
+                                var diff = now - date;
+
+                                stage = "File name processed";
+                                if (Core.LocalAdmin.Configuration!.DeleteOldRoundLogs && diff.TotalDays >
+                                    Core.LocalAdmin.Configuration!.RoundLogsExpirationDays)
+                                {
+                                    stage = "Deletion";
+                                    File.Delete(file);
+                                    continue;
+                                }
+
+                                stage = "End";
+                            }
+                            catch (Exception e)
+                            {
+                                ConsoleUtil.WriteLine($"[Log Maintenance] Failed to process old archive of round logs {file}. Processing stage: {stage}. Exception: {e.Message}", ConsoleColor.Red);
                             }
                         }
 
@@ -175,7 +215,8 @@ namespace LocalAdmin.V2.IO.Logging
 
                                 stage = "Processing file name";
                                 var name = Path.GetFileName(file);
-                                if (name.Length < 34 || !name.StartsWith("LocalAdmin Log ", StringComparison.Ordinal))
+                                if (name.Length < 34 || !name.StartsWith("LocalAdmin Log ", StringComparison.Ordinal) ||
+                                    !name.EndsWith(".txt", StringComparison.Ordinal))
                                     continue;
 
                                 var d = name.Substring(15, 10);
