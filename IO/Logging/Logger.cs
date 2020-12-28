@@ -6,7 +6,7 @@ namespace LocalAdmin.V2.IO.Logging
     public static class Logger
     {
         private static StreamWriter? _sw;
-        private const string LogFolderName = "LocalAdminLogs";
+        internal const string LogFolderName = "LocalAdminLogs";
         
         public static void Initialize()
         {
@@ -15,11 +15,11 @@ namespace LocalAdmin.V2.IO.Logging
             if (_sw != null)
                 EndLogging();
             
-            string dir = Core.LocalAdmin.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.Singleton.GamePort;
+            string dir = Core.LocalAdmin.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.Singleton.GamePort + Path.DirectorySeparatorChar;
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            _sw = new StreamWriter(dir + Path.DirectorySeparatorChar +
+            _sw = new StreamWriter(dir +
                                    $"LocalAdmin Log {DateTime.Now:yyyy-MM-dd HH.mm.ss}.txt") {AutoFlush = Core.LocalAdmin.AutoFlush};
             
             Log($"{ConsoleUtil.GetTimestamp()} Logging started.");

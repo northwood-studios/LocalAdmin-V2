@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
-using LocalAdmin.V2.IO.Config;
+using LocalAdmin.V2.IO;
 
 namespace LocalAdmin.V2.Core
 {

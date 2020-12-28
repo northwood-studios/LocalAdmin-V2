@@ -11,7 +11,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using LocalAdmin.V2.IO.Config;
 using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.Core
@@ -29,7 +28,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin : IDisposable
     {
-        public const string VersionString = "2.3.0";
+        public const string VersionString = "2.3.1";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
         public ushort GamePort { get; private set; }
 
@@ -206,6 +205,9 @@ namespace LocalAdmin.V2.Core
                 
                 if (NoSetCursor)
                     ConsoleUtil.WriteLine("Cursor management been disabled.", ConsoleColor.Gray);
+                
+                if (Configuration.LaDeleteOldLogs || Configuration.DeleteOldRoundLogs || Configuration.CompressOldRoundLogs)
+                    LogCleaner.Initialize();
 
                 Task.WaitAll(readerTask);
 
@@ -495,11 +497,10 @@ namespace LocalAdmin.V2.Core
             lock (this)
             {
                 if (processClosing)
-                {
                     return;
-                }
 
                 processClosing = true;
+                LogCleaner.Abort();
                 Logger.EndLogging();
                 TerminateGame(); // Forcefully terminating the process
                 gameProcess?.Dispose();

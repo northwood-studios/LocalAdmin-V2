@@ -1,11 +1,11 @@
 using System;
 using System.Text;
 
-namespace LocalAdmin.V2.IO.Config
+namespace LocalAdmin.V2.IO
 {
     public class Config
     {
-        private static readonly string[] SplitArray = new[] {": "};
+        private static readonly string[] SplitArray = {": "};
         
         public bool LaShowStdoutStderr;
         public bool LaNoSetCursor;
