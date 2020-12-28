@@ -1,4 +1,5 @@
 ﻿using System;
+using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.IO
 {
@@ -42,16 +43,18 @@ namespace LocalAdmin.V2.IO
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.BackgroundColor = ConsoleColor.Black;
 
-                //Logger.Log(content);
+                Logger.Log(content);
             }
         }
+
+        public static string GetTimestamp() => $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}]";
 
         public static void WriteLine(string content, ConsoleColor color = ConsoleColor.White, int height = 0)
         {
             lock (_lck)
             {
                 content = content.Trim().Trim(ToTrim);
-                content = string.IsNullOrEmpty(content) ? string.Empty : $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {content}";
+                content = string.IsNullOrEmpty(content) ? string.Empty : $"{GetTimestamp()} {content}";
 
                 Console.BackgroundColor = ConsoleColor.Black;
 
@@ -72,7 +75,7 @@ namespace LocalAdmin.V2.IO
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.BackgroundColor = ConsoleColor.Black;
 
-                //Logger.Log(content);
+                Logger.Log(content);
             }
         }
     }

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.Core
 {
@@ -36,8 +37,12 @@ namespace LocalAdmin.V2.Core
         private Task? readerTask;
         private readonly string scpslExecutable;
         private string gameArguments = string.Empty;
+        internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
+        internal static readonly string GameUserDataRoot =
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
+            "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
         private bool exit;
-        internal static bool NoSetCursor;
+        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true;
         private volatile bool processClosing;
 
         private LocalAdmin()
@@ -57,7 +62,7 @@ namespace LocalAdmin.V2.Core
 
         public void Start(string[] args)
         {
-            Console.Title = $"LocalAdmin v. {VersionString}";
+            Console.Title = BaseWindowTitle;
 
             try
             {
@@ -97,6 +102,21 @@ namespace LocalAdmin.V2.Core
                             NoSetCursor = true;
                             break;
                         
+                        case "-p":
+                        case "--printControl":
+                            PrintControlMessages = true;
+                            break;
+                        
+                        case "-n":
+                        case "--noAutoFlush":
+                            AutoFlush = false;
+                            break;
+                        
+                        case "-l":
+                        case "--noLogs":
+                            EnableLogging = false;
+                            break;
+                        
                         case "--":
                             passArgs = true;
                             break;
@@ -118,6 +138,17 @@ namespace LocalAdmin.V2.Core
                 StartSession(port);
 
                 readerTask!.Start();
+                
+                if (!EnableLogging)
+                    ConsoleUtil.WriteLine("Logging has been disabled using startup argument.", ConsoleColor.Red);
+                else if (!AutoFlush)
+                    ConsoleUtil.WriteLine("Logs auto flush has been disabled using startup argument.", ConsoleColor.Yellow);
+                
+                if (PrintControlMessages)
+                    ConsoleUtil.WriteLine("Printing control messages been enabled using startup argument.", ConsoleColor.Gray);
+                
+                if (NoSetCursor)
+                    ConsoleUtil.WriteLine("Cursor management been disabled using startup argument.", ConsoleColor.Gray);
 
                 Task.WaitAll(readerTask);
 
@@ -126,22 +157,19 @@ namespace LocalAdmin.V2.Core
             }
             catch (Exception ex)
             {
-                File.WriteAllText($"{DateTime.UtcNow:yyyy-MM-ddTHH-mm-ssZ}-crash.txt", ex.ToString());
-
-                /*
+                File.WriteAllText($"LocalAdmin Crash {DateTime.UtcNow:yyyy-MM-ddTHH-mm-ssZ}.txt", ex.ToString());
+                
                 Logger.Log("|===| Exception |===|");
-                Logger.Log("Time: " + DateTime.Now);
                 Logger.Log(ex);
                 Logger.Log("|===================|");
                 Logger.Log("");
-                */
             }
         }
 
         /// <summary>
-        ///     Starts a session,
-        ///     if the session has already begun,
-        ///     then terminates it.
+        /// Starts a session,
+        /// if the session has already begun,
+        /// then terminates it.
         /// </summary>
         public void StartSession(ushort port)
         {
@@ -151,17 +179,20 @@ namespace LocalAdmin.V2.Core
 
             Menu();
 
-            Console.Title = $"LocalAdmin v. {VersionString} on port {port}";
+            BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {port}";
+            Console.Title = BaseWindowTitle;
+            
+            GamePort = port;
+            Logger.Initialize();
 
-            ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
+            ConsoleUtil.WriteLine($"Started new session on port {port}.", ConsoleColor.DarkGreen);
             ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
 
             SetupServer();
 
             while (server!.ConsolePort == 0)
                 Thread.Sleep(200);
-
-            GamePort = port;
+            
             RunScpsl(port);
         }
 
@@ -377,6 +408,7 @@ namespace LocalAdmin.V2.Core
                 }
 
                 processClosing = true;
+                Logger.EndLogging();
                 TerminateGame(); // Forcefully terminating the process
                 gameProcess?.Dispose();
                 readerTask?.Dispose();

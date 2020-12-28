@@ -5,11 +5,21 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.Core
 {
     public class TcpServer
     {
+        private enum OutputCodes : byte
+        {
+            //0x00 - 0x0F - reserved for colors
+	
+            RoundRestart = 0x10,
+            IdleEnter = 0x11,
+            IdleExit = 0x12
+        }
+        
         public event EventHandler<string>? Received;
 
         private readonly TcpListener listener;
@@ -47,7 +57,9 @@ namespace LocalAdmin.V2.Core
                     Task.Run(async () =>
                     {
                         const int offset = sizeof(int);
+                        var codeBuffer = new byte[1];
                         var lengthBuffer = new byte[offset];
+                        bool restartReceived = false;
                         while (true)
                         {
                             lock (lck)
@@ -58,15 +70,47 @@ namespace LocalAdmin.V2.Core
 
                             if (networkStream?.DataAvailable == true)
                             {
-                                await networkStream.ReadAsync(lengthBuffer, 0, offset);
-                                var length = MemoryMarshal.Cast<byte, int>(lengthBuffer)[0];
+                                await networkStream.ReadAsync(codeBuffer, 0, 1);
 
-                                var buffer = ArrayPool<byte>.Shared.Rent(length);
-                                await networkStream.ReadAsync(buffer, 0, length);
-                                var message = encoding.GetString(buffer, 0, length);
-                                ArrayPool<byte>.Shared.Return(buffer);
+                                if (codeBuffer[0] < 16)
+                                {
+                                    await networkStream.ReadAsync(lengthBuffer, 0, offset);
+                                    var length = (lengthBuffer[0] << 24) | (lengthBuffer[1] << 16) |
+                                                 (lengthBuffer[2] << 8) | lengthBuffer[3];
 
-                                Received?.Invoke(this, message);
+                                    var buffer = ArrayPool<byte>.Shared.Rent(length);
+                                    await networkStream.ReadAsync(buffer, 0, length);
+                                    var message = $"{codeBuffer[0]:X}{encoding.GetString(buffer, 0, length)}";
+                                    ArrayPool<byte>.Shared.Return(buffer);
+
+                                    Received?.Invoke(this, message);
+                                }
+                                else
+                                {
+                                    if (LocalAdmin.PrintControlMessages)
+                                        Received?.Invoke(this, "7[LocalAdmin] Received control message: " + codeBuffer[0]);
+
+                                    switch ((OutputCodes) codeBuffer[0])
+                                    {
+                                        case OutputCodes.RoundRestart:
+                                            if (restartReceived)
+                                                Logger.Initialize();
+                                            else restartReceived = true;
+                                            break;
+
+                                        case OutputCodes.IdleEnter:
+                                            Console.Title = "[IDLE] " + LocalAdmin.BaseWindowTitle;
+                                            break;
+
+                                        case OutputCodes.IdleExit:
+                                            Console.Title = LocalAdmin.BaseWindowTitle;
+                                            break;
+
+                                        default:
+                                            Received?.Invoke(this, "4[LocalAdmin] Received **INVALID** control message: " + codeBuffer[0]);
+                                            break;
+                                    }
+                                }
                             }
 
                             await Task.Delay(10);
