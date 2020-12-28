@@ -49,33 +49,37 @@ namespace LocalAdmin.V2.IO
 
         public static string GetTimestamp() => $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}]";
 
-        public static void WriteLine(string content, ConsoleColor color = ConsoleColor.White, int height = 0)
+        public static void WriteLine(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
         {
             lock (_lck)
             {
                 content = content.Trim().Trim(ToTrim);
                 content = string.IsNullOrEmpty(content) ? string.Empty : $"{GetTimestamp()} {content}";
 
-                Console.BackgroundColor = ConsoleColor.Black;
+                if (display)
+                {
+                    Console.BackgroundColor = ConsoleColor.Black;
 
-                try
-                {
-                    Console.ForegroundColor = color;
-                }
-                catch
-                {
+                    try
+                    {
+                        Console.ForegroundColor = color;
+                    }
+                    catch
+                    {
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+
+                    if (height > 0 && !Core.LocalAdmin.NoSetCursor)
+                        Console.CursorTop += height;
+
+                    Console.WriteLine(content);
+
                     Console.ForegroundColor = ConsoleColor.White;
+                    Console.BackgroundColor = ConsoleColor.Black;
                 }
 
-                if (height > 0 && !Core.LocalAdmin.NoSetCursor)
-                    Console.CursorTop += height;
-
-                Console.WriteLine(content);
-
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.BackgroundColor = ConsoleColor.Black;
-
-                Logger.Log(content);
+                if (log)
+                    Logger.Log(content);
             }
         }
     }
