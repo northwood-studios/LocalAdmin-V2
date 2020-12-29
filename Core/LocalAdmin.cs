@@ -405,7 +405,7 @@ namespace LocalAdmin.V2.Core
                         await Task.Delay(65);
                         continue;
                     }
-                    
+
                     if (string.IsNullOrWhiteSpace(input))
                         continue;
 
@@ -444,9 +444,14 @@ namespace LocalAdmin.V2.Core
                             continue;
                     }
 
-                    if (input.StartsWith("exit", StringComparison.OrdinalIgnoreCase))
+                    if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
+                        input.StartsWith("exit ", StringComparison.OrdinalIgnoreCase) ||
+                        input.Equals("quit", StringComparison.OrdinalIgnoreCase) ||
+                        input.StartsWith("quit ", StringComparison.OrdinalIgnoreCase) ||
+                        input.Equals("stop", StringComparison.OrdinalIgnoreCase) ||
+                        input.StartsWith("stop ", StringComparison.OrdinalIgnoreCase))
                     {
-                        ExitAction = ShutdownAction.Shutdown;
+                        ExitAction = ShutdownAction.SilentShutdown;
                         _exit = true;
                     }
 
