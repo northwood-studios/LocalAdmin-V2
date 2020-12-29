@@ -15,7 +15,7 @@ namespace LocalAdmin.V2.IO.Logging
             if (_sw != null)
                 EndLogging();
             
-            string dir = Core.LocalAdmin.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.Singleton.GamePort + Path.DirectorySeparatorChar;
+            string dir = Core.LocalAdmin.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.GamePort + Path.DirectorySeparatorChar;
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 

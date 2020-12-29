@@ -15,12 +15,14 @@ namespace LocalAdmin.V2.IO.ExitHandlers
 
         private static void Exit(object? sender, EventArgs e)
         {
-            Core.LocalAdmin.Singleton.Exit(0);
+            if (Core.LocalAdmin.Singleton != null)
+                Core.LocalAdmin.Singleton.Exit(0);
         }
 
         private static void DomandUnload(object? sender, EventArgs e)
         {
-            Core.LocalAdmin.Singleton.Exit(0);
+            if (Core.LocalAdmin.Singleton != null)
+                Core.LocalAdmin.Singleton.Exit(0);
         }
 
         private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -30,12 +32,16 @@ namespace LocalAdmin.V2.IO.ExitHandlers
                 if (e.ExceptionObject is Exception ex)
                 {
                     ConsoleUtil.WriteLine($"Unhandled Exception: {ex}", ConsoleColor.Red);
-                    Core.LocalAdmin.Singleton.Exit(ex.HResult);
+                    
+                    if (Core.LocalAdmin.Singleton != null)
+                        Core.LocalAdmin.Singleton.Exit(ex.HResult);
                 }
                 else
                 {
                     ConsoleUtil.WriteLine("Unhandled Exception!", ConsoleColor.Red);
-                    Core.LocalAdmin.Singleton.Exit(1);
+                    
+                    if (Core.LocalAdmin.Singleton != null)
+                        Core.LocalAdmin.Singleton.Exit(1);
                 }
             }
         }

@@ -8,7 +8,9 @@ namespace LocalAdmin.V2.Commands
 
         internal override void Execute(string[] arguments)
         {
-            Core.LocalAdmin.Singleton.StartSession(Core.LocalAdmin.Singleton.GamePort);
+            Core.LocalAdmin.Singleton!.ExitAction = Core.LocalAdmin.ShutdownAction.Restart;
+            if (Core.LocalAdmin.Singleton.Server != null && Core.LocalAdmin.Singleton.Server.Connected)
+                Core.LocalAdmin.Singleton.Server.WriteLine("exit");
         }
     }
 }

@@ -12,6 +12,7 @@ Linux: `./LocalAdmin [port] [arguments] [-- arguments passthrough]`
 | Long version | Short version | Description |
 | --- | --- | --- |
 | --reconfigure | -r | Opens configuration editor. |
+| --printStd | -s | Redirects stdout and stderr of the game to the LocalAdmin live view. |
 | --noSetCursor | -c | Disables setting console cursor position. |
 | --printControl | -p | Enables printing control messages. |
 | --noLogs | -l | Disables LocalAdmin logging. |

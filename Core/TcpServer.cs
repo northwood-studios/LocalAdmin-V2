@@ -17,7 +17,11 @@ namespace LocalAdmin.V2.Core
 	
             RoundRestart = 0x10,
             IdleEnter = 0x11,
-            IdleExit = 0x12
+            IdleExit = 0x12,
+            ExitActionReset = 0x13,
+            ExitActionShutdown = 0x14,
+            ExitActionSilentShutdown = 0x15,
+            ExitActionRestart = 0x16
         }
         
         public event EventHandler<string>? Received;
@@ -106,6 +110,22 @@ namespace LocalAdmin.V2.Core
                                             Console.Title = LocalAdmin.BaseWindowTitle;
                                             break;
 
+                                        case OutputCodes.ExitActionReset:
+                                            LocalAdmin.Singleton!.ExitAction = LocalAdmin.ShutdownAction.Crash;
+                                            break;
+                                        
+                                        case OutputCodes.ExitActionShutdown:
+                                            LocalAdmin.Singleton!.ExitAction = LocalAdmin.ShutdownAction.Shutdown;
+                                            break;
+                                        
+                                        case OutputCodes.ExitActionSilentShutdown:
+                                            LocalAdmin.Singleton!.ExitAction = LocalAdmin.ShutdownAction.SilentShutdown;
+                                            break;
+                                        
+                                        case OutputCodes.ExitActionRestart:
+                                            LocalAdmin.Singleton!.ExitAction = LocalAdmin.ShutdownAction.Restart;
+                                            break;
+                                        
                                         default:
                                             Received?.Invoke(this, "4[LocalAdmin] Received **INVALID** control message: " + codeBuffer[0]);
                                             break;

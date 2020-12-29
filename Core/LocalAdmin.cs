@@ -3,6 +3,7 @@ using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.IO.ExitHandlers;
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -28,27 +29,39 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin : IDisposable
     {
-        public const string VersionString = "2.3.1";
-        public static readonly LocalAdmin Singleton = new LocalAdmin();
-        public ushort GamePort;
+        public const string VersionString = "2.3.2";
+        public static LocalAdmin? Singleton;
+        public static ushort GamePort;
+        private static bool _firstRun = true;
 
         private readonly CommandService commandService = new CommandService();
         private Process? gameProcess;
-        private TcpServer? server;
+        internal TcpServer? Server { get; private set; }
         private Task? readerTask;
         private readonly string scpslExecutable;
-        private string gameArguments = string.Empty;
+        private static string _gameArguments = string.Empty;
         internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
         internal static readonly string GameUserDataRoot =
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
             "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
-        private bool exit;
-        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true;
+        private static bool _exit;
+        private static readonly ConcurrentQueue<string> InputQueue = new ConcurrentQueue<string>();
+        internal static bool NoSetCursor, PrintControlMessages, StdPrint, AutoFlush = true, EnableLogging = true;
         private volatile bool processClosing;
 
         internal static Config? Configuration;
 
-        private LocalAdmin()
+        internal ShutdownAction ExitAction = ShutdownAction.Crash;
+
+        internal enum ShutdownAction : byte
+        {
+            Crash,
+            Shutdown,
+            SilentShutdown,
+            Restart
+        }
+
+        internal LocalAdmin()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 scpslExecutable = "SCPSL.exe";
@@ -65,94 +78,111 @@ namespace LocalAdmin.V2.Core
 
         public void Start(string[] args)
         {
+            Singleton = this;
             Console.Title = BaseWindowTitle;
 
             try
             {
-                if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
-                {
-                    ConsoleUtil.WriteLine("You can pass port number as first startup argument.", ConsoleColor.Green);
-                    Console.WriteLine(string.Empty);
-                    ConsoleUtil.Write("Port number (default: 7777): ", ConsoleColor.Green);
-
-                    ReadInput((input) =>
-                    {
-                        if (!string.IsNullOrEmpty(input))
-                            return ushort.TryParse(input, out GamePort);
-                        GamePort = 7777;
-                        return true;
-
-                    }, () => { }, () =>
-                    {
-                        ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red);
-                    });
-                }
-
-                var passArgs = false;
                 var reconfigure = false;
                 
-                foreach (var arg in args)
+                if (_firstRun)
                 {
-                    if (passArgs)
+                    if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
                     {
-                        gameArguments += $"\"{arg}\" ";
-                        continue;
+                        ConsoleUtil.WriteLine("You can pass port number as first startup argument.",
+                            ConsoleColor.Green);
+                        Console.WriteLine(string.Empty);
+                        ConsoleUtil.Write("Port number (default: 7777): ", ConsoleColor.Green);
+
+                        ReadInput((input) =>
+                            {
+                                if (!string.IsNullOrEmpty(input))
+                                    return ushort.TryParse(input, out GamePort);
+                                GamePort = 7777;
+                                return true;
+
+                            }, () => { },
+                            () =>
+                            {
+                                ConsoleUtil.WriteLine("Port number must be a unsigned short integer.",
+                                    ConsoleColor.Red);
+                            });
                     }
 
-                    if (arg.StartsWith("-", StringComparison.Ordinal) &&
-                        !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
+                    var passArgs = false;
+
+                    foreach (var arg in args)
                     {
-                        for (int i = 1; i < arg.Length; i++)
+                        if (passArgs)
                         {
-                            switch (arg[i])
+                            _gameArguments += $"\"{arg}\" ";
+                            continue;
+                        }
+
+                        if (arg.StartsWith("-", StringComparison.Ordinal) &&
+                            !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
+                        {
+                            for (int i = 1; i < arg.Length; i++)
                             {
-                                case 'c':
-                                    NoSetCursor = true;
-                                    break;
-                        
-                                case 'p':
-                                    PrintControlMessages = true;
-                                    break;
-                        
-                                case 'n':
-                                    AutoFlush = false;
-                                    break;
-                        
-                                case 'l':
-                                    EnableLogging = false;
-                                    break;
-                        
-                                case 'r':
-                                    reconfigure = true;
-                                    break;
+                                switch (arg[i])
+                                {
+                                    case 'c':
+                                        NoSetCursor = true;
+                                        break;
+
+                                    case 'p':
+                                        PrintControlMessages = true;
+                                        break;
+
+                                    case 'n':
+                                        AutoFlush = false;
+                                        break;
+
+                                    case 'l':
+                                        EnableLogging = false;
+                                        break;
+
+                                    case 'r':
+                                        reconfigure = true;
+                                        break;
+                                    
+                                    case 's':
+                                        StdPrint = true;
+                                        break;
+                                }
                             }
                         }
-                    }
-                    else switch (arg)
-                    {
-                        case "--noSetCursor":
-                            NoSetCursor = true;
-                            break;
-                        
-                        case "--printControl":
-                            PrintControlMessages = true;
-                            break;
-                        
-                        case "--noAutoFlush":
-                            AutoFlush = false;
-                            break;
-                        
-                        case "--noLogs":
-                            EnableLogging = false;
-                            break;
-                        
-                        case "--reconfigure":
-                            reconfigure = true;
-                            break;
-                        
-                        case "--":
-                            passArgs = true;
-                            break;
+                        else
+                            switch (arg)
+                            {
+                                case "--noSetCursor":
+                                    NoSetCursor = true;
+                                    break;
+
+                                case "--printControl":
+                                    PrintControlMessages = true;
+                                    break;
+
+                                case "--noAutoFlush":
+                                    AutoFlush = false;
+                                    break;
+
+                                case "--noLogs":
+                                    EnableLogging = false;
+                                    break;
+
+                                case "--reconfigure":
+                                    reconfigure = true;
+                                    break;
+                                
+                                case "--printStd":
+                                    StdPrint = true;
+                                    break;
+
+                                case "--":
+                                    passArgs = true;
+                                    break;
+                            }
                     }
                 }
 
@@ -176,16 +206,30 @@ namespace LocalAdmin.V2.Core
                 NoSetCursor |= Configuration!.LaNoSetCursor;
                 AutoFlush &= Configuration!.LaLogAutoFlush;
                 EnableLogging &= Configuration!.EnableLaLogs;
+                
+                InputQueue.Clear();
 
-                try
+                if (_firstRun)
                 {
-                    SetupExitHandlers();
-                }
-                catch (Exception ex)
-                {
-                    ConsoleUtil.WriteLine($"Starting exit handlers threw {ex}. Game process will NOT be closed on console closing!", ConsoleColor.Yellow);
+                    try
+                    {
+                        SetupExitHandlers();
+                    }
+                    catch (Exception ex)
+                    {
+                        ConsoleUtil.WriteLine(
+                            $"Starting exit handlers threw {ex}. Game process will NOT be closed on console closing!",
+                            ConsoleColor.Yellow);
+                    }
                 }
 
+                if (_firstRun || _exit)
+                {
+                    _exit = false;
+                    _firstRun = false;
+                    SetupKeyboardInput();
+                }
+                
                 RegisterCommands();
                 SetupReader();
 
@@ -206,11 +250,12 @@ namespace LocalAdmin.V2.Core
                 
                 if (Configuration.LaDeleteOldLogs || Configuration.DeleteOldRoundLogs || Configuration.CompressOldRoundLogs)
                     LogCleaner.Initialize();
-
-                Task.WaitAll(readerTask);
+                
+                while (!_exit)
+                    Thread.Sleep(250);
 
                 // If the game was terminated intentionally, then wait, otherwise no
-                Exit(0, gameProcess != null && gameProcess.HasExited); // After the readerTask is completed this will happen
+                Exit(0, true); // After the readerTask is completed this will happen
             }
             catch (Exception ex)
             {
@@ -228,16 +273,13 @@ namespace LocalAdmin.V2.Core
         /// if the session has already begun,
         /// then terminates it.
         /// </summary>
-        public void StartSession(ushort port = 0)
+        private void StartSession()
         {
             // Terminate the game, if the game process is exists
             if (gameProcess != null && !gameProcess.HasExited)
                 TerminateGame();
 
             Menu();
-
-            if (port != 0)
-                GamePort = port;
 
             BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {GamePort}";
             Console.Title = BaseWindowTitle;
@@ -249,7 +291,7 @@ namespace LocalAdmin.V2.Core
 
             SetupServer();
 
-            while (server!.ConsolePort == 0)
+            while (Server!.ConsolePort == 0)
                 Thread.Sleep(200);
             
             RunScpsl();
@@ -322,28 +364,48 @@ namespace LocalAdmin.V2.Core
 
         private void SetupServer()
         {
-            server = new TcpServer();
-            server.Received += (sender, line) =>
+            Server = new TcpServer();
+            Server.Received += (sender, line) =>
             {
                 if (!byte.TryParse(line.AsSpan(0, 1), NumberStyles.HexNumber, null, out var colorValue))
                     colorValue = (byte)ConsoleColor.Gray;
 
                 ConsoleUtil.WriteLine(line[1..], (ConsoleColor)colorValue);
             };
-            server.Start();
+            Server.Start();
+        }
+
+        private void SetupKeyboardInput()
+        {
+            new Task(() =>
+            {
+                while (!_exit)
+                {
+                    var input = Console.ReadLine();
+                    
+                    if (string.IsNullOrWhiteSpace(input))
+                        continue;
+                    
+                    InputQueue.Enqueue(input);
+                }
+            }).Start();
         }
 
         private void SetupReader()
         {
             readerTask = new Task(async () =>
             {
-                while (server == null)
+                while (Server == null)
                     await Task.Delay(20);
 
-                while (!exit)
+                while (!_exit)
                 {
-                    var input = Console.ReadLine();
-
+                    if (!InputQueue.TryDequeue(out var input))
+                    {
+                        await Task.Delay(65);
+                        continue;
+                    }
+                    
                     if (string.IsNullOrWhiteSpace(input))
                         continue;
 
@@ -359,16 +421,11 @@ namespace LocalAdmin.V2.Core
                     else
                         ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
 
-                    if (input.StartsWith("exit", StringComparison.OrdinalIgnoreCase))
-                    {
-                        exit = true;
-                        continue;
-                    }
-
                     if (gameProcess != null && gameProcess.HasExited)
                     {
-                        ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
-                        exit = true;
+                        ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
+                            ConsoleColor.Red);
+                        _exit = true;
                         continue;
                     }
 
@@ -387,10 +444,18 @@ namespace LocalAdmin.V2.Core
                             continue;
                     }
 
-                    if (server.Connected)
-                        server.WriteLine(input);
+                    if (input.StartsWith("exit", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ExitAction = ShutdownAction.Shutdown;
+                        _exit = true;
+                    }
+
+                    if (Server.Connected)
+                        Server.WriteLine(input);
                     else
-                        ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
+                        ConsoleUtil.WriteLine(
+                            "Failed to send command - connection to server process hasn't been established yet.",
+                            ConsoleColor.Yellow);
                 }
             });
         }
@@ -405,7 +470,7 @@ namespace LocalAdmin.V2.Core
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = scpslExecutable,
-                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id} {gameArguments}",
+                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId} {_gameArguments}",
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardOutput = redirectStreams,
@@ -420,7 +485,7 @@ namespace LocalAdmin.V2.Core
                     if (string.IsNullOrWhiteSpace(args.Data))
                         return;
 
-                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaLogStdoutStderr, display: Configuration!.LaShowStdoutStderr);
+                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaLogStdoutStderr || StdPrint, display: Configuration!.LaShowStdoutStderr);
                 };
                 
                 gameProcess!.ErrorDataReceived += (sender, args) =>
@@ -428,7 +493,7 @@ namespace LocalAdmin.V2.Core
                     if (string.IsNullOrWhiteSpace(args.Data))
                         return;
 
-                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaLogStdoutStderr, display: Configuration!.LaShowStdoutStderr);
+                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaLogStdoutStderr || StdPrint, display: Configuration!.LaShowStdoutStderr);
                 };
                 
                 gameProcess!.BeginOutputReadLine();
@@ -438,9 +503,29 @@ namespace LocalAdmin.V2.Core
                 {
                     if (processClosing)
                         return;
-                    
-                    ConsoleUtil.WriteLine("The game process has been terminated...", ConsoleColor.Red);
-                    Exit(0, true);
+
+                    switch (ExitAction)
+                    {
+                        case ShutdownAction.Crash:
+                            ConsoleUtil.WriteLine("The game process has been terminated...", ConsoleColor.Red);
+                            Exit(0, true, Configuration.RestartOnCrash);
+                            break;
+                        
+                        case ShutdownAction.Shutdown:
+                            Exit(0, true);
+                            break;
+                        
+                        case ShutdownAction.SilentShutdown:
+                            Exit(0);
+                            break;
+                        
+                        case ShutdownAction.Restart:
+                            Exit(0, false, true);
+                            break;
+                        
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 };
 
                 gameProcess!.EnableRaisingEvents = true;
@@ -460,7 +545,7 @@ namespace LocalAdmin.V2.Core
         private void RegisterCommands()
         {
             commandService.RegisterCommand(new RestartCommand());
-            commandService.RegisterCommand(new NewCommand());
+            commandService.RegisterCommand(new ForceRestartCommand());
             commandService.RegisterCommand(new HelpCommand());
             commandService.RegisterCommand(new LicenseCommand());
         }
@@ -484,7 +569,7 @@ namespace LocalAdmin.V2.Core
         /// </summary>
         private void TerminateGame()
         {
-            server?.Stop();
+            Server?.Stop();
             if (gameProcess != null && !gameProcess.HasExited)
                 gameProcess.Kill();
         }
@@ -492,13 +577,14 @@ namespace LocalAdmin.V2.Core
         /// <summary>
         ///     Terminates the game and console.
         /// </summary>
-        public void Exit(int code = -1, bool waitForKey = false)
+        public void Exit(int code = -1, bool waitForKey = false, bool restart = false)
         {
             lock (this)
             {
                 if (processClosing)
                     return;
 
+                _exit = true;
                 processClosing = true;
                 LogCleaner.Abort();
                 Logger.EndLogging();
@@ -515,10 +601,13 @@ namespace LocalAdmin.V2.Core
                     //Ignore
                 }
 
+                if (restart)
+                    return;
+                
                 if (waitForKey)
                 {
                     ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
-                    Console.Read();
+                    Console.ReadKey(true);
                 }
                 Environment.Exit(code);
             }
