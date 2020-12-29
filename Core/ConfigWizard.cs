@@ -116,9 +116,9 @@ namespace LocalAdmin.V2.Core
                 Console.Write($"Do you want to save the configuration only for THIS server (on port {LocalAdmin.Singleton.GamePort} or should it become a GLOBAL configuration (default one for all future servers - servers not configured yet)? [this/global]: ");
                 input = Console.ReadLine();
             }
-            
-            var cfgPath = LocalAdmin.GameUserDataRoot + "config" + Path.PathSeparator + LocalAdmin.Singleton.GamePort + Path.PathSeparator +
-                          "config_localadmin.txt";
+
+            var cfgPath =
+                $"{LocalAdmin.GameUserDataRoot}config{Path.PathSeparator}{LocalAdmin.Singleton.GamePort}{Path.PathSeparator}config_localadmin.txt";
 
             if (input.Equals("this", StringComparison.OrdinalIgnoreCase))
             {
@@ -171,7 +171,7 @@ namespace LocalAdmin.V2.Core
                 }
             }
             
-            cfgPath = LocalAdmin.GameUserDataRoot + "config" + Path.PathSeparator + "config_localadmin_global.txt";
+            cfgPath = $"{LocalAdmin.GameUserDataRoot}config{Path.PathSeparator}config_localadmin_global.txt";
             
             if (File.Exists(cfgPath))
             {

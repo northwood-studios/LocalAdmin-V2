@@ -30,7 +30,7 @@ namespace LocalAdmin.V2.Core
     {
         public const string VersionString = "2.3.1";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
-        public ushort GamePort { get; private set; }
+        public ushort GamePort;
 
         private readonly CommandService commandService = new CommandService();
         private Process? gameProcess;
@@ -69,8 +69,7 @@ namespace LocalAdmin.V2.Core
 
             try
             {
-                ushort port = 0;
-                if (args.Length == 0 || !ushort.TryParse(args[0], out port))
+                if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
                 {
                     ConsoleUtil.WriteLine("You can pass port number as first startup argument.", ConsoleColor.Green);
                     Console.WriteLine(string.Empty);
@@ -79,8 +78,8 @@ namespace LocalAdmin.V2.Core
                     ReadInput((input) =>
                     {
                         if (!string.IsNullOrEmpty(input))
-                            return ushort.TryParse(input, out port);
-                        port = 7777;
+                            return ushort.TryParse(input, out GamePort);
+                        GamePort = 7777;
                         return true;
 
                     }, () => { }, () =>
@@ -157,14 +156,13 @@ namespace LocalAdmin.V2.Core
                     }
                 }
 
-                var cfgPath = GameUserDataRoot + "config" + Path.PathSeparator + GamePort + Path.PathSeparator +
-                              "config_localadmin.txt";
+                var cfgPath = $"{GameUserDataRoot}config{Path.PathSeparator}{GamePort}{Path.PathSeparator}config_localadmin.txt";
                 
                 if (File.Exists(cfgPath))
                     Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
                 else
                 {
-                    cfgPath = GameUserDataRoot + "config" + Path.PathSeparator + "config_localadmin_global.txt";
+                    cfgPath = $"{GameUserDataRoot}config{Path.PathSeparator}config_localadmin_global.txt";
                     
                     if (File.Exists(cfgPath))
                         Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
@@ -191,7 +189,7 @@ namespace LocalAdmin.V2.Core
                 RegisterCommands();
                 SetupReader();
 
-                StartSession(port);
+                StartSession();
 
                 readerTask!.Start();
                 
@@ -230,7 +228,7 @@ namespace LocalAdmin.V2.Core
         /// if the session has already begun,
         /// then terminates it.
         /// </summary>
-        public void StartSession(ushort port)
+        public void StartSession()
         {
             // Terminate the game, if the game process is exists
             if (gameProcess != null && !gameProcess.HasExited)
@@ -238,13 +236,12 @@ namespace LocalAdmin.V2.Core
 
             Menu();
 
-            BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {port}";
+            BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {GamePort}";
             Console.Title = BaseWindowTitle;
             
-            GamePort = port;
             Logger.Initialize();
 
-            ConsoleUtil.WriteLine($"Started new session on port {port}.", ConsoleColor.DarkGreen);
+            ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen);
             ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
 
             SetupServer();
@@ -252,7 +249,7 @@ namespace LocalAdmin.V2.Core
             while (server!.ConsolePort == 0)
                 Thread.Sleep(200);
             
-            RunScpsl(port);
+            RunScpsl();
         }
 
         private void Menu()
@@ -395,7 +392,7 @@ namespace LocalAdmin.V2.Core
             });
         }
 
-        private void RunScpsl(ushort port)
+        private void RunScpsl()
         {
             if (File.Exists(scpslExecutable))
             {
@@ -405,7 +402,7 @@ namespace LocalAdmin.V2.Core
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = scpslExecutable,
-                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{port} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id} {gameArguments}",
+                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id} {gameArguments}",
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardOutput = redirectStreams,

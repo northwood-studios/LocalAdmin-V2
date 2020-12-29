@@ -53,12 +53,13 @@ namespace LocalAdmin.V2.IO.Logging
                     for (uint i = 0; i < 30 * 60 * 2 && !_abort; i++)
                         Thread.Sleep(500);
                 }
+                
+                ConsoleUtil.WriteLine("Log cleanup started");
 
                 if (Core.LocalAdmin.Configuration!.DeleteOldRoundLogs ||
                     Core.LocalAdmin.Configuration!.CompressOldRoundLogs)
                 {
-                    var root = Core.LocalAdmin.GameUserDataRoot + "ServerLogs" + Path.PathSeparator +
-                               Core.LocalAdmin.Singleton.GamePort + Path.PathSeparator;
+                    var root = $"{Core.LocalAdmin.GameUserDataRoot}ServerLogs{Path.PathSeparator}{Core.LocalAdmin.Singleton.GamePort}{Path.PathSeparator}";
 
                     if (Directory.Exists(root))
                     {
@@ -201,7 +202,7 @@ namespace LocalAdmin.V2.IO.Logging
 
                 if (Core.LocalAdmin.Configuration!.LaDeleteOldLogs)
                 {
-                    var root = Core.LocalAdmin.GameUserDataRoot + Logger.LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.Singleton.GamePort + Path.DirectorySeparatorChar;
+                    var root = $"{Core.LocalAdmin.GameUserDataRoot}{Logger.LogFolderName}{Path.PathSeparator}{Core.LocalAdmin.Singleton.GamePort}{Path.PathSeparator}";
                     if (Directory.Exists(root))
                     {
                         foreach (var file in Directory.GetFiles(root, "LocalAdmin Log *", SearchOption.TopDirectoryOnly))
@@ -243,6 +244,8 @@ namespace LocalAdmin.V2.IO.Logging
                         }
                     }
                 }
+                
+                ConsoleUtil.WriteLine("Log cleanup complete");
             }
         }
     }
