@@ -606,10 +606,10 @@ namespace LocalAdmin.V2.Core
                     //Ignore
                 }
 
-                if (restart)
+                if (restart || ExitAction == ShutdownAction.Restart || ExitAction == ShutdownAction.Crash && Configuration != null && Configuration.RestartOnCrash)
                     return;
                 
-                if (waitForKey)
+                if (waitForKey && ExitAction != ShutdownAction.SilentShutdown)
                 {
                     ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
                     Console.ReadKey(true);
