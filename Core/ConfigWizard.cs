@@ -38,8 +38,8 @@ namespace LocalAdmin.V2.Core
                 return;
             }
 
-            LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (stdout and stderr) be visible on the LocalAdmin console?");
-            LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be disabled (enable only if you are experiencing issues with the cursor)?");
+            LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin console?");
+            LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console)?");
             LocalAdmin.Configuration.EnableLaLogs = BoolInput("Do you want to enable LocalAdmin logs?");
 
             if (LocalAdmin.Configuration.EnableLaLogs)
