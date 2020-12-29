@@ -228,13 +228,16 @@ namespace LocalAdmin.V2.Core
         /// if the session has already begun,
         /// then terminates it.
         /// </summary>
-        public void StartSession()
+        public void StartSession(ushort port = 0)
         {
             // Terminate the game, if the game process is exists
             if (gameProcess != null && !gameProcess.HasExited)
                 TerminateGame();
 
             Menu();
+
+            if (port != 0)
+                GamePort = port;
 
             BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {GamePort}";
             Console.Title = BaseWindowTitle;
