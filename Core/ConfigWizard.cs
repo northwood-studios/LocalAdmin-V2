@@ -118,7 +118,7 @@ namespace LocalAdmin.V2.Core
             }
 
             var cfgPath =
-                $"{LocalAdmin.GameUserDataRoot}config{Path.PathSeparator}{LocalAdmin.Singleton.GamePort}{Path.PathSeparator}config_localadmin.txt";
+                $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.Singleton.GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
 
             if (input.Equals("this", StringComparison.OrdinalIgnoreCase))
             {
@@ -171,7 +171,7 @@ namespace LocalAdmin.V2.Core
                 }
             }
             
-            cfgPath = $"{LocalAdmin.GameUserDataRoot}config{Path.PathSeparator}config_localadmin_global.txt";
+            cfgPath = $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
             
             if (File.Exists(cfgPath))
             {

@@ -14,9 +14,9 @@ namespace LocalAdmin.V2.IO
         public bool LaLogStdoutStderr = true;
         public bool LaDeleteOldLogs = true;
         public ushort LaLogsExpirationDays = 90;
-        public bool DeleteOldRoundLogs = false;
+        public bool DeleteOldRoundLogs;
         public ushort RoundLogsExpirationDays = 180;
-        public bool CompressOldRoundLogs = false;
+        public bool CompressOldRoundLogs;
         public ushort RoundLogsCompressionThresholdDays = 14;
 
         public string SerializeConfig()

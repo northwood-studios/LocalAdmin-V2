@@ -156,13 +156,13 @@ namespace LocalAdmin.V2.Core
                     }
                 }
 
-                var cfgPath = $"{GameUserDataRoot}config{Path.PathSeparator}{GamePort}{Path.PathSeparator}config_localadmin.txt";
+                var cfgPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
                 
                 if (File.Exists(cfgPath))
                     Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
                 else
                 {
-                    cfgPath = $"{GameUserDataRoot}config{Path.PathSeparator}config_localadmin_global.txt";
+                    cfgPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
                     
                     if (File.Exists(cfgPath))
                         Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
