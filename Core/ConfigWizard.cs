@@ -24,15 +24,15 @@ namespace LocalAdmin.V2.Core
             Console.WriteLine(LocalAdmin.Configuration.ToString());
             
             Console.WriteLine();
-            var input = string.Empty;
-            while (input == null || !input.Equals("edit", StringComparison.OrdinalIgnoreCase) &&
+            var input = "0";
+            while (!string.IsNullOrWhiteSpace(input) && !input.Equals("edit", StringComparison.OrdinalIgnoreCase) &&
                    !input.Equals("keep", StringComparison.OrdinalIgnoreCase))
             {
                 Console.Write("Do you want to edit that configuration? [edit/keep]: ");
                 input = Console.ReadLine();
             }
 
-            if (input.Equals("keep", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(input) || input.Equals("keep", StringComparison.OrdinalIgnoreCase))
             {
                 SaveConfig();
                 return;
@@ -109,9 +109,9 @@ namespace LocalAdmin.V2.Core
 
         private static void SaveConfig()
         {
-            var input = string.Empty;
-            while (input == null || !input.Equals("this", StringComparison.OrdinalIgnoreCase) &&
-                !input.Equals("global", StringComparison.OrdinalIgnoreCase))
+            var input = "0";
+            while (!string.IsNullOrWhiteSpace(input) && !input.Equals("this", StringComparison.OrdinalIgnoreCase) &&
+                   !input.Equals("global", StringComparison.OrdinalIgnoreCase))
             {
                 Console.Write($"Do you want to save the configuration only for THIS server (on port {LocalAdmin.Singleton.GamePort} or should it become a GLOBAL configuration (default one for all future servers - servers not configured yet)? [this/global]: ");
                 input = Console.ReadLine();
@@ -120,7 +120,7 @@ namespace LocalAdmin.V2.Core
             var cfgPath =
                 $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.Singleton.GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
 
-            if (input.Equals("this", StringComparison.OrdinalIgnoreCase))
+            if (input != null && input.Equals("this", StringComparison.OrdinalIgnoreCase))
             {
                 if (File.Exists(cfgPath))
                 {
