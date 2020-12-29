@@ -504,7 +504,17 @@ namespace LocalAdmin.V2.Core
                 Logger.EndLogging();
                 TerminateGame(); // Forcefully terminating the process
                 gameProcess?.Dispose();
-                readerTask?.Dispose();
+                
+                try
+                {
+                    if (readerTask != null && readerTask.IsCompleted)
+                        readerTask?.Dispose();
+                }
+                catch
+                {
+                    //Ignore
+                }
+
                 if (waitForKey)
                 {
                     ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
