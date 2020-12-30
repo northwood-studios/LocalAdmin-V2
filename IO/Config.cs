@@ -6,7 +6,8 @@ namespace LocalAdmin.V2.IO
     public class Config
     {
         private static readonly string[] SplitArray = {": "};
-        
+
+        public bool RestartOnCrash = true;
         public bool LaShowStdoutStderr;
         public bool LaNoSetCursor;
         public bool EnableLaLogs = true;
@@ -22,6 +23,9 @@ namespace LocalAdmin.V2.IO
         public string SerializeConfig()
         {
             var sb = new StringBuilder();
+            
+            sb.Append("restart_on_crash: ");
+            sb.AppendLine(RestartOnCrash.ToString().ToLowerInvariant());
 
             sb.Append("la_show_stdout_and_stderr: ");
             sb.AppendLine(LaShowStdoutStderr.ToString().ToLowerInvariant());
@@ -74,6 +78,10 @@ namespace LocalAdmin.V2.IO
 
                 switch (sp[0].ToLowerInvariant())
                 {
+                    case "restart_on_crash" when bool.TryParse(sp[1], out var b):
+                        cfg.RestartOnCrash = b;
+                        break;
+                    
                     case "la_show_stdout_and_stderr" when bool.TryParse(sp[1], out var b):
                         cfg.LaShowStdoutStderr = b;
                         break;
@@ -139,22 +147,16 @@ namespace LocalAdmin.V2.IO
         {
             var sb = new StringBuilder();
             
-            sb.Append("- Show standard outputs (stdin and stderr): ");
-            sb.AppendLine(LaShowStdoutStderr.ToString().ToLowerInvariant());
-            
-            sb.Append("- Disable cursor position management: ");
-            sb.AppendLine(LaNoSetCursor.ToString().ToLowerInvariant());
-            
-            sb.Append("- Enable LocalAdmin logs: ");
-            sb.AppendLine(EnableLaLogs.ToString().ToLowerInvariant());
+            sb.AppendLine(RestartOnCrash ? "- Server will be automatically restarted after a crash." : "- Server will NOT be automatically restarted after a crash.");
+            sb.AppendLine(LaShowStdoutStderr ? "- Standard outputs (that contain a lot of debug information) will be displayed." : "- Standard outputs (that contain a lot of debug information) will NOT be displayed.");
+            sb.AppendLine(LaNoSetCursor ? "- Cursor position management is DISABLED." : "- Cursor position management is ENABLED.");
+            sb.AppendLine(EnableLaLogs ? "- LocalAdmin logs are ENABLED." : "- LocalAdmin logs are DISABLED.");
 
             if (EnableLaLogs)
             {
-                sb.Append("- Enable LocalAdmin logs auto flushing: ");
-                sb.AppendLine(LaLogAutoFlush.ToString().ToLowerInvariant());
+                sb.AppendLine(LaLogAutoFlush ? "- LocalAdmin logs auto flushing is ENABLED." : "- LocalAdmin logs auto flushing is DISABLED.");
 
-                sb.Append("- Enable logging standard outputs: ");
-                sb.AppendLine(LaLogStdoutStderr.ToString().ToLowerInvariant());
+                sb.AppendLine(LaLogStdoutStderr ? "- Standard outputs will be logged." : "- Standard outputs will NOT be logged.");
 
                 if (LaDeleteOldLogs)
                 {
@@ -162,7 +164,7 @@ namespace LocalAdmin.V2.IO
                     sb.Append(LaLogsExpirationDays);
                     sb.AppendLine(" days");
                 }
-                else sb.AppendLine("- Don't delete old LocalAdmin logs.");
+                else sb.AppendLine("- Do not delete old LocalAdmin logs.");
             }
 
             if (DeleteOldRoundLogs)
@@ -171,7 +173,7 @@ namespace LocalAdmin.V2.IO
                 sb.Append(RoundLogsExpirationDays);
                 sb.AppendLine(" days");
             }
-            else sb.AppendLine("- Don't delete old round logs.");
+            else sb.AppendLine("- Do not delete old round logs.");
             
             if (CompressOldRoundLogs)
             {
@@ -179,7 +181,7 @@ namespace LocalAdmin.V2.IO
                 sb.Append(RoundLogsCompressionThresholdDays);
                 sb.AppendLine(" days");
             }
-            else sb.AppendLine("- Don't compress old round logs.");
+            else sb.AppendLine("- Do not compress old round logs.");
 
             return sb.ToString();
         }

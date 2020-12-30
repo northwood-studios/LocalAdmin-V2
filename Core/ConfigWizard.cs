@@ -38,6 +38,7 @@ namespace LocalAdmin.V2.Core
                 return;
             }
 
+            LocalAdmin.Configuration.RestartOnCrash = BoolInput("Should the server be automatically restarted after a crash?");
             LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin console?");
             LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console)?");
             LocalAdmin.Configuration.EnableLaLogs = BoolInput("Do you want to enable LocalAdmin logs?");
@@ -113,12 +114,12 @@ namespace LocalAdmin.V2.Core
             while (!string.IsNullOrWhiteSpace(input) && !input.Equals("this", StringComparison.OrdinalIgnoreCase) &&
                    !input.Equals("global", StringComparison.OrdinalIgnoreCase))
             {
-                Console.Write($"Do you want to save the configuration only for THIS server (on port {LocalAdmin.Singleton.GamePort} or should it become a GLOBAL configuration (default one for all future servers - servers not configured yet)? [this/global]: ");
+                Console.Write($"Do you want to save the configuration only for THIS server (on port {LocalAdmin.GamePort} or should it become a GLOBAL configuration (default one for all future servers - servers not configured yet)? [this/global]: ");
                 input = Console.ReadLine();
             }
 
             var cfgPath =
-                $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.Singleton.GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
+                $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
 
             if (input != null && input.Equals("this", StringComparison.OrdinalIgnoreCase))
             {

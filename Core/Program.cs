@@ -4,10 +4,12 @@
     {
         static void Main(string[] args)
         {
-            using (var la = LocalAdmin.Singleton)
+            while (true)
             {
+                using var la = new LocalAdmin();
                 la.Start(args);
             }
+            // ReSharper disable once FunctionNeverReturns
         }
     }
 }

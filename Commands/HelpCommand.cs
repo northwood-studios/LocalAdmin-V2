@@ -12,7 +12,6 @@ namespace LocalAdmin.V2.Commands
         {
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("----HELP----", ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("NEW - starts the next server on different port.");
             ConsoleUtil.WriteLine("BAN - time-bans player using IP address or part of the nickname.");
             ConsoleUtil.WriteLine("FORCESTART - forces the round to start.");
             ConsoleUtil.WriteLine("ROUNDRESTART - forces the round to restart.");
@@ -21,6 +20,7 @@ namespace LocalAdmin.V2.Commands
             ConsoleUtil.WriteLine("CONFIG RELOAD - applies config changes.");
             ConsoleUtil.WriteLine("EXIT - stops the server.");
             ConsoleUtil.WriteLine("RESTART - restarts the server.");
+            ConsoleUtil.WriteLine("FORCERESTART - kills the server and restarts it.");
             ConsoleUtil.WriteLine("SEED - shows the current map seed in order to re-generate level in the future.");
             ConsoleUtil.WriteLine("BANREFRESH - forces ban database to refresh.");
             ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);

@@ -26,7 +26,7 @@ namespace LocalAdmin.V2.IO.ExitHandlers
             {
                 // Blocking operation with infinite expectation of any signal
                 UnixSignal.WaitAny(Signals, -1);
-                Core.LocalAdmin.Singleton.Exit(0);
+                Core.LocalAdmin.Singleton!.Exit(0);
             }).Start();
         }
     }

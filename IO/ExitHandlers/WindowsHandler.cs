@@ -23,7 +23,8 @@ namespace LocalAdmin.V2.IO.ExitHandlers
 
         private static bool OnNativeSignal(CtrlTypes ctrl)
         {
-            Core.LocalAdmin.Singleton.Exit(0);
+            if (Core.LocalAdmin.Singleton != null)
+                Core.LocalAdmin.Singleton.Exit(0);
             return true;
         }
 

@@ -57,7 +57,7 @@ namespace LocalAdmin.V2.IO.Logging
                 if (Core.LocalAdmin.Configuration!.DeleteOldRoundLogs ||
                     Core.LocalAdmin.Configuration!.CompressOldRoundLogs)
                 {
-                    var root = $"{Core.LocalAdmin.GameUserDataRoot}ServerLogs{Path.DirectorySeparatorChar}{Core.LocalAdmin.Singleton.GamePort}{Path.DirectorySeparatorChar}";
+                    var root = $"{Core.LocalAdmin.GameUserDataRoot}ServerLogs{Path.DirectorySeparatorChar}{Core.LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
 
                     if (Directory.Exists(root))
                     {
@@ -200,7 +200,7 @@ namespace LocalAdmin.V2.IO.Logging
 
                 if (Core.LocalAdmin.Configuration!.LaDeleteOldLogs)
                 {
-                    var root = $"{Core.LocalAdmin.GameUserDataRoot}{Logger.LogFolderName}{Path.DirectorySeparatorChar}{Core.LocalAdmin.Singleton.GamePort}{Path.DirectorySeparatorChar}";
+                    var root = $"{Core.LocalAdmin.GameUserDataRoot}{Logger.LogFolderName}{Path.DirectorySeparatorChar}{Core.LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
                     if (Directory.Exists(root))
                     {
                         foreach (var file in Directory.GetFiles(root, "LocalAdmin Log *", SearchOption.TopDirectoryOnly))
