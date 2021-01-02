@@ -29,16 +29,16 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin : IDisposable
     {
-        public const string VersionString = "2.3.2";
+        public const string VersionString = "2.3.3";
         public static LocalAdmin? Singleton;
         public static ushort GamePort;
         private static bool _firstRun = true;
 
-        private readonly CommandService commandService = new CommandService();
-        private Process? gameProcess;
+        private readonly CommandService _commandService = new CommandService();
+        private Process? _gameProcess;
         internal TcpServer? Server { get; private set; }
-        private Task? readerTask;
-        private readonly string scpslExecutable;
+        private Task? _readerTask;
+        private readonly string _scpslExecutable;
         private static string _gameArguments = string.Empty;
         internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
         internal static readonly string GameUserDataRoot =
@@ -46,8 +46,9 @@ namespace LocalAdmin.V2.Core
             "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
         private static bool _exit;
         private static readonly ConcurrentQueue<string> InputQueue = new ConcurrentQueue<string>();
-        internal static bool NoSetCursor, PrintControlMessages, StdPrint, AutoFlush = true, EnableLogging = true;
-        private volatile bool processClosing;
+        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true;
+        private static bool _stdPrint;
+        private volatile bool _processClosing;
 
         internal static Config? Configuration;
 
@@ -64,14 +65,14 @@ namespace LocalAdmin.V2.Core
         internal LocalAdmin()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                scpslExecutable = "SCPSL.exe";
+                _scpslExecutable = "SCPSL.exe";
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                scpslExecutable = "SCPSL.x86_64";
+                _scpslExecutable = "SCPSL.x86_64";
             else
             {
                 ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
                 // shut up dotnet
-                scpslExecutable = "";
+                _scpslExecutable = string.Empty;
                 Exit(1);
             }
         }
@@ -147,7 +148,7 @@ namespace LocalAdmin.V2.Core
                                         break;
                                     
                                     case 's':
-                                        StdPrint = true;
+                                        _stdPrint = true;
                                         break;
                                 }
                             }
@@ -176,7 +177,7 @@ namespace LocalAdmin.V2.Core
                                     break;
                                 
                                 case "--printStd":
-                                    StdPrint = true;
+                                    _stdPrint = true;
                                     break;
 
                                 case "--":
@@ -235,7 +236,7 @@ namespace LocalAdmin.V2.Core
 
                 StartSession();
 
-                readerTask!.Start();
+                _readerTask!.Start();
                 
                 if (!EnableLogging)
                     ConsoleUtil.WriteLine("Logging has been disabled.", ConsoleColor.Red);
@@ -276,7 +277,7 @@ namespace LocalAdmin.V2.Core
         private void StartSession()
         {
             // Terminate the game, if the game process is exists
-            if (gameProcess != null && !gameProcess.HasExited)
+            if (_gameProcess != null && !_gameProcess.HasExited)
                 TerminateGame();
 
             Menu();
@@ -393,7 +394,7 @@ namespace LocalAdmin.V2.Core
 
         private void SetupReader()
         {
-            readerTask = new Task(async () =>
+            _readerTask = new Task(async () =>
             {
                 while (Server == null)
                     await Task.Delay(20);
@@ -421,7 +422,7 @@ namespace LocalAdmin.V2.Core
                     else
                         ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
 
-                    if (gameProcess != null && gameProcess.HasExited)
+                    if (_gameProcess != null && _gameProcess.HasExited)
                     {
                         ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
                             ConsoleColor.Red);
@@ -435,7 +436,7 @@ namespace LocalAdmin.V2.Core
                         continue;
                     var name = split[0].ToUpperInvariant();
 
-                    var command = commandService.GetCommandByName(name);
+                    var command = _commandService.GetCommandByName(name);
 
                     if (command != null)
                     {
@@ -467,14 +468,14 @@ namespace LocalAdmin.V2.Core
 
         private void RunScpsl()
         {
-            if (File.Exists(scpslExecutable))
+            if (File.Exists(_scpslExecutable))
             {
-                ConsoleUtil.WriteLine("Executing: " + scpslExecutable, ConsoleColor.DarkGreen);
+                ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
                 var redirectStreams = Configuration!.LaShowStdoutStderr || Configuration!.LaLogStdoutStderr;
                 
                 var startInfo = new ProcessStartInfo
                 {
-                    FileName = scpslExecutable,
+                    FileName = _scpslExecutable,
                     Arguments = $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId} {_gameArguments}",
                     CreateNoWindow = true,
                     UseShellExecute = false,
@@ -482,31 +483,31 @@ namespace LocalAdmin.V2.Core
                     RedirectStandardError = redirectStreams,
                 };
 
-                gameProcess = Process.Start(startInfo);
+                _gameProcess = Process.Start(startInfo);
 
                 if (!redirectStreams) return;
-                gameProcess!.OutputDataReceived += (sender, args) =>
+                _gameProcess!.OutputDataReceived += (sender, args) =>
                 {
                     if (string.IsNullOrWhiteSpace(args.Data))
                         return;
 
-                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaLogStdoutStderr || StdPrint, display: Configuration!.LaShowStdoutStderr);
+                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaLogStdoutStderr || _stdPrint, display: Configuration!.LaShowStdoutStderr);
                 };
                 
-                gameProcess!.ErrorDataReceived += (sender, args) =>
+                _gameProcess!.ErrorDataReceived += (sender, args) =>
                 {
                     if (string.IsNullOrWhiteSpace(args.Data))
                         return;
 
-                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaLogStdoutStderr || StdPrint, display: Configuration!.LaShowStdoutStderr);
+                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaLogStdoutStderr || _stdPrint, display: Configuration!.LaShowStdoutStderr);
                 };
                 
-                gameProcess!.BeginOutputReadLine();
-                gameProcess!.BeginErrorReadLine();
+                _gameProcess!.BeginOutputReadLine();
+                _gameProcess!.BeginErrorReadLine();
 
-                gameProcess!.Exited += (sender, args) =>
+                _gameProcess!.Exited += (sender, args) =>
                 {
-                    if (processClosing)
+                    if (_processClosing)
                         return;
 
                     switch (ExitAction)
@@ -533,7 +534,7 @@ namespace LocalAdmin.V2.Core
                     }
                 };
 
-                gameProcess!.EnableRaisingEvents = true;
+                _gameProcess!.EnableRaisingEvents = true;
             }
             else
             {
@@ -549,10 +550,10 @@ namespace LocalAdmin.V2.Core
 
         private void RegisterCommands()
         {
-            commandService.RegisterCommand(new RestartCommand());
-            commandService.RegisterCommand(new ForceRestartCommand());
-            commandService.RegisterCommand(new HelpCommand());
-            commandService.RegisterCommand(new LicenseCommand());
+            _commandService.RegisterCommand(new RestartCommand());
+            _commandService.RegisterCommand(new ForceRestartCommand());
+            _commandService.RegisterCommand(new HelpCommand());
+            _commandService.RegisterCommand(new LicenseCommand());
         }
 
         private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)
@@ -575,8 +576,8 @@ namespace LocalAdmin.V2.Core
         private void TerminateGame()
         {
             Server?.Stop();
-            if (gameProcess != null && !gameProcess.HasExited)
-                gameProcess.Kill();
+            if (_gameProcess != null && !_gameProcess.HasExited)
+                _gameProcess.Kill();
         }
 
         /// <summary>
@@ -586,20 +587,20 @@ namespace LocalAdmin.V2.Core
         {
             lock (this)
             {
-                if (processClosing)
+                if (_processClosing)
                     return;
 
                 _exit = true;
-                processClosing = true;
+                _processClosing = true;
                 LogCleaner.Abort();
                 Logger.EndLogging();
                 TerminateGame(); // Forcefully terminating the process
-                gameProcess?.Dispose();
+                _gameProcess?.Dispose();
                 
                 try
                 {
-                    if (readerTask != null && readerTask.IsCompleted)
-                        readerTask?.Dispose();
+                    if (_readerTask != null && _readerTask.IsCompleted)
+                        _readerTask?.Dispose();
                 }
                 catch
                 {

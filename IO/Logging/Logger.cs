@@ -6,6 +6,7 @@ namespace LocalAdmin.V2.IO.Logging
     public static class Logger
     {
         private static StreamWriter? _sw;
+        private static string? _logPath;
         internal const string LogFolderName = "LocalAdminLogs";
         
         public static void Initialize()
@@ -19,8 +20,8 @@ namespace LocalAdmin.V2.IO.Logging
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            _sw = new StreamWriter(dir +
-                                   $"LocalAdmin Log {DateTime.Now:yyyy-MM-dd HH.mm.ss}.txt") {AutoFlush = Core.LocalAdmin.AutoFlush};
+            _logPath = dir + $"LocalAdmin Log {DateTime.Now:yyyy-MM-dd HH.mm.ss}.txt";
+            _sw = new StreamWriter(_logPath) {AutoFlush = Core.LocalAdmin.AutoFlush};
             
             Log($"{ConsoleUtil.GetTimestamp()} Logging started.");
         }
@@ -34,9 +35,38 @@ namespace LocalAdmin.V2.IO.Logging
             _sw.Dispose();
             _sw = null;
         }
-        
-        public static void Log(string text) => _sw?.WriteLine(text);
 
-        public static void Log(object obj) => _sw?.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {obj}");
+        private static void AppendLog(string text)
+        {
+            if (_sw == null) return;
+            
+            try
+            {
+                if (_sw.BaseStream.CanWrite) _sw.WriteLine(text);
+                else
+                {
+                    try
+                    {
+                        _sw.Close();
+                    }
+                    catch
+                    {
+                        //Ignore
+                    }
+                
+                    _sw = File.AppendText(_logPath!);
+                    _sw.AutoFlush = Core.LocalAdmin.AutoFlush;
+                    _sw.WriteLine(text);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Write("Failed to write log: " + e.Message);
+            }
+        }
+        
+        public static void Log(string text) => AppendLog(text);
+
+        public static void Log(object obj) => AppendLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {obj}");
     }
 }
