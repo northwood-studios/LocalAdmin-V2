@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace LocalAdmin.V2.IO
@@ -9,7 +10,7 @@ namespace LocalAdmin.V2.IO
 
         public bool RestartOnCrash = true;
         public bool LaShowStdoutStderr;
-        public bool LaNoSetCursor;
+        public bool LaNoSetCursor = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         public bool EnableLaLogs = true;
         public bool LaLogAutoFlush = true;
         public bool LaLogStdoutStderr = true;

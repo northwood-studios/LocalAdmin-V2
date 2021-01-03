@@ -29,7 +29,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin : IDisposable
     {
-        public const string VersionString = "2.3.3";
+        public const string VersionString = "2.3.4";
         public static LocalAdmin? Singleton;
         public static ushort GamePort;
         private static bool _firstRun = true;
@@ -383,10 +383,10 @@ namespace LocalAdmin.V2.Core
                 while (!_exit)
                 {
                     var input = Console.ReadLine();
-                    
+
                     if (string.IsNullOrWhiteSpace(input))
                         continue;
-                    
+
                     InputQueue.Enqueue(input);
                 }
             }).Start();
@@ -409,12 +409,13 @@ namespace LocalAdmin.V2.Core
 
                     if (string.IsNullOrWhiteSpace(input))
                         continue;
+                    
+                    var currentLineCursor = NoSetCursor ? 0 : Console.CursorTop;
 
-                    var currentLineCursor = Console.CursorTop;
-
-                    if (!NoSetCursor && currentLineCursor > 0)
+                    if (currentLineCursor > 0)
                     {
                         Console.SetCursorPosition(0, currentLineCursor - 1);
+
                         ConsoleUtil.Write(string.Empty.PadLeft(Console.WindowWidth));
                         ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
                         Console.SetCursorPosition(0, currentLineCursor);

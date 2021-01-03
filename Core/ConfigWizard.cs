@@ -40,7 +40,7 @@ namespace LocalAdmin.V2.Core
 
             LocalAdmin.Configuration.RestartOnCrash = BoolInput("Should the server be automatically restarted after a crash?");
             LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin console?");
-            LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console)?");
+            LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console, may cause issues especially on linux)?");
             LocalAdmin.Configuration.EnableLaLogs = BoolInput("Do you want to enable LocalAdmin logs?");
 
             if (LocalAdmin.Configuration.EnableLaLogs)
