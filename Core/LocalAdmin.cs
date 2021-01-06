@@ -304,7 +304,7 @@ namespace LocalAdmin.V2.Core
             ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
-            ConsoleUtil.WriteLine("Copyright by KernelError and Łukasz \"zabszk\" Jurczyk, 2019 - 2020", ConsoleColor.Cyan);
+            ConsoleUtil.WriteLine("Copyright by KernelError and Łukasz \"zabszk\" Jurczyk, 2019 - 2021", ConsoleColor.Cyan);
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
             ConsoleUtil.WriteLine(string.Empty);
