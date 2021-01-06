@@ -43,18 +43,19 @@ namespace LocalAdmin.V2.IO.Logging
                 {
                     _lastCleanup = DateTime.UtcNow;
                     
-                    for (uint i = 0; i < 15 * 2 && !_abort; i++)
-                        Thread.Sleep(500);
+                    for (uint i = 0; i < 15 && !_abort; i++)
+                        Thread.Sleep(1000);
                 }
                 else if (now.DayOfYear == _lastCleanup.Value.DayOfYear)
                 {
-                    Thread.Sleep(1800000);
+                    for (uint i = 0; i < 1800 && !_abort; i++) //30 * 60
+                        Thread.Sleep(1000);
                     continue;
                 }
                 else
                 {
-                    for (uint i = 0; i < 30 * 60 * 2 && !_abort; i++)
-                        Thread.Sleep(500);
+                    for (uint i = 0; i < 1800 && !_abort; i++) //30 * 60
+                        Thread.Sleep(1000);
                 }
 
                 if (Core.LocalAdmin.Configuration!.DeleteOldRoundLogs ||
