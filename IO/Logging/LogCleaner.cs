@@ -47,7 +47,10 @@ namespace LocalAdmin.V2.IO.Logging
                         Thread.Sleep(500);
                 }
                 else if (now.DayOfYear == _lastCleanup.Value.DayOfYear)
+                {
+                    Thread.Sleep(1800000);
                     continue;
+                }
                 else
                 {
                     for (uint i = 0; i < 30 * 60 * 2 && !_abort; i++)
