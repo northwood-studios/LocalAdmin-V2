@@ -28,7 +28,7 @@ namespace LocalAdmin.V2.Core
             while (!string.IsNullOrWhiteSpace(input) && !input.Equals("edit", StringComparison.OrdinalIgnoreCase) &&
                    !input.Equals("keep", StringComparison.OrdinalIgnoreCase))
             {
-                Console.Write("Do you want to edit that configuration? [edit/keep]: ");
+                Console.WriteLine("Do you want to edit that configuration? [edit/keep]: ");
                 input = Console.ReadLine();
             }
 
@@ -82,7 +82,7 @@ namespace LocalAdmin.V2.Core
         {
             while (true)
             {
-                Console.Write(question + " [yes/no]: ");
+                Console.WriteLine(question + " [yes/no]: ");
                 var input = Console.ReadLine();
                 
                 if (input == null) continue;
@@ -99,7 +99,7 @@ namespace LocalAdmin.V2.Core
         {
             while (true)
             {
-                Console.Write(question + " ");
+                Console.WriteLine(question + " ");
                 var input = Console.ReadLine();
                 
                 if (input == null) continue;
@@ -114,12 +114,30 @@ namespace LocalAdmin.V2.Core
             while (!string.IsNullOrWhiteSpace(input) && !input.Equals("this", StringComparison.OrdinalIgnoreCase) &&
                    !input.Equals("global", StringComparison.OrdinalIgnoreCase))
             {
-                Console.Write($"Do you want to save the configuration only for THIS server (on port {LocalAdmin.GamePort} or should it become a GLOBAL configuration (default one for all future servers - servers not configured yet)? [this/global]: ");
+                Console.WriteLine($"Do you want to save the configuration only for THIS server (on port {LocalAdmin.GamePort} or should it become a GLOBAL configuration (default one for all future servers - servers not configured yet)? [this/global]: ");
                 input = Console.ReadLine();
             }
 
             var cfgPath =
-                $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
+                $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
+
+            if (!Directory.Exists(cfgPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(cfgPath);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("FATAL ERROR: Can't create config directory.");
+                    Console.WriteLine("Path: " + cfgPath);
+                    Console.WriteLine("Exception: " + e.Message);
+                    Environment.Exit(1);
+                    return;
+                }
+            }
+            
+            cfgPath += "config_localadmin.txt";
 
             if (input != null && input.Equals("this", StringComparison.OrdinalIgnoreCase))
             {
@@ -172,7 +190,25 @@ namespace LocalAdmin.V2.Core
                 }
             }
             
-            cfgPath = $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
+            cfgPath = $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}";
+            
+            if (!Directory.Exists(cfgPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(cfgPath);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("FATAL ERROR: Can't  **GLOBAL** config directory.");
+                    Console.WriteLine("Path: " + cfgPath);
+                    Console.WriteLine("Exception: " + e.Message);
+                    Environment.Exit(1);
+                    return;
+                }
+            }
+
+            cfgPath += "config_localadmin_global.txt";
             
             if (File.Exists(cfgPath))
             {
