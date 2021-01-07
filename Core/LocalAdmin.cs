@@ -492,7 +492,7 @@ namespace LocalAdmin.V2.Core
                     if (string.IsNullOrWhiteSpace(args.Data))
                         return;
 
-                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaLogStdoutStderr || _stdPrint, display: Configuration!.LaShowStdoutStderr);
+                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaShowStdoutStderr || _stdPrint, display: Configuration!.LaShowStdoutStderr);
                 };
                 
                 _gameProcess!.ErrorDataReceived += (sender, args) =>
@@ -500,7 +500,7 @@ namespace LocalAdmin.V2.Core
                     if (string.IsNullOrWhiteSpace(args.Data))
                         return;
 
-                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaLogStdoutStderr || _stdPrint, display: Configuration!.LaShowStdoutStderr);
+                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaShowStdoutStderr || _stdPrint, display: Configuration!.LaShowStdoutStderr);
                 };
                 
                 _gameProcess!.BeginOutputReadLine();
