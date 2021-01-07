@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace LocalAdmin.V2.IO.Logging
 {
     public static class Logger
     {
-        private static StreamWriter? _sw;
+        private static StringBuilder? _sb;
+        private static bool _logging;
         private static string? _logPath;
         internal const string LogFolderName = "LocalAdminLogs";
         
@@ -13,7 +15,7 @@ namespace LocalAdmin.V2.IO.Logging
         {
             if (!Core.LocalAdmin.EnableLogging)
                 return;
-            if (_sw != null)
+            if (_logging)
                 EndLogging();
             
             string dir = Core.LocalAdmin.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.GamePort + Path.DirectorySeparatorChar;
@@ -21,43 +23,37 @@ namespace LocalAdmin.V2.IO.Logging
                 Directory.CreateDirectory(dir);
 
             _logPath = dir + $"LocalAdmin Log {DateTime.Now:yyyy-MM-dd HH.mm.ss}.txt";
-            _sw = new StreamWriter(_logPath) {AutoFlush = Core.LocalAdmin.AutoFlush};
-            
+            _logging = true;
+
             Log($"{ConsoleUtil.GetLogsTimestamp()} Logging started.");
             Log($"{ConsoleUtil.GetLogsTimestamp()} Timezone offset: {DateTimeOffset.Now.Offset:HH:mm:ss}");
         }
 
         public static void EndLogging()
         {
-            if (_sw == null) return;
-            Log($"{ConsoleUtil.GetLogsTimestamp()} --- END OF LOG ---");
+            if (!_logging) return;
+            Log($"{ConsoleUtil.GetLogsTimestamp()} --- END OF LOG ---", true);
 
-            _sw.Close();
-            _sw.Dispose();
-            _sw = null;
+            _logging = false;
+            _sb = null;
         }
 
-        private static void AppendLog(string text)
+        private static void AppendLog(string text, bool flush = false)
         {
-            if (_sw == null) return;
+            if (!_logging) return;
             
             try
             {
-                if (_sw.BaseStream.CanWrite) _sw.WriteLine(text);
+                if (Core.LocalAdmin.AutoFlush)
+                    File.AppendAllText(_logPath!, text);
                 else
                 {
-                    try
-                    {
-                        _sw.Close();
-                    }
-                    catch
-                    {
-                        //Ignore
-                    }
-                
-                    _sw = File.AppendText(_logPath!);
-                    _sw.AutoFlush = Core.LocalAdmin.AutoFlush;
-                    _sw.WriteLine(text);
+                    _sb ??= new StringBuilder();
+                    _sb.AppendLine(text);
+
+                    if (_sb.Length <= 1000 || flush) return;
+                    File.AppendAllText(_logPath!, _sb.ToString());
+                    _sb.Clear();
                 }
             }
             catch (Exception e)
@@ -66,8 +62,8 @@ namespace LocalAdmin.V2.IO.Logging
             }
         }
         
-        public static void Log(string text) => AppendLog(text);
+        public static void Log(string text, bool flush = false) => AppendLog(text, flush);
 
-        public static void Log(object obj) => AppendLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {obj}");
+        public static void Log(object obj, bool flush = false) => AppendLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {obj}", flush);
     }
 }
