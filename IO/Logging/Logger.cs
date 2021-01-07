@@ -26,7 +26,7 @@ namespace LocalAdmin.V2.IO.Logging
             _logging = true;
 
             Log($"{ConsoleUtil.GetLogsTimestamp()} Logging started.");
-            Log($"{ConsoleUtil.GetLogsTimestamp()} Timezone offset: {DateTimeOffset.Now.Offset:HH:mm:ss}");
+            Log($"{ConsoleUtil.GetLogsTimestamp()} Timezone offset: {DateTimeOffset.Now:zzz}");
         }
 
         public static void EndLogging()
