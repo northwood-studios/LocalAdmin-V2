@@ -16,45 +16,28 @@ namespace LocalAdmin.V2.IO
                 Console.Clear();
             }
         }
+        
+        private static string GetLogsLocalTimestamp() => $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}]";
+        
+        private static string GetLogsUtcTimestamp() => $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}";
+        
+        public static string GetLogsTimestamp() => Core.LocalAdmin.Configuration!.LaLogsUseUtc
+            ? GetLogsUtcTimestamp()
+            : GetLogsLocalTimestamp();
+        
+        private static string GetLiveViewLocalTimestamp() => $"[{DateTime.Now.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeFormat)}]";
+        
+        private static string GetLiveViewUtcTimestamp() => $"[{DateTime.UtcNow.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeUtcFormat)}Z]";
 
-        public static void Write(string content, ConsoleColor color = ConsoleColor.White, int height = 0)
+        private static string GetLiveViewTimestamp() => Core.LocalAdmin.Configuration!.LaLiveViewUseUtc
+            ? GetLiveViewUtcTimestamp()
+            : GetLiveViewLocalTimestamp();
+
+        public static void Write(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
         {
             lock (_lck)
             {
-                content = content.Trim().Trim(ToTrim);
-                content = string.IsNullOrEmpty(content) ? "" : $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {content}";
-
-                Console.BackgroundColor = ConsoleColor.Black;
-
-                try
-                {
-                    Console.ForegroundColor = color;
-                }
-                catch
-                {
-                    Console.ForegroundColor = ConsoleColor.White;
-                }
-
-                if (height > 0)
-                    Console.CursorTop += height;
-
-                Console.Write(content);
-
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.BackgroundColor = ConsoleColor.Black;
-
-                Logger.Log(content);
-            }
-        }
-
-        public static string GetTimestamp() => $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}]";
-
-        public static void WriteLine(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
-        {
-            lock (_lck)
-            {
-                content = content.Trim().Trim(ToTrim);
-                content = string.IsNullOrEmpty(content) ? string.Empty : $"{GetTimestamp()} {content}";
+                content = string.IsNullOrEmpty(content) ? string.Empty : content.Trim().Trim(ToTrim);
 
                 if (display)
                 {
@@ -72,14 +55,47 @@ namespace LocalAdmin.V2.IO
                     if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                         Console.CursorTop += height;
 
-                    Console.WriteLine(content);
+                    Console.Write($"{GetLiveViewTimestamp()} {content}");
 
                     Console.ForegroundColor = ConsoleColor.White;
                     Console.BackgroundColor = ConsoleColor.Black;
                 }
 
                 if (log)
-                    Logger.Log(content);
+                    Logger.Log($"{GetLogsTimestamp()} {content}");
+            }
+        }
+
+        public static void WriteLine(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
+        {
+            lock (_lck)
+            {
+                content = string.IsNullOrEmpty(content) ? string.Empty : content.Trim().Trim(ToTrim);
+
+                if (display)
+                {
+                    Console.BackgroundColor = ConsoleColor.Black;
+
+                    try
+                    {
+                        Console.ForegroundColor = color;
+                    }
+                    catch
+                    {
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+
+                    if (height > 0 && !Core.LocalAdmin.NoSetCursor)
+                        Console.CursorTop += height;
+
+                    Console.WriteLine($"{GetLiveViewTimestamp()} {content}");
+
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.BackgroundColor = ConsoleColor.Black;
+                }
+
+                if (log)
+                    Logger.Log($"{GetLogsTimestamp()} {content}");
             }
         }
     }

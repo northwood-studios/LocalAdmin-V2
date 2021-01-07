@@ -29,7 +29,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin : IDisposable
     {
-        public const string VersionString = "2.3.6";
+        public const string VersionString = "2.3.7";
         public static LocalAdmin? Singleton;
         public static ushort GamePort;
         private static bool _firstRun = true;
@@ -472,7 +472,7 @@ namespace LocalAdmin.V2.Core
             if (File.Exists(_scpslExecutable))
             {
                 ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
-                var redirectStreams = Configuration!.LaShowStdoutStderr || Configuration!.LaLogStdoutStderr;
+                var redirectStreams = Configuration!.LaShowStdoutStderr || Configuration!.LaLogStdoutStderr || _stdPrint;
                 
                 var startInfo = new ProcessStartInfo
                 {
@@ -492,7 +492,7 @@ namespace LocalAdmin.V2.Core
                     if (string.IsNullOrWhiteSpace(args.Data))
                         return;
 
-                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaShowStdoutStderr || _stdPrint, display: Configuration!.LaShowStdoutStderr);
+                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaLogStdoutStderr, display: Configuration!.LaShowStdoutStderr || _stdPrint);
                 };
                 
                 _gameProcess!.ErrorDataReceived += (sender, args) =>
@@ -500,7 +500,7 @@ namespace LocalAdmin.V2.Core
                     if (string.IsNullOrWhiteSpace(args.Data))
                         return;
 
-                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaShowStdoutStderr || _stdPrint, display: Configuration!.LaShowStdoutStderr);
+                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaLogStdoutStderr, display: Configuration!.LaShowStdoutStderr || _stdPrint);
                 };
                 
                 _gameProcess!.BeginOutputReadLine();

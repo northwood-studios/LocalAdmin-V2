@@ -23,13 +23,14 @@ namespace LocalAdmin.V2.IO.Logging
             _logPath = dir + $"LocalAdmin Log {DateTime.Now:yyyy-MM-dd HH.mm.ss}.txt";
             _sw = new StreamWriter(_logPath) {AutoFlush = Core.LocalAdmin.AutoFlush};
             
-            Log($"{ConsoleUtil.GetTimestamp()} Logging started.");
+            Log($"{ConsoleUtil.GetLogsTimestamp()} Logging started.");
+            Log($"{ConsoleUtil.GetLogsTimestamp()} Timezone offset: {DateTimeOffset.Now.Offset:HH:mm:ss}");
         }
 
         public static void EndLogging()
         {
             if (_sw == null) return;
-            Log($"{ConsoleUtil.GetTimestamp()} --- END OF LOG ---");
+            Log($"{ConsoleUtil.GetLogsTimestamp()} --- END OF LOG ---");
 
             _sw.Close();
             _sw.Dispose();

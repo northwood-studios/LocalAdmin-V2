@@ -9,9 +9,25 @@ namespace LocalAdmin.V2.IO
         private static readonly string[] SplitArray = {": "};
 
         public bool RestartOnCrash = true;
+        public bool LaLiveViewUseUtc;
+
+        public string LaLiveViewTimeFormat
+        {
+            get => _laLiveViewTimeFormat;
+            
+            set
+            {
+                _laLiveViewTimeFormat = value;
+                _laLiveViewTimeFormatTimezone = value.Contains("z", StringComparison.OrdinalIgnoreCase);
+                LaLiveViewTimeUtcFormat = _laLiveViewTimeFormatTimezone
+                    ? LaLiveViewTimeFormat.Replace(" z", string.Empty).Replace("z", string.Empty) : LaLiveViewTimeFormat;
+            }
+        }
+        
         public bool LaShowStdoutStderr;
         public bool LaNoSetCursor = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         public bool EnableLaLogs = true;
+        public bool LaLogsUseUtc;
         public bool LaLogAutoFlush = true;
         public bool LaLogStdoutStderr = true;
         public bool LaDeleteOldLogs = true;
@@ -21,12 +37,22 @@ namespace LocalAdmin.V2.IO
         public bool CompressOldRoundLogs;
         public ushort RoundLogsCompressionThresholdDays = 14;
 
+        private string _laLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
+        public string LaLiveViewTimeUtcFormat = "yyyy-MM-dd HH:mm:ss.fff";
+        private bool _laLiveViewTimeFormatTimezone = true;
+
         public string SerializeConfig()
         {
             var sb = new StringBuilder();
             
             sb.Append("restart_on_crash: ");
             sb.AppendLine(RestartOnCrash.ToString().ToLowerInvariant());
+            
+            sb.Append("la_live_view_use_utc: ");
+            sb.AppendLine(LaLiveViewUseUtc.ToString().ToLowerInvariant());
+            
+            sb.Append("la_live_view_time_format: ");
+            sb.AppendLine(LaLiveViewTimeFormat);
 
             sb.Append("la_show_stdout_and_stderr: ");
             sb.AppendLine(LaShowStdoutStderr.ToString().ToLowerInvariant());
@@ -36,6 +62,9 @@ namespace LocalAdmin.V2.IO
             
             sb.Append("enable_la_logs: ");
             sb.AppendLine(EnableLaLogs.ToString().ToLowerInvariant());
+            
+            sb.Append("la_logs_use_utc: ");
+            sb.AppendLine(LaLogsUseUtc.ToString().ToLowerInvariant());
             
             sb.Append("la_log_auto_flush: ");
             sb.AppendLine(LaLogAutoFlush.ToString().ToLowerInvariant());
@@ -83,6 +112,14 @@ namespace LocalAdmin.V2.IO
                         cfg.RestartOnCrash = b;
                         break;
                     
+                    case "la_live_view_use_utc" when bool.TryParse(sp[1], out var b):
+                        cfg.LaLiveViewUseUtc = b;
+                        break;
+                    
+                    case "la_live_view_time_format":
+                        cfg.LaLiveViewTimeFormat = sp[1];
+                        break;
+                    
                     case "la_show_stdout_and_stderr" when bool.TryParse(sp[1], out var b):
                         cfg.LaShowStdoutStderr = b;
                         break;
@@ -93,6 +130,10 @@ namespace LocalAdmin.V2.IO
                     
                     case "enable_la_logs" when bool.TryParse(sp[1], out var b):
                         cfg.EnableLaLogs = b;
+                        break;
+                    
+                    case "la_logs_use_utc" when bool.TryParse(sp[1], out var b):
+                        cfg.LaLogsUseUtc = b;
                         break;
                     
                     case "la_log_auto_flush" when bool.TryParse(sp[1], out var b):
@@ -149,14 +190,16 @@ namespace LocalAdmin.V2.IO
             var sb = new StringBuilder();
             
             sb.AppendLine(RestartOnCrash ? "- Server will be automatically restarted after a crash." : "- Server will NOT be automatically restarted after a crash.");
+            sb.AppendLine(LaLiveViewUseUtc ? "- LocalAdmin live view will use UTC timezone." : "- LocalAdmin live view will use local timezone.");
+            sb.AppendLine($"- LocalAdmin live will use the following timestamp format: {LaLiveViewTimeFormat}");
             sb.AppendLine(LaShowStdoutStderr ? "- Standard outputs (that contain a lot of debug information) will be displayed." : "- Standard outputs (that contain a lot of debug information) will NOT be displayed.");
             sb.AppendLine(LaNoSetCursor ? "- Cursor position management is DISABLED." : "- Cursor position management is ENABLED.");
             sb.AppendLine(EnableLaLogs ? "- LocalAdmin logs are ENABLED." : "- LocalAdmin logs are DISABLED.");
 
             if (EnableLaLogs)
             {
+                sb.AppendLine(LaLogsUseUtc ? "- LocalAdmin logs will use UTC timezone." : "- LocalAdmin logs will use local timezone.");
                 sb.AppendLine(LaLogAutoFlush ? "- LocalAdmin logs auto flushing is ENABLED." : "- LocalAdmin logs auto flushing is DISABLED.");
-
                 sb.AppendLine(LaLogStdoutStderr ? "- Standard outputs will be logged." : "- Standard outputs will NOT be logged.");
 
                 if (LaDeleteOldLogs)

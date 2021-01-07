@@ -39,12 +39,103 @@ namespace LocalAdmin.V2.Core
             }
 
             LocalAdmin.Configuration.RestartOnCrash = BoolInput("Should the server be automatically restarted after a crash?");
-            LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin console?");
+            LocalAdmin.Configuration.LaLiveViewUseUtc = !BoolInput("Should timestamps in the LocalAdmin live view use server timezone (otherwise UTC time will be use)?");
+
+            if (BoolInput("Do you want to customize time format of timestamps in the LocalAdmin live view?"))
+            {
+                var dt = DateTime.Now;
+                
+                Console.WriteLine($"1. Full timestamp: {dt:yyyy-MM-dd HH:mm:ss.fff zzz} (yyyy-MM-dd HH:mm:ss.fff zzz)");
+                Console.WriteLine($"2. Full timestamp w/o timezone: {dt:yyyy-MM-dd HH:mm:ss.fff} (yyyy-MM-dd HH:mm:ss.fff)");
+                Console.WriteLine($"3. Full timestamp w/o milliseconds: {dt:yyyy-MM-dd HH:mm:ss zzz} (yyyy-MM-dd HH:mm:ss zzz)");
+                Console.WriteLine($"4. Full timestamp w/o date: {dt:HH:mm:ss.fff zzz} (HH:mm:ss.fff zzz)");
+                Console.WriteLine($"5. Full timestamp w/o date and timezone: {dt:HH:mm:ss.fff} (HH:mm:ss.fff)");
+                Console.WriteLine($"6. Full timestamp w/o date and milliseconds: {dt:HH:mm:ss zzz} (HH:mm:ss zzz)");
+                Console.WriteLine($"7. Date and short time: {dt:yyyy-MM-dd HH:mm:ss} (yyyy-MM-dd HH:mm:ss)");
+                Console.WriteLine($"8. Date, short time and timezone: {dt:yyyy-MM-dd HH:mm:ss zzz} (yyyy-MM-dd HH:mm:ss zzz)");
+                Console.WriteLine($"9. Date, short time and milliseconds: {dt:yyyy-MM-dd HH:mm:ss.fff} (yyyy-MM-dd HH:mm:ss.fff)");
+                Console.WriteLine("10. Custom");
+                
+                Console.WriteLine("Please choose a timestamp format by specifying its number.");
+
+                var tzPassed = false;
+                
+                while (!tzPassed)
+                {
+                    var inputx = Console.ReadLine();
+                
+                    if (inputx == null || !ushort.TryParse(inputx, out var c)) continue;
+                    
+                    switch (c)
+                    {
+                        case 1:
+                            LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
+                            tzPassed = true;
+                            break;
+                        
+                        case 2:
+                            LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff";
+                            tzPassed = true;
+                            break;
+                        
+                        case 3:
+                            LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss zzz";
+                            tzPassed = true;
+                            break;
+                        
+                        case 4:
+                            LocalAdmin.Configuration.LaLiveViewTimeFormat = "HH:mm:ss.fff zzz";
+                            tzPassed = true;
+                            break;
+                        
+                        case 5:
+                            LocalAdmin.Configuration.LaLiveViewTimeFormat = "HH:mm:ss.fff";
+                            tzPassed = true;
+                            break;
+                        
+                        case 6:
+                            LocalAdmin.Configuration.LaLiveViewTimeFormat = "HH:mm:ss zzz";
+                            tzPassed = true;
+                            break;
+                        
+                        case 7:
+                            LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss";
+                            tzPassed = true;
+                            break;
+                        
+                        case 8:
+                            LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss zzz";
+                            tzPassed = true;
+                            break;
+                        
+                        case 9:
+                            LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff";
+                            tzPassed = true;
+                            break;
+                        
+                        case 10:
+                            while (true)
+                            {
+                                Console.WriteLine("Enter custom timestamp format.");
+                                LocalAdmin.Configuration.LaLiveViewTimeFormat = Console.ReadLine()!;
+                                if (!string.IsNullOrWhiteSpace(LocalAdmin.Configuration.LaLiveViewTimeFormat) &&
+                                    BoolInput("Save the specified time format?"))
+                                    break;
+                            }
+
+                            tzPassed = true;
+                            break;
+                    }
+                }
+            }
+            
+            LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin live view?");
             LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console, may cause issues especially on linux)?");
             LocalAdmin.Configuration.EnableLaLogs = BoolInput("Do you want to enable LocalAdmin logs?");
 
             if (LocalAdmin.Configuration.EnableLaLogs)
             {
+                LocalAdmin.Configuration.LaLogsUseUtc = !BoolInput("Should timestamps in the LocalAdmin logs use server timezone (otherwise UTC time will be use)?");
                 LocalAdmin.Configuration.LaLogAutoFlush = BoolInput("Should LocalAdmin logs be automatically flushed (file updated in real time - may affect performance)?");
                 LocalAdmin.Configuration.LaLogStdoutStderr = BoolInput("Do you want to enable standard outputs logging?");
                 LocalAdmin.Configuration.LaDeleteOldLogs = BoolInput("Do you want to automatically delete old LocalAdmin logs (older than a specified amount of days)?");
