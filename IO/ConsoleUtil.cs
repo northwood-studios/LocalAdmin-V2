@@ -29,7 +29,7 @@ namespace LocalAdmin.V2.IO
         
         private static string GetLiveViewUtcTimestamp() => $"[{DateTime.UtcNow.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeUtcFormat)}Z]";
 
-        private static string GetLiveViewTimestamp() => Core.LocalAdmin.Configuration != null && Core.LocalAdmin.Configuration!.LaLiveViewUseUtc
+        private static string GetLiveViewTimestamp() => Core.LocalAdmin.Configuration == null ? GetLogsLocalTimestamp() : Core.LocalAdmin.Configuration!.LaLiveViewUseUtc
             ? GetLiveViewUtcTimestamp()
             : GetLiveViewLocalTimestamp();
 
