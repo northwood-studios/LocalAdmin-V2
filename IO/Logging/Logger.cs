@@ -45,7 +45,7 @@ namespace LocalAdmin.V2.IO.Logging
             try
             {
                 if (Core.LocalAdmin.AutoFlush)
-                    File.AppendAllText(_logPath!, text);
+                    File.AppendAllText(_logPath!, text + Environment.NewLine);
                 else
                 {
                     _sb ??= new StringBuilder();
