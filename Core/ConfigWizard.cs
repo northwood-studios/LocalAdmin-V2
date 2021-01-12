@@ -7,8 +7,15 @@ namespace LocalAdmin.V2.Core
 {
     public static class ConfigWizard
     {
-        public static void RunConfigWizard()
+        public static void RunConfigWizard(bool useDefault)
         {
+            if (useDefault)
+            {
+                LocalAdmin.Configuration ??= new Config();
+                SaveConfig(true);
+                return;
+            }
+
             var curConfig = LocalAdmin.Configuration;
             
             Retry:
@@ -199,15 +206,21 @@ namespace LocalAdmin.V2.Core
             }
         }
 
-        private static void SaveConfig()
+        private static void SaveConfig(bool silent = false)
         {
             var input = "0";
-            while (!string.IsNullOrWhiteSpace(input) && !input.Equals("this", StringComparison.OrdinalIgnoreCase) &&
-                   !input.Equals("global", StringComparison.OrdinalIgnoreCase))
+            
+            if (!silent)
             {
-                Console.WriteLine($"Do you want to save the configuration only for THIS server (on port {LocalAdmin.GamePort} or should it become a GLOBAL configuration (default one for all future servers - servers not configured yet)? [this/global]: ");
-                input = Console.ReadLine();
+                while (!string.IsNullOrWhiteSpace(input) && !input.Equals("this", StringComparison.OrdinalIgnoreCase) &&
+                       !input.Equals("global", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine(
+                        $"Do you want to save the configuration only for THIS server (on port {LocalAdmin.GamePort} or should it become a GLOBAL configuration (default one for all future servers - servers not configured yet)? [this/global]: ");
+                    input = Console.ReadLine();
+                }
             }
+            else input = "this";
 
             var cfgPath =
                 $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";

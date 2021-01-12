@@ -85,6 +85,7 @@ namespace LocalAdmin.V2.Core
             try
             {
                 var reconfigure = false;
+                var useDefault = false;
                 
                 if (_firstRun)
                 {
@@ -150,6 +151,10 @@ namespace LocalAdmin.V2.Core
                                     case 's':
                                         _stdPrint = true;
                                         break;
+                                    
+                                    case 'd':
+                                        useDefault = true;
+                                        break;
                                 }
                             }
                         }
@@ -179,6 +184,10 @@ namespace LocalAdmin.V2.Core
                                 case "--printStd":
                                     _stdPrint = true;
                                     break;
+                                
+                                case "--useDefault":
+                                    useDefault = true;
+                                    break;
 
                                 case "--":
                                     passArgs = true;
@@ -202,7 +211,7 @@ namespace LocalAdmin.V2.Core
                 }
                 
                 if (reconfigure)
-                    ConfigWizard.RunConfigWizard();
+                    ConfigWizard.RunConfigWizard(useDefault);
 
                 NoSetCursor |= Configuration!.LaNoSetCursor;
                 AutoFlush &= Configuration!.LaLogAutoFlush;
