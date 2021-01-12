@@ -32,6 +32,7 @@ namespace LocalAdmin.V2.Core
         public const string VersionString = "2.3.7";
         public static LocalAdmin? Singleton;
         public static ushort GamePort;
+        public static string? ConfigPath = null;
         private static bool _firstRun = true;
 
         private readonly CommandService _commandService = new CommandService();
@@ -112,9 +113,17 @@ namespace LocalAdmin.V2.Core
                     }
 
                     var passArgs = false;
+                    var captureConfigPath = false;
 
                     foreach (var arg in args)
                     {
+                        if (captureConfigPath)
+                        {
+                            ConfigPath = arg;
+                            captureConfigPath = false;
+                            continue;
+                        }
+
                         if (passArgs)
                         {
                             _gameArguments += $"\"{arg}\" ";
@@ -188,6 +197,10 @@ namespace LocalAdmin.V2.Core
                                 case "--useDefault":
                                     useDefault = true;
                                     break;
+                                
+                                case "--config":
+                                    captureConfigPath = true;
+                                    break;
 
                                 case "--":
                                     passArgs = true;
@@ -196,20 +209,30 @@ namespace LocalAdmin.V2.Core
                     }
                 }
 
-                var cfgPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
-                
-                if (File.Exists(cfgPath))
-                    Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
+                if (ConfigPath != null)
+                {
+                    if (File.Exists(ConfigPath))
+                        Configuration = Config.DeserializeConfig(File.ReadAllLines(ConfigPath, Encoding.UTF8));
+                    else reconfigure = true;
+                }
                 else
                 {
-                    cfgPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
-                    
+                    var cfgPath =
+                        $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
+
                     if (File.Exists(cfgPath))
                         Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
                     else
-                        reconfigure = true;
+                    {
+                        cfgPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
+
+                        if (File.Exists(cfgPath))
+                            Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
+                        else
+                            reconfigure = true;
+                    }
                 }
-                
+
                 if (reconfigure)
                     ConfigWizard.RunConfigWizard(useDefault);
 
@@ -517,6 +540,20 @@ namespace LocalAdmin.V2.Core
 
                 _gameProcess!.Exited += (sender, args) =>
                 {
+                    try
+                    {
+                        if (_gameProcess != null && !_gameProcess.HasExited)
+                        {
+                            ConsoleUtil.WriteLine("Game process exited and has been killed.", ConsoleColor.Gray);
+                            _gameProcess.Kill();
+                        }
+                        else ConsoleUtil.WriteLine("Game process exited and has been killed, no need to kill it.", ConsoleColor.Gray);
+                    }
+                    catch (Exception e)
+                    {
+                        ConsoleUtil.WriteLine($"Game process exited and has been killed, can't kill it: {e.Message}.", ConsoleColor.Gray);
+                    }
+                    
                     if (_processClosing)
                         return;
 

@@ -23,7 +23,7 @@ namespace LocalAdmin.V2.Core
             Console.WriteLine();
             Console.WriteLine(
                 "We will ask you a couple of questions. You can always change your answers by running LocalAdmin with \"--reconfigure\" argument or manually editing configuration files in " +
-                LocalAdmin.GameUserDataRoot + "config directory.");
+                (LocalAdmin.ConfigPath ?? LocalAdmin.GameUserDataRoot) + "config directory.");
             Console.WriteLine();
             
             Console.WriteLine(LocalAdmin.Configuration == null ? "This is the default LocalAdmin configuration:" : "That's your current LocalAdmin configuration:");
@@ -209,6 +209,9 @@ namespace LocalAdmin.V2.Core
         private static void SaveConfig(bool silent = false)
         {
             var input = "0";
+
+            if (LocalAdmin.ConfigPath != null)
+                silent = true;
             
             if (!silent)
             {
@@ -221,6 +224,67 @@ namespace LocalAdmin.V2.Core
                 }
             }
             else input = "this";
+
+            if (LocalAdmin.ConfigPath != null)
+            {
+                var parent = Directory.GetParent(LocalAdmin.ConfigPath);
+
+                if (parent == null)
+                {
+                    Console.WriteLine("FATAL ERROR: Can't create config directory (Directory processing error).");
+                    Console.WriteLine("Path: " + LocalAdmin.ConfigPath);
+                    Environment.Exit(1);
+                    return;
+                }
+                
+                if (!parent.Exists)
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(parent.FullName);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("FATAL ERROR: Can't create config directory.");
+                        Console.WriteLine("Path: " + parent.FullName);
+                        Console.WriteLine("Exception: " + e.Message);
+                        Environment.Exit(1);
+                        return;
+                    }
+                }
+                
+                if (File.Exists(parent.FullName))
+                {
+                    try
+                    {
+                        File.Delete(parent.FullName);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("FATAL ERROR: Can't delete config file.");
+                        Console.WriteLine("Path: " + parent.FullName);
+                        Console.WriteLine("Exception: " + e.Message);
+                        Environment.Exit(1);
+                        return;
+                    }
+                }
+                
+                try
+                {
+                    File.WriteAllText(LocalAdmin.ConfigPath, LocalAdmin.Configuration!.SerializeConfig(), Encoding.UTF8);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("FATAL ERROR: Can't write config file.");
+                    Console.WriteLine("Path: " + LocalAdmin.ConfigPath);
+                    Console.WriteLine("Exception: " + e.Message);
+                    Environment.Exit(1);
+                    return;
+                }
+
+                Console.WriteLine("Configuration saved!");
+                return;
+            }
 
             var cfgPath =
                 $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
