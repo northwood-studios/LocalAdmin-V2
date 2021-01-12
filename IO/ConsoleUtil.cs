@@ -19,7 +19,7 @@ namespace LocalAdmin.V2.IO
         
         private static string GetLogsLocalTimestamp() => $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}]";
         
-        private static string GetLogsUtcTimestamp() => $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}";
+        private static string GetLogsUtcTimestamp() => $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}Z]";
         
         public static string GetLogsTimestamp() => Core.LocalAdmin.Configuration != null && Core.LocalAdmin.Configuration!.LaLogsUseUtc
             ? GetLogsUtcTimestamp()
