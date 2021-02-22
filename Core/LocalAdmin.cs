@@ -32,11 +32,12 @@ namespace LocalAdmin.V2.Core
         public const string VersionString = "2.3.7";
         public static LocalAdmin? Singleton;
         public static ushort GamePort;
-        public static string? ConfigPath = null;
+        public static string? ConfigPath, LaLogsPath, GameLogsPath;
         private static bool _firstRun = true;
 
         private readonly CommandService _commandService = new CommandService();
         private Process? _gameProcess;
+        private int _gameProcessId;
         internal TcpServer? Server { get; private set; }
         private Task? _readerTask;
         private readonly string _scpslExecutable;
@@ -45,7 +46,7 @@ namespace LocalAdmin.V2.Core
         internal static readonly string GameUserDataRoot =
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
             "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
-        private static bool _exit;
+        private static bool _exit, _processRefreshFail;
         private static readonly ConcurrentQueue<string> InputQueue = new ConcurrentQueue<string>();
         internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true;
         private static bool _stdPrint;
@@ -61,6 +62,15 @@ namespace LocalAdmin.V2.Core
             Shutdown,
             SilentShutdown,
             Restart
+        }
+
+        private enum CaptureArgs : byte
+        {
+            None,
+            ArgsPassthrough,
+            ConfigPath,
+            LaLogsPath,
+            GameLogsPath
         }
 
         internal LocalAdmin()
@@ -112,100 +122,121 @@ namespace LocalAdmin.V2.Core
                             });
                     }
 
-                    var passArgs = false;
-                    var captureConfigPath = false;
+                    var capture = CaptureArgs.None;
 
                     foreach (var arg in args)
                     {
-                        if (captureConfigPath)
+                        switch (capture)
                         {
-                            ConfigPath = arg;
-                            captureConfigPath = false;
-                            continue;
-                        }
-
-                        if (passArgs)
-                        {
-                            _gameArguments += $"\"{arg}\" ";
-                            continue;
-                        }
-
-                        if (arg.StartsWith("-", StringComparison.Ordinal) &&
-                            !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
-                        {
-                            for (int i = 1; i < arg.Length; i++)
-                            {
-                                switch (arg[i])
+                            case CaptureArgs.None:
+                                if (arg.StartsWith("-", StringComparison.Ordinal) &&
+                                    !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
                                 {
-                                    case 'c':
-                                        NoSetCursor = true;
-                                        break;
+                                    for (var i = 1; i < arg.Length; i++)
+                                    {
+                                        switch (arg[i])
+                                        {
+                                            case 'c':
+                                                NoSetCursor = true;
+                                                break;
 
-                                    case 'p':
-                                        PrintControlMessages = true;
-                                        break;
+                                            case 'p':
+                                                PrintControlMessages = true;
+                                                break;
 
-                                    case 'n':
-                                        AutoFlush = false;
-                                        break;
+                                            case 'n':
+                                                AutoFlush = false;
+                                                break;
 
-                                    case 'l':
-                                        EnableLogging = false;
-                                        break;
+                                            case 'l':
+                                                EnableLogging = false;
+                                                break;
 
-                                    case 'r':
-                                        reconfigure = true;
-                                        break;
-                                    
-                                    case 's':
-                                        _stdPrint = true;
-                                        break;
-                                    
-                                    case 'd':
-                                        useDefault = true;
-                                        break;
+                                            case 'r':
+                                                reconfigure = true;
+                                                break;
+
+                                            case 's':
+                                                _stdPrint = true;
+                                                break;
+
+                                            case 'd':
+                                                useDefault = true;
+                                                break;
+                                        }
+                                    }
                                 }
-                            }
+                                else
+                                    switch (arg)
+                                    {
+                                        case "--noSetCursor":
+                                            NoSetCursor = true;
+                                            break;
+
+                                        case "--printControl":
+                                            PrintControlMessages = true;
+                                            break;
+
+                                        case "--noAutoFlush":
+                                            AutoFlush = false;
+                                            break;
+
+                                        case "--noLogs":
+                                            EnableLogging = false;
+                                            break;
+
+                                        case "--reconfigure":
+                                            reconfigure = true;
+                                            break;
+
+                                        case "--printStd":
+                                            _stdPrint = true;
+                                            break;
+
+                                        case "--useDefault":
+                                            useDefault = true;
+                                            break;
+
+                                        case "--config":
+                                            capture = CaptureArgs.ConfigPath;
+                                            break;
+                                        
+                                        case "--logs":
+                                            capture = CaptureArgs.LaLogsPath;
+                                            break;
+                                        
+                                        case "--gameLogs":
+                                            capture = CaptureArgs.GameLogsPath;
+                                            break;
+
+                                        case "--":
+                                            capture = CaptureArgs.ArgsPassthrough;
+                                            break;
+                                    }
+                                break;
+
+                            case CaptureArgs.ArgsPassthrough:
+                                _gameArguments += $"\"{arg}\" ";
+                                break;
+
+                            case CaptureArgs.ConfigPath:
+                                ConfigPath = arg;
+                                capture = CaptureArgs.None;
+                                break;
+
+                            case CaptureArgs.LaLogsPath:
+                                LaLogsPath = arg + Path.DirectorySeparatorChar;
+                                capture = CaptureArgs.None;
+                                break;
+
+                            case CaptureArgs.GameLogsPath:
+                                GameLogsPath = arg + Path.DirectorySeparatorChar;
+                                capture = CaptureArgs.None;
+                                break;
+
+                            default:
+                                throw new ArgumentOutOfRangeException();
                         }
-                        else
-                            switch (arg)
-                            {
-                                case "--noSetCursor":
-                                    NoSetCursor = true;
-                                    break;
-
-                                case "--printControl":
-                                    PrintControlMessages = true;
-                                    break;
-
-                                case "--noAutoFlush":
-                                    AutoFlush = false;
-                                    break;
-
-                                case "--noLogs":
-                                    EnableLogging = false;
-                                    break;
-
-                                case "--reconfigure":
-                                    reconfigure = true;
-                                    break;
-                                
-                                case "--printStd":
-                                    _stdPrint = true;
-                                    break;
-                                
-                                case "--useDefault":
-                                    useDefault = true;
-                                    break;
-                                
-                                case "--config":
-                                    captureConfigPath = true;
-                                    break;
-
-                                case "--":
-                                    passArgs = true;
-                                    break;
-                            }
                     }
                 }
 
@@ -455,12 +486,45 @@ namespace LocalAdmin.V2.Core
                     else
                         ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
 
-                    if (_gameProcess != null && _gameProcess.HasExited)
+                    if (_gameProcess != null)
                     {
-                        ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
-                            ConsoleColor.Red);
-                        _exit = true;
-                        continue;
+                        try
+                        {
+                            if (_gameProcess.HasExited)
+                            {
+                                ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
+                                    ConsoleColor.Red);
+                                _exit = true;
+                                continue;
+                            }
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            if (!_processRefreshFail)
+                            {
+                                _gameProcess = Process.GetProcessById(_gameProcessId);
+                                
+                                try
+                                {
+                                    if (_gameProcess != null && _gameProcess.HasExited)
+                                    {
+                                        ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
+                                            ConsoleColor.Red);
+                                        _exit = true;
+                                        continue;
+                                    }
+                                    
+                                    ConsoleUtil.WriteLine("Refreshed process object.",
+                                        ConsoleColor.Gray);
+                                }
+                                catch (InvalidOperationException)
+                                {
+                                    ConsoleUtil.WriteLine("Failed to refresh process object.",
+                                        ConsoleColor.Red);
+                                    _processRefreshFail = true;
+                                }
+                            }
+                        }
                     }
 
                     var split = input.Split(' ');
@@ -517,6 +581,7 @@ namespace LocalAdmin.V2.Core
                 };
 
                 _gameProcess = Process.Start(startInfo);
+                _gameProcessId = _gameProcess!.Id;
 
                 if (!redirectStreams) return;
                 _gameProcess!.OutputDataReceived += (sender, args) =>

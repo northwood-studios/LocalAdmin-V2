@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using LocalAdmin.V2.IO;
@@ -52,15 +53,15 @@ namespace LocalAdmin.V2.Core
             {
                 var dt = DateTime.Now;
                 
-                Console.WriteLine($"1. Full timestamp: {dt:yyyy-MM-dd HH:mm:ss.fff zzz} (yyyy-MM-dd HH:mm:ss.fff zzz)");
-                Console.WriteLine($"2. Full timestamp w/o timezone: {dt:yyyy-MM-dd HH:mm:ss.fff} (yyyy-MM-dd HH:mm:ss.fff)");
-                Console.WriteLine($"3. Full timestamp w/o milliseconds: {dt:yyyy-MM-dd HH:mm:ss zzz} (yyyy-MM-dd HH:mm:ss zzz)");
-                Console.WriteLine($"4. Full timestamp w/o date: {dt:HH:mm:ss.fff zzz} (HH:mm:ss.fff zzz)");
-                Console.WriteLine($"5. Full timestamp w/o date and timezone: {dt:HH:mm:ss.fff} (HH:mm:ss.fff)");
-                Console.WriteLine($"6. Full timestamp w/o date and milliseconds: {dt:HH:mm:ss zzz} (HH:mm:ss zzz)");
-                Console.WriteLine($"7. Date and short time: {dt:yyyy-MM-dd HH:mm:ss} (yyyy-MM-dd HH:mm:ss)");
-                Console.WriteLine($"8. Date, short time and timezone: {dt:yyyy-MM-dd HH:mm:ss zzz} (yyyy-MM-dd HH:mm:ss zzz)");
-                Console.WriteLine($"9. Date, short time and milliseconds: {dt:yyyy-MM-dd HH:mm:ss.fff} (yyyy-MM-dd HH:mm:ss.fff)");
+                Console.WriteLine($"1. Full timestamp: {dt.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss.fff zzz)");
+                Console.WriteLine($"2. Full timestamp w/o timezone: {dt.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss.fff)");
+                Console.WriteLine($"3. Full timestamp w/o milliseconds: {dt.ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss zzz)");
+                Console.WriteLine($"4. Full timestamp w/o date: {dt.ToString("HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)} (HH:mm:ss.fff zzz)");
+                Console.WriteLine($"5. Full timestamp w/o date and timezone: {dt.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture)} (HH:mm:ss.fff)");
+                Console.WriteLine($"6. Full timestamp w/o date and milliseconds: {dt.ToString("HH:mm:ss zzz", CultureInfo.InvariantCulture)} (HH:mm:ss zzz)");
+                Console.WriteLine($"7. Date and short time: {dt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss)");
+                Console.WriteLine($"8. Date, short time and timezone: {dt.ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss zzz)");
+                Console.WriteLine($"9. Date, short time and milliseconds: {dt.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss.fff)");
                 Console.WriteLine("10. Custom");
                 
                 Console.WriteLine("Please choose a timestamp format by specifying its number.");

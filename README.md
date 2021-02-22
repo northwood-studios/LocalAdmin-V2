@@ -13,6 +13,8 @@ Linux: `./LocalAdmin [port] [arguments] [-- arguments passthrough]`
 | --- | --- | --- |
 | --reconfigure | -r | Opens configuration editor. |
 | --config [path to file] | | Changes LocalAdmin config path. |
+| --logs [path to logs folder] | | Changes LocalAdmin logs directory. |
+| --gameLogs [path to logs folder] | | Changes game logs directory.<br>**It applies only to the Log Cleaner in LocalAdmin, not the game itself!** |
 | --useDefault | -d | Uses the default config if no config is present. |
 | --printStd | -s | Redirects stdout and stderr of the game to the LocalAdmin live view. |
 | --noSetCursor | -c | Disables setting console cursor position. |
