@@ -225,12 +225,12 @@ namespace LocalAdmin.V2.Core
                                 break;
 
                             case CaptureArgs.LaLogsPath:
-                                LaLogsPath = arg;
+                                LaLogsPath = arg + Path.DirectorySeparatorChar;
                                 capture = CaptureArgs.None;
                                 break;
 
                             case CaptureArgs.GameLogsPath:
-                                GameLogsPath = arg;
+                                GameLogsPath = arg + Path.DirectorySeparatorChar;
                                 capture = CaptureArgs.None;
                                 break;
 
