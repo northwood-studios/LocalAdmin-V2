@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.IO
@@ -7,27 +8,27 @@ namespace LocalAdmin.V2.IO
     {
         private static readonly char[] ToTrim = { '\n', '\r' };
 
-        private static object _lck = new object();
+        private static readonly object Lck = new object();
 
         public static void Clear()
         {
-            lock (_lck)
+            lock (Lck)
             {
                 Console.Clear();
             }
         }
         
-        private static string GetLogsLocalTimestamp() => $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}]";
+        private static string GetLogsLocalTimestamp() => $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}]";
         
-        private static string GetLogsUtcTimestamp() => $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}Z]";
+        private static string GetLogsUtcTimestamp() => $"[{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}Z]";
         
         public static string GetLogsTimestamp() => Core.LocalAdmin.Configuration != null && Core.LocalAdmin.Configuration!.LaLogsUseUtc
             ? GetLogsUtcTimestamp()
             : GetLogsLocalTimestamp();
         
-        private static string GetLiveViewLocalTimestamp() => $"[{DateTime.Now.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeFormat)}]";
+        private static string GetLiveViewLocalTimestamp() => $"[{DateTime.Now.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeFormat, CultureInfo.InvariantCulture)}]";
         
-        private static string GetLiveViewUtcTimestamp() => $"[{DateTime.UtcNow.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeUtcFormat)}Z]";
+        private static string GetLiveViewUtcTimestamp() => $"[{DateTime.UtcNow.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeUtcFormat, CultureInfo.InvariantCulture)}Z]";
 
         private static string GetLiveViewTimestamp() => Core.LocalAdmin.Configuration == null ? GetLogsLocalTimestamp() : Core.LocalAdmin.Configuration!.LaLiveViewUseUtc
             ? GetLiveViewUtcTimestamp()
@@ -35,7 +36,7 @@ namespace LocalAdmin.V2.IO
 
         public static void Write(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
         {
-            lock (_lck)
+            lock (Lck)
             {
                 content = string.IsNullOrEmpty(content) ? string.Empty : content.Trim().Trim(ToTrim);
 
@@ -68,7 +69,7 @@ namespace LocalAdmin.V2.IO
 
         public static void WriteLine(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
         {
-            lock (_lck)
+            lock (Lck)
             {
                 content = string.IsNullOrEmpty(content) ? string.Empty : content.Trim().Trim(ToTrim);
 

@@ -32,7 +32,7 @@ namespace LocalAdmin.V2.Core
         public const string VersionString = "2.3.7";
         public static LocalAdmin? Singleton;
         public static ushort GamePort;
-        public static string? ConfigPath = null;
+        public static string? ConfigPath;
         private static bool _firstRun = true;
 
         private readonly CommandService _commandService = new CommandService();
