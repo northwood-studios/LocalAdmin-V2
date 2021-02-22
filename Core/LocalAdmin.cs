@@ -32,7 +32,7 @@ namespace LocalAdmin.V2.Core
         public const string VersionString = "2.3.7";
         public static LocalAdmin? Singleton;
         public static ushort GamePort;
-        public static string? ConfigPath;
+        public static string? ConfigPath, LaLogsPath, GameLogsPath;
         private static bool _firstRun = true;
 
         private readonly CommandService _commandService = new CommandService();
@@ -62,6 +62,15 @@ namespace LocalAdmin.V2.Core
             Shutdown,
             SilentShutdown,
             Restart
+        }
+
+        private enum CaptureArgs : byte
+        {
+            None,
+            ArgsPassthrough,
+            ConfigPath,
+            LaLogsPath,
+            GameLogsPath
         }
 
         internal LocalAdmin()
@@ -113,100 +122,121 @@ namespace LocalAdmin.V2.Core
                             });
                     }
 
-                    var passArgs = false;
-                    var captureConfigPath = false;
+                    var capture = CaptureArgs.None;
 
                     foreach (var arg in args)
                     {
-                        if (captureConfigPath)
+                        switch (capture)
                         {
-                            ConfigPath = arg;
-                            captureConfigPath = false;
-                            continue;
-                        }
-
-                        if (passArgs)
-                        {
-                            _gameArguments += $"\"{arg}\" ";
-                            continue;
-                        }
-
-                        if (arg.StartsWith("-", StringComparison.Ordinal) &&
-                            !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
-                        {
-                            for (int i = 1; i < arg.Length; i++)
-                            {
-                                switch (arg[i])
+                            case CaptureArgs.None:
+                                if (arg.StartsWith("-", StringComparison.Ordinal) &&
+                                    !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
                                 {
-                                    case 'c':
-                                        NoSetCursor = true;
-                                        break;
+                                    for (var i = 1; i < arg.Length; i++)
+                                    {
+                                        switch (arg[i])
+                                        {
+                                            case 'c':
+                                                NoSetCursor = true;
+                                                break;
 
-                                    case 'p':
-                                        PrintControlMessages = true;
-                                        break;
+                                            case 'p':
+                                                PrintControlMessages = true;
+                                                break;
 
-                                    case 'n':
-                                        AutoFlush = false;
-                                        break;
+                                            case 'n':
+                                                AutoFlush = false;
+                                                break;
 
-                                    case 'l':
-                                        EnableLogging = false;
-                                        break;
+                                            case 'l':
+                                                EnableLogging = false;
+                                                break;
 
-                                    case 'r':
-                                        reconfigure = true;
-                                        break;
-                                    
-                                    case 's':
-                                        _stdPrint = true;
-                                        break;
-                                    
-                                    case 'd':
-                                        useDefault = true;
-                                        break;
+                                            case 'r':
+                                                reconfigure = true;
+                                                break;
+
+                                            case 's':
+                                                _stdPrint = true;
+                                                break;
+
+                                            case 'd':
+                                                useDefault = true;
+                                                break;
+                                        }
+                                    }
                                 }
-                            }
+                                else
+                                    switch (arg)
+                                    {
+                                        case "--noSetCursor":
+                                            NoSetCursor = true;
+                                            break;
+
+                                        case "--printControl":
+                                            PrintControlMessages = true;
+                                            break;
+
+                                        case "--noAutoFlush":
+                                            AutoFlush = false;
+                                            break;
+
+                                        case "--noLogs":
+                                            EnableLogging = false;
+                                            break;
+
+                                        case "--reconfigure":
+                                            reconfigure = true;
+                                            break;
+
+                                        case "--printStd":
+                                            _stdPrint = true;
+                                            break;
+
+                                        case "--useDefault":
+                                            useDefault = true;
+                                            break;
+
+                                        case "--config":
+                                            capture = CaptureArgs.ConfigPath;
+                                            break;
+                                        
+                                        case "--logs":
+                                            capture = CaptureArgs.LaLogsPath;
+                                            break;
+                                        
+                                        case "--gameLogs":
+                                            capture = CaptureArgs.GameLogsPath;
+                                            break;
+
+                                        case "--":
+                                            capture = CaptureArgs.ArgsPassthrough;
+                                            break;
+                                    }
+                                break;
+
+                            case CaptureArgs.ArgsPassthrough:
+                                _gameArguments += $"\"{arg}\" ";
+                                break;
+
+                            case CaptureArgs.ConfigPath:
+                                ConfigPath = arg;
+                                capture = CaptureArgs.None;
+                                break;
+
+                            case CaptureArgs.LaLogsPath:
+                                LaLogsPath = arg;
+                                capture = CaptureArgs.None;
+                                break;
+
+                            case CaptureArgs.GameLogsPath:
+                                GameLogsPath = arg;
+                                capture = CaptureArgs.None;
+                                break;
+
+                            default:
+                                throw new ArgumentOutOfRangeException();
                         }
-                        else
-                            switch (arg)
-                            {
-                                case "--noSetCursor":
-                                    NoSetCursor = true;
-                                    break;
-
-                                case "--printControl":
-                                    PrintControlMessages = true;
-                                    break;
-
-                                case "--noAutoFlush":
-                                    AutoFlush = false;
-                                    break;
-
-                                case "--noLogs":
-                                    EnableLogging = false;
-                                    break;
-
-                                case "--reconfigure":
-                                    reconfigure = true;
-                                    break;
-                                
-                                case "--printStd":
-                                    _stdPrint = true;
-                                    break;
-                                
-                                case "--useDefault":
-                                    useDefault = true;
-                                    break;
-                                
-                                case "--config":
-                                    captureConfigPath = true;
-                                    break;
-
-                                case "--":
-                                    passArgs = true;
-                                    break;
-                            }
                     }
                 }
 
