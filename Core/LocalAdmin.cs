@@ -37,6 +37,7 @@ namespace LocalAdmin.V2.Core
 
         private readonly CommandService _commandService = new CommandService();
         private Process? _gameProcess;
+        private int _gameProcessId;
         internal TcpServer? Server { get; private set; }
         private Task? _readerTask;
         private readonly string _scpslExecutable;
@@ -45,7 +46,7 @@ namespace LocalAdmin.V2.Core
         internal static readonly string GameUserDataRoot =
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
             "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
-        private static bool _exit;
+        private static bool _exit, _processRefreshFail;
         private static readonly ConcurrentQueue<string> InputQueue = new ConcurrentQueue<string>();
         internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true;
         private static bool _stdPrint;
@@ -455,12 +456,45 @@ namespace LocalAdmin.V2.Core
                     else
                         ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
 
-                    if (_gameProcess != null && _gameProcess.HasExited)
+                    if (_gameProcess != null)
                     {
-                        ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
-                            ConsoleColor.Red);
-                        _exit = true;
-                        continue;
+                        try
+                        {
+                            if (_gameProcess.HasExited)
+                            {
+                                ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
+                                    ConsoleColor.Red);
+                                _exit = true;
+                                continue;
+                            }
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            if (!_processRefreshFail)
+                            {
+                                _gameProcess = Process.GetProcessById(_gameProcessId);
+                                
+                                try
+                                {
+                                    if (_gameProcess != null && _gameProcess.HasExited)
+                                    {
+                                        ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
+                                            ConsoleColor.Red);
+                                        _exit = true;
+                                        continue;
+                                    }
+                                    
+                                    ConsoleUtil.WriteLine("Refreshed process object.",
+                                        ConsoleColor.Gray);
+                                }
+                                catch (InvalidOperationException)
+                                {
+                                    ConsoleUtil.WriteLine("Failed to refresh process object.",
+                                        ConsoleColor.Red);
+                                    _processRefreshFail = true;
+                                }
+                            }
+                        }
                     }
 
                     var split = input.Split(' ');
@@ -517,6 +551,7 @@ namespace LocalAdmin.V2.Core
                 };
 
                 _gameProcess = Process.Start(startInfo);
+                _gameProcessId = _gameProcess!.Id;
 
                 if (!redirectStreams) return;
                 _gameProcess!.OutputDataReceived += (sender, args) =>
