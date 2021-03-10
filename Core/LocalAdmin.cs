@@ -683,7 +683,7 @@ namespace LocalAdmin.V2.Core
                     {
                         case ShutdownAction.Crash:
                             ConsoleUtil.WriteLine("The game process has been terminated...", ConsoleColor.Red);
-                            Exit(0, true, Configuration.RestartOnCrash);
+                            Exit(0, true);
                             break;
                         
                         case ShutdownAction.Shutdown:
