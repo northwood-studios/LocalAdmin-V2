@@ -70,14 +70,14 @@ namespace LocalAdmin.V2.IO.Logging
                 if (_totalEntries > Core.LocalAdmin.LogEntriesLimit && Core.LocalAdmin.LogEntriesLimit > 0)
                 {
                     _logging = false;
-                    AppendLog("Log entries limit exceeded. Logging Stopped.", bypass: true);
+                    AppendLog($"{ConsoleUtil.GetLogsTimestamp()} Log entries limit exceeded. Logging stopped.", bypass: true);
                     EndLogging(true);
                 }
                 
                 if (_totalLength > Core.LocalAdmin.LogLengthLimit && Core.LocalAdmin.LogLengthLimit > 0)
                 {
                     _logging = false;
-                    AppendLog("Log length limit exceeded. Logging Stopped.", bypass: true);
+                    AppendLog($"{ConsoleUtil.GetLogsTimestamp()} Log length limit exceeded. Logging stopped.", bypass: true);
                     EndLogging(true);
                 }
             }
