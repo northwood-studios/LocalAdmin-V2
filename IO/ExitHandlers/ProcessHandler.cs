@@ -16,8 +16,9 @@ namespace LocalAdmin.V2.IO.ExitHandlers
 
         private static void Exit(object? sender, EventArgs e)
         {
-            if (Core.LocalAdmin.Singleton != null)
-                Core.LocalAdmin.Singleton.Exit(0);
+            if (Core.LocalAdmin.Singleton == null) return;
+            Core.LocalAdmin.Singleton!.ExitAction = Core.LocalAdmin.ShutdownAction.SilentShutdown;
+            Core.LocalAdmin.Singleton.Exit(0);
         }
     }
 }

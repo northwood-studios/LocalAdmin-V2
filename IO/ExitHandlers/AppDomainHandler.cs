@@ -22,7 +22,10 @@ namespace LocalAdmin.V2.IO.ExitHandlers
         private static void DomandUnload(object? sender, EventArgs e)
         {
             if (Core.LocalAdmin.Singleton != null)
+            {
+                Core.LocalAdmin.Singleton.ExitAction = Core.LocalAdmin.ShutdownAction.SilentShutdown;
                 Core.LocalAdmin.Singleton.Exit(0);
+            }
         }
 
         private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
