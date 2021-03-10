@@ -32,10 +32,10 @@ namespace LocalAdmin.V2.IO.Logging
             Log($"{ConsoleUtil.GetLogsTimestamp()} Timezone offset: {DateTimeOffset.Now:zzz}");
         }
 
-        public static void EndLogging()
+        public static void EndLogging(bool bypass = false)
         {
-            if (!_logging) return;
-            Log($"{ConsoleUtil.GetLogsTimestamp()} --- END OF LOG ---", true);
+            if (!_logging && !bypass) return;
+            AppendLog($"{ConsoleUtil.GetLogsTimestamp()} --- END OF LOG ---", true, true);
 
             _logging = false;
             _sb = null;
@@ -43,7 +43,7 @@ namespace LocalAdmin.V2.IO.Logging
 
         private static void AppendLog(string text, bool flush = false, bool bypass = false)
         {
-            if (!_logging) return;
+            if (!_logging && !bypass) return;
             
             try
             {
@@ -69,14 +69,16 @@ namespace LocalAdmin.V2.IO.Logging
 
                 if (_totalEntries > Core.LocalAdmin.LogEntriesLimit && Core.LocalAdmin.LogEntriesLimit > 0)
                 {
+                    _logging = false;
                     AppendLog("Log entries limit exceeded. Logging Stopped.", bypass: true);
-                    EndLogging();
+                    EndLogging(true);
                 }
                 
                 if (_totalLength > Core.LocalAdmin.LogLengthLimit && Core.LocalAdmin.LogLengthLimit > 0)
                 {
+                    _logging = false;
                     AppendLog("Log length limit exceeded. Logging Stopped.", bypass: true);
-                    EndLogging();
+                    EndLogging(true);
                 }
             }
             catch (Exception e)
@@ -84,7 +86,7 @@ namespace LocalAdmin.V2.IO.Logging
                 Console.Write("Failed to write log: " + e.Message);
             }
         }
-        
+
         public static void Log(string text, bool flush = false) => AppendLog(text, flush);
 
         public static void Log(object obj, bool flush = false) => AppendLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] {obj}", flush);
