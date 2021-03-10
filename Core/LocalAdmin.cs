@@ -56,6 +56,8 @@ namespace LocalAdmin.V2.Core
         private static bool _ignoreNextRestart;
         private static readonly Stopwatch RestartsStopwatch = new Stopwatch();
 
+        internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000; 
+
         internal static Config? Configuration;
 
         internal ShutdownAction ExitAction = ShutdownAction.Crash;
@@ -76,7 +78,9 @@ namespace LocalAdmin.V2.Core
             LaLogsPath,
             GameLogsPath,
             RestartsLimit,
-            RestartsTimeWindow
+            RestartsTimeWindow,
+            LogLengthLimit,
+            LogEntriesLimit
         }
 
         internal LocalAdmin()
@@ -247,6 +251,14 @@ namespace LocalAdmin.V2.Core
                                         case "--restartsTimeWindow":
                                             capture = CaptureArgs.RestartsTimeWindow;
                                             break;
+                                        
+                                        case "--logLengthLimit":
+                                            capture = CaptureArgs.LogLengthLimit;
+                                            break;
+                                        
+                                        case "--logEntriesLimit":
+                                            capture = CaptureArgs.LogEntriesLimit;
+                                            break;
 
                                         case "--":
                                             capture = CaptureArgs.ArgsPassthrough;
@@ -289,6 +301,42 @@ namespace LocalAdmin.V2.Core
                                     ConsoleUtil.WriteLine("restartsTimeWindow argument value must be an integer greater or equal to 0.", ConsoleColor.Red);
                                 }
                                 capture = CaptureArgs.None;
+                                break;
+
+                            case CaptureArgs.LogLengthLimit:
+                            {
+                                string a = arg.Replace("k", "000", StringComparison.Ordinal)
+                                    .Replace("M", "000000", StringComparison.Ordinal)
+                                    .Replace("G", "000000000", StringComparison.Ordinal)
+                                    .Replace("T", "000000000000", StringComparison.Ordinal);
+                                if (!ulong.TryParse(a, out LogLengthLimit))
+                                {
+                                    ConsoleUtil.WriteLine(
+                                        "logLengthLimit argument value must be an integer greater or equal to 0.",
+                                        ConsoleColor.Red);
+                                    LogLengthLimit = 25000000000;
+                                }
+
+                                capture = CaptureArgs.None;
+                            }
+                                break;
+
+                            case CaptureArgs.LogEntriesLimit:
+                            {
+                                string a = arg.Replace("k", "000", StringComparison.Ordinal)
+                                    .Replace("M", "000000", StringComparison.Ordinal)
+                                    .Replace("G", "000000000", StringComparison.Ordinal)
+                                    .Replace("T", "000000000000", StringComparison.Ordinal);
+                                if (!ulong.TryParse(a, out LogEntriesLimit))
+                                {
+                                    ConsoleUtil.WriteLine(
+                                        "logEntriesLimit argument value must be an integer greater or equal to 0.",
+                                        ConsoleColor.Red);
+                                    LogEntriesLimit = 10000000000;
+                                }
+
+                                capture = CaptureArgs.None;
+                            }
                                 break;
 
                             default:
