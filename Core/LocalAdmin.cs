@@ -591,7 +591,7 @@ namespace LocalAdmin.V2.Core
                     else
                         ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
 
-                    if (_gameProcess != null)
+                    if (!_processRefreshFail && _gameProcess != null)
                     {
                         try
                         {
@@ -622,9 +622,9 @@ namespace LocalAdmin.V2.Core
                                     ConsoleUtil.WriteLine("Refreshed process object.",
                                         ConsoleColor.Gray);
                                 }
-                                catch (InvalidOperationException)
+                                catch (Exception e)
                                 {
-                                    ConsoleUtil.WriteLine("Failed to refresh process object.",
+                                    ConsoleUtil.WriteLine($"Failed to refresh process object: {e.Message}",
                                         ConsoleColor.Red);
                                     _processRefreshFail = true;
                                 }
