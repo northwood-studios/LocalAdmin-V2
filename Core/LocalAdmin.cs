@@ -52,6 +52,10 @@ namespace LocalAdmin.V2.Core
         private static bool _stdPrint;
         private volatile bool _processClosing;
 
+        private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
+        private static bool _ignoreNextRestart;
+        private static readonly Stopwatch RestartsStopwatch = new Stopwatch();
+
         internal static Config? Configuration;
 
         internal ShutdownAction ExitAction = ShutdownAction.Crash;
@@ -70,7 +74,9 @@ namespace LocalAdmin.V2.Core
             ArgsPassthrough,
             ConfigPath,
             LaLogsPath,
-            GameLogsPath
+            GameLogsPath,
+            RestartsLimit,
+            RestartsTimeWindow
         }
 
         internal LocalAdmin()
@@ -92,6 +98,31 @@ namespace LocalAdmin.V2.Core
         {
             Singleton = this;
             Console.Title = BaseWindowTitle;
+
+            if (_restartsLimit > -1)
+            {
+                if (_restartsTimeWindow > 0)
+                {
+                    if (!RestartsStopwatch.IsRunning)
+                        RestartsStopwatch.Start();
+                    else if (RestartsStopwatch.Elapsed.TotalSeconds > _restartsTimeWindow)
+                    {
+                        RestartsStopwatch.Restart();
+                        _restarts = 0;
+                    }
+                }
+
+                if (!_ignoreNextRestart)
+                    _restarts++;
+                else _ignoreNextRestart = false;
+
+                if (_restarts > _restartsLimit)
+                {
+                    ConsoleUtil.WriteLine("Restarts limit exceeded.", ConsoleColor.Red);
+                    ExitAction = ShutdownAction.SilentShutdown;
+                    Exit(1);
+                }
+            }
 
             try
             {
@@ -208,6 +239,14 @@ namespace LocalAdmin.V2.Core
                                         case "--gameLogs":
                                             capture = CaptureArgs.GameLogsPath;
                                             break;
+                                        
+                                        case "--restartsLimit":
+                                            capture = CaptureArgs.RestartsLimit;
+                                            break;
+                                        
+                                        case "--restartsTimeWindow":
+                                            capture = CaptureArgs.RestartsTimeWindow;
+                                            break;
 
                                         case "--":
                                             capture = CaptureArgs.ArgsPassthrough;
@@ -231,6 +270,24 @@ namespace LocalAdmin.V2.Core
 
                             case CaptureArgs.GameLogsPath:
                                 GameLogsPath = arg + Path.DirectorySeparatorChar;
+                                capture = CaptureArgs.None;
+                                break;
+                            
+                            case CaptureArgs.RestartsLimit:
+                                if (!int.TryParse(arg, out _restartsLimit) || _restartsLimit < -1)
+                                {
+                                    _restartsLimit = 4;
+                                    ConsoleUtil.WriteLine("restartsLimit argument value must be an integer greater or equal to -1.", ConsoleColor.Red);
+                                }
+                                capture = CaptureArgs.None;
+                                break;
+                            
+                            case CaptureArgs.RestartsTimeWindow:
+                                if (!int.TryParse(arg, out _restartsTimeWindow) || _restartsLimit < 0)
+                                {
+                                    _restartsTimeWindow = 480;
+                                    ConsoleUtil.WriteLine("restartsTimeWindow argument value must be an integer greater or equal to 0.", ConsoleColor.Red);
+                                }
                                 capture = CaptureArgs.None;
                                 break;
 
@@ -626,7 +683,7 @@ namespace LocalAdmin.V2.Core
                     {
                         case ShutdownAction.Crash:
                             ConsoleUtil.WriteLine("The game process has been terminated...", ConsoleColor.Red);
-                            Exit(0, true, Configuration.RestartOnCrash);
+                            Exit(0, true);
                             break;
                         
                         case ShutdownAction.Shutdown:
@@ -719,7 +776,13 @@ namespace LocalAdmin.V2.Core
                     //Ignore
                 }
 
-                if (restart || ExitAction == ShutdownAction.Restart || ExitAction == ShutdownAction.Crash && Configuration != null && Configuration.RestartOnCrash)
+                if (restart || ExitAction == ShutdownAction.Restart)
+                {
+                    _ignoreNextRestart = true;
+                    return;
+                }
+
+                if (ExitAction == ShutdownAction.Crash && Configuration != null && Configuration.RestartOnCrash)
                     return;
                 
                 if (waitForKey && ExitAction != ShutdownAction.SilentShutdown)

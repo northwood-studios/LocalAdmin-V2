@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.IO
@@ -14,7 +15,14 @@ namespace LocalAdmin.V2.IO
         {
             lock (Lck)
             {
-                Console.Clear();
+                try
+                {
+                    Console.Clear();
+                }
+                catch (IOException)
+                {
+                    //Ignore
+                }
             }
         }
         
