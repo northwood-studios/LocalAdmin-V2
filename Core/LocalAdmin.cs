@@ -607,10 +607,10 @@ namespace LocalAdmin.V2.Core
                         {
                             if (!_processRefreshFail)
                             {
-                                _gameProcess = Process.GetProcessById(_gameProcessId);
-                                
                                 try
                                 {
+                                    _gameProcess = Process.GetProcessById(_gameProcessId);
+                                    
                                     if (_gameProcess != null && _gameProcess.HasExited)
                                     {
                                         ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
