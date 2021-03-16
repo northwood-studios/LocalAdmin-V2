@@ -29,7 +29,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin : IDisposable
     {
-        public const string VersionString = "2.4.1";
+        public const string VersionString = "2.4.2";
         public static LocalAdmin? Singleton;
         public static ushort GamePort;
         public static string? ConfigPath, LaLogsPath, GameLogsPath;
@@ -37,7 +37,6 @@ namespace LocalAdmin.V2.Core
 
         private readonly CommandService _commandService = new CommandService();
         private Process? _gameProcess;
-        private int _gameProcessId;
         internal TcpServer? Server { get; private set; }
         private Task? _readerTask;
         private readonly string _scpslExecutable;
@@ -603,32 +602,9 @@ namespace LocalAdmin.V2.Core
                                 continue;
                             }
                         }
-                        catch (InvalidOperationException)
+                        catch
                         {
-                            if (!_processRefreshFail)
-                            {
-                                try
-                                {
-                                    _gameProcess = Process.GetProcessById(_gameProcessId);
-                                    
-                                    if (_gameProcess != null && _gameProcess.HasExited)
-                                    {
-                                        ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
-                                            ConsoleColor.Red);
-                                        _exit = true;
-                                        continue;
-                                    }
-                                    
-                                    ConsoleUtil.WriteLine("Refreshed process object.",
-                                        ConsoleColor.Gray);
-                                }
-                                catch (Exception e)
-                                {
-                                    ConsoleUtil.WriteLine($"Failed to refresh process object: {e.Message}",
-                                        ConsoleColor.Red);
-                                    _processRefreshFail = true;
-                                }
-                            }
+                            _processRefreshFail = true;
                         }
                     }
 
@@ -686,7 +662,6 @@ namespace LocalAdmin.V2.Core
                 };
 
                 _gameProcess = Process.Start(startInfo);
-                _gameProcessId = _gameProcess!.Id;
 
                 if (!redirectStreams) return;
                 _gameProcess!.OutputDataReceived += (sender, args) =>
