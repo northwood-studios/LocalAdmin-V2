@@ -11,14 +11,14 @@ namespace LocalAdmin.V2.IO.Logging
         private static string? _logPath;
         private static ulong _totalLength, _totalEntries;
         internal const string LogFolderName = "LocalAdminLogs";
-        
+
         public static void Initialize()
         {
             if (!Core.LocalAdmin.EnableLogging)
                 return;
             if (_logging)
                 EndLogging();
-            
+
             string dir = Core.LocalAdmin.LaLogsPath ?? Core.LocalAdmin.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.GamePort + Path.DirectorySeparatorChar;
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
@@ -44,7 +44,7 @@ namespace LocalAdmin.V2.IO.Logging
         private static void AppendLog(string text, bool flush = false, bool bypass = false)
         {
             if (!_logging && !bypass) return;
-            
+
             try
             {
                 if (Core.LocalAdmin.AutoFlush)
@@ -63,7 +63,7 @@ namespace LocalAdmin.V2.IO.Logging
 
                 if (bypass)
                     return;
-                
+
                 _totalEntries++;
                 _totalLength += (uint)text.Length;
 
@@ -73,7 +73,7 @@ namespace LocalAdmin.V2.IO.Logging
                     AppendLog($"{ConsoleUtil.GetLogsTimestamp()} Log entries limit exceeded. Logging stopped.", bypass: true);
                     EndLogging(true);
                 }
-                
+
                 if (_totalLength > Core.LocalAdmin.LogLengthLimit && Core.LocalAdmin.LogLengthLimit > 0)
                 {
                     _logging = false;

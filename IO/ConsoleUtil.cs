@@ -1,7 +1,7 @@
-﻿using System;
+﻿using LocalAdmin.V2.IO.Logging;
+using System;
 using System.Globalization;
 using System.IO;
-using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.IO
 {
@@ -25,17 +25,17 @@ namespace LocalAdmin.V2.IO
                 }
             }
         }
-        
+
         private static string GetLogsLocalTimestamp() => $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}]";
-        
+
         private static string GetLogsUtcTimestamp() => $"[{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}Z]";
-        
+
         public static string GetLogsTimestamp() => Core.LocalAdmin.Configuration != null && Core.LocalAdmin.Configuration!.LaLogsUseUtc
             ? GetLogsUtcTimestamp()
             : GetLogsLocalTimestamp();
-        
+
         private static string GetLiveViewLocalTimestamp() => $"[{DateTime.Now.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeFormat, CultureInfo.InvariantCulture)}]";
-        
+
         private static string GetLiveViewUtcTimestamp() => $"[{DateTime.UtcNow.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeUtcFormat, CultureInfo.InvariantCulture)}Z]";
 
         private static string GetLiveViewTimestamp() => Core.LocalAdmin.Configuration == null ? GetLogsLocalTimestamp() : Core.LocalAdmin.Configuration!.LaLiveViewUseUtc

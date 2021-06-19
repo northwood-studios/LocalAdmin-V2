@@ -1,8 +1,8 @@
+using LocalAdmin.V2.IO;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using LocalAdmin.V2.IO;
 
 namespace LocalAdmin.V2.Core
 {
@@ -17,22 +17,22 @@ namespace LocalAdmin.V2.Core
                 return;
             }
 
-            var curConfig = LocalAdmin.Configuration;
-            
-            Retry:
+            Config? curConfig = LocalAdmin.Configuration;
+
+        Retry:
             Console.WriteLine("Welcome to LocalAdmin Configuration Wizard!");
             Console.WriteLine();
             Console.WriteLine(
                 "We will ask you a couple of questions. You can always change your answers by running LocalAdmin with \"--reconfigure\" argument or manually editing configuration files in " +
                 (LocalAdmin.ConfigPath ?? LocalAdmin.GameUserDataRoot) + "config directory.");
             Console.WriteLine();
-            
+
             Console.WriteLine(LocalAdmin.Configuration == null ? "This is the default LocalAdmin configuration:" : "That's your current LocalAdmin configuration:");
             LocalAdmin.Configuration ??= new Config();
             Console.WriteLine(LocalAdmin.Configuration.ToString());
-            
+
             Console.WriteLine();
-            var input = "0";
+            string? input = "0";
             while (!string.IsNullOrWhiteSpace(input) && !input.Equals("edit", StringComparison.OrdinalIgnoreCase) &&
                    !input.Equals("keep", StringComparison.OrdinalIgnoreCase))
             {
@@ -51,8 +51,8 @@ namespace LocalAdmin.V2.Core
 
             if (BoolInput("Do you want to customize time format of timestamps in the LocalAdmin live view?"))
             {
-                var dt = DateTime.Now;
-                
+                DateTime dt = DateTime.Now;
+
                 Console.WriteLine($"1. Full timestamp: {dt.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss.fff zzz)");
                 Console.WriteLine($"2. Full timestamp w/o timezone: {dt.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss.fff)");
                 Console.WriteLine($"3. Full timestamp w/o milliseconds: {dt.ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss zzz)");
@@ -63,64 +63,64 @@ namespace LocalAdmin.V2.Core
                 Console.WriteLine($"8. Date, short time and timezone: {dt.ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss zzz)");
                 Console.WriteLine($"9. Date, short time and milliseconds: {dt.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)} (yyyy-MM-dd HH:mm:ss.fff)");
                 Console.WriteLine("10. Custom");
-                
+
                 Console.WriteLine("Please choose a timestamp format by specifying its number.");
 
-                var tzPassed = false;
-                
+                bool tzPassed = false;
+
                 while (!tzPassed)
                 {
-                    var inputx = Console.ReadLine();
-                
-                    if (inputx == null || !ushort.TryParse(inputx, out var c)) continue;
-                    
+                    string? inputx = Console.ReadLine();
+
+                    if (inputx == null || !ushort.TryParse(inputx, out ushort c)) continue;
+
                     switch (c)
                     {
                         case 1:
                             LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
                             tzPassed = true;
                             break;
-                        
+
                         case 2:
                             LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff";
                             tzPassed = true;
                             break;
-                        
+
                         case 3:
                             LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss zzz";
                             tzPassed = true;
                             break;
-                        
+
                         case 4:
                             LocalAdmin.Configuration.LaLiveViewTimeFormat = "HH:mm:ss.fff zzz";
                             tzPassed = true;
                             break;
-                        
+
                         case 5:
                             LocalAdmin.Configuration.LaLiveViewTimeFormat = "HH:mm:ss.fff";
                             tzPassed = true;
                             break;
-                        
+
                         case 6:
                             LocalAdmin.Configuration.LaLiveViewTimeFormat = "HH:mm:ss zzz";
                             tzPassed = true;
                             break;
-                        
+
                         case 7:
                             LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss";
                             tzPassed = true;
                             break;
-                        
+
                         case 8:
                             LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss zzz";
                             tzPassed = true;
                             break;
-                        
+
                         case 9:
                             LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff";
                             tzPassed = true;
                             break;
-                        
+
                         case 10:
                             while (true)
                             {
@@ -136,7 +136,7 @@ namespace LocalAdmin.V2.Core
                     }
                 }
             }
-            
+
             LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin live view?");
             LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console, may cause issues especially on linux)?");
             LocalAdmin.Configuration.EnableLaLogs = BoolInput("Do you want to enable LocalAdmin logs?");
@@ -147,19 +147,19 @@ namespace LocalAdmin.V2.Core
                 LocalAdmin.Configuration.LaLogAutoFlush = BoolInput("Should LocalAdmin logs be automatically flushed (file updated in real time - may affect performance)?");
                 LocalAdmin.Configuration.LaLogStdoutStderr = BoolInput("Do you want to enable standard outputs logging?");
                 LocalAdmin.Configuration.LaDeleteOldLogs = BoolInput("Do you want to automatically delete old LocalAdmin logs (older than a specified amount of days)?");
-                
+
                 if (LocalAdmin.Configuration.LaDeleteOldLogs)
                     LocalAdmin.Configuration.LaLogsExpirationDays = UshortInput("How many days LocalAdmin logs should be kept?");
             }
-            
+
             LocalAdmin.Configuration.DeleteOldRoundLogs = BoolInput("Do you want to automatically delete old round logs (older than a specified amount of days)?");
             if (LocalAdmin.Configuration.DeleteOldRoundLogs)
                 LocalAdmin.Configuration.RoundLogsExpirationDays = UshortInput("How many days round logs should be kept?");
-            
+
             LocalAdmin.Configuration.CompressOldRoundLogs = BoolInput("Do you want to automatically compress old round logs (older than a specified amount of days)?");
             if (LocalAdmin.Configuration.CompressOldRoundLogs)
                 LocalAdmin.Configuration.RoundLogsCompressionThresholdDays = UshortInput("How many days round logs should be kept uncompressed?");
-            
+
             Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine("Your new configuration:");
@@ -171,7 +171,7 @@ namespace LocalAdmin.V2.Core
                 SaveConfig();
                 return;
             }
-            
+
             Console.WriteLine();
             LocalAdmin.Configuration = curConfig;
             goto Retry;
@@ -182,8 +182,8 @@ namespace LocalAdmin.V2.Core
             while (true)
             {
                 Console.WriteLine(question + " [yes/no]: ");
-                var input = Console.ReadLine();
-                
+                string? input = Console.ReadLine();
+
                 if (input == null) continue;
                 if (input.Equals("y", StringComparison.OrdinalIgnoreCase) ||
                     input.Equals("yes", StringComparison.OrdinalIgnoreCase))
@@ -193,27 +193,27 @@ namespace LocalAdmin.V2.Core
                     return false;
             }
         }
-        
+
         private static ushort UshortInput(string question)
         {
             while (true)
             {
                 Console.WriteLine(question + " ");
-                var input = Console.ReadLine();
-                
+                string? input = Console.ReadLine();
+
                 if (input == null) continue;
-                if (ushort.TryParse(input, out var u))
+                if (ushort.TryParse(input, out ushort u))
                     return u;
             }
         }
 
         private static void SaveConfig(bool silent = false)
         {
-            var input = "0";
+            string? input = "0";
 
             if (LocalAdmin.ConfigPath != null)
                 silent = true;
-            
+
             if (!silent)
             {
                 while (!string.IsNullOrWhiteSpace(input) && !input.Equals("this", StringComparison.OrdinalIgnoreCase) &&
@@ -228,7 +228,7 @@ namespace LocalAdmin.V2.Core
 
             if (LocalAdmin.ConfigPath != null)
             {
-                var parent = Directory.GetParent(LocalAdmin.ConfigPath);
+                DirectoryInfo? parent = Directory.GetParent(LocalAdmin.ConfigPath);
 
                 if (parent == null)
                 {
@@ -237,7 +237,7 @@ namespace LocalAdmin.V2.Core
                     Environment.Exit(1);
                     return;
                 }
-                
+
                 if (!parent.Exists)
                 {
                     try
@@ -253,7 +253,7 @@ namespace LocalAdmin.V2.Core
                         return;
                     }
                 }
-                
+
                 if (File.Exists(parent.FullName))
                 {
                     try
@@ -269,7 +269,7 @@ namespace LocalAdmin.V2.Core
                         return;
                     }
                 }
-                
+
                 try
                 {
                     File.WriteAllText(LocalAdmin.ConfigPath, LocalAdmin.Configuration!.SerializeConfig(), Encoding.UTF8);
@@ -287,7 +287,7 @@ namespace LocalAdmin.V2.Core
                 return;
             }
 
-            var cfgPath =
+            string? cfgPath =
                 $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
 
             if (!Directory.Exists(cfgPath))
@@ -305,7 +305,7 @@ namespace LocalAdmin.V2.Core
                     return;
                 }
             }
-            
+
             cfgPath += "config_localadmin.txt";
 
             if (input != null && input.Equals("this", StringComparison.OrdinalIgnoreCase))
@@ -342,7 +342,7 @@ namespace LocalAdmin.V2.Core
                 Console.WriteLine("Configuration saved!");
                 return;
             }
-            
+
             if (File.Exists(cfgPath))
             {
                 try
@@ -358,9 +358,9 @@ namespace LocalAdmin.V2.Core
                     return;
                 }
             }
-            
+
             cfgPath = $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}";
-            
+
             if (!Directory.Exists(cfgPath))
             {
                 try
@@ -378,7 +378,7 @@ namespace LocalAdmin.V2.Core
             }
 
             cfgPath += "config_localadmin_global.txt";
-            
+
             if (File.Exists(cfgPath))
             {
                 try
@@ -394,7 +394,7 @@ namespace LocalAdmin.V2.Core
                     return;
                 }
             }
-            
+
             try
             {
                 File.WriteAllText(cfgPath, LocalAdmin.Configuration!.SerializeConfig(), Encoding.UTF8);

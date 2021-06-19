@@ -35,14 +35,14 @@ namespace LocalAdmin.V2.IO.ExitHandlers
                 if (e.ExceptionObject is Exception ex)
                 {
                     ConsoleUtil.WriteLine($"Unhandled Exception: {ex}", ConsoleColor.Red);
-                    
+
                     if (Core.LocalAdmin.Singleton != null)
                         Core.LocalAdmin.Singleton.Exit(ex.HResult);
                 }
                 else
                 {
                     ConsoleUtil.WriteLine("Unhandled Exception!", ConsoleColor.Red);
-                    
+
                     if (Core.LocalAdmin.Singleton != null)
                         Core.LocalAdmin.Singleton.Exit(1);
                 }

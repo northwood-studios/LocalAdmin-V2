@@ -9,7 +9,7 @@ namespace LocalAdmin.V2.IO.ExitHandlers
 
         public void Setup()
         {
-            var process = Process.GetCurrentProcess();
+            Process? process = Process.GetCurrentProcess();
             process.EnableRaisingEvents = true;
             process.Exited += Exit;
         }
