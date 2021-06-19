@@ -74,16 +74,16 @@ namespace LocalAdmin.V2.Core
 
                             if (networkStream?.DataAvailable == true)
                             {
-                                await networkStream.ReadAsync(codeBuffer, 0, 1);
+                                await networkStream.ReadAsync(codeBuffer.AsMemory(0, 1));
 
                                 if (codeBuffer[0] < 16)
                                 {
-                                    await networkStream.ReadAsync(lengthBuffer, 0, offset);
+                                    await networkStream.ReadAsync(lengthBuffer.AsMemory(0, offset));
                                     int length = (lengthBuffer[0] << 24) | (lengthBuffer[1] << 16) |
                                                  (lengthBuffer[2] << 8) | lengthBuffer[3];
 
                                     byte[]? buffer = ArrayPool<byte>.Shared.Rent(length);
-                                    await networkStream.ReadAsync(buffer, 0, length);
+                                    await networkStream.ReadAsync(buffer.AsMemory(0, length));
                                     string? message = $"{codeBuffer[0]:X}{encoding.GetString(buffer, 0, length)}";
                                     ArrayPool<byte>.Shared.Return(buffer);
 
