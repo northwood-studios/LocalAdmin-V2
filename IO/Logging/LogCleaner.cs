@@ -169,7 +169,7 @@ namespace LocalAdmin.V2.IO.Logging
                                 if (name.Length != 24 || !name.StartsWith("LA-ToCompress-", StringComparison.Ordinal))
                                     continue;
 
-                                string? d = root + "Round Logs Archive " + name.Substring(14);
+                                string? d = root + "Round Logs Archive " + name[14..];
 
                                 if (Directory.Exists(d))
                                 {
