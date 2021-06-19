@@ -465,7 +465,7 @@ namespace LocalAdmin.V2.Core
             RunScpsl();
         }
 
-        private void Menu()
+        private static void Menu()
         {
             ConsoleUtil.Clear();
             ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
@@ -543,7 +543,7 @@ namespace LocalAdmin.V2.Core
             Server.Start();
         }
 
-        private void SetupKeyboardInput()
+        private static void SetupKeyboardInput()
         {
             new Task(() =>
             {
