@@ -649,12 +649,14 @@ namespace LocalAdmin.V2.Core
             if (File.Exists(_scpslExecutable))
             {
                 ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
-                var redirectStreams = Configuration!.LaShowStdoutStderr || Configuration!.LaLogStdoutStderr || _stdPrint;
-                
+                var redirectStreams =
+                    Configuration!.LaShowStdoutStderr || Configuration!.LaLogStdoutStderr || _stdPrint;
+
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = _scpslExecutable,
-                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId} {_gameArguments}",
+                    Arguments =
+                        $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId} {_gameArguments}",
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardOutput = redirectStreams,
@@ -663,25 +665,31 @@ namespace LocalAdmin.V2.Core
 
                 _gameProcess = Process.Start(startInfo);
 
-                if (!redirectStreams) return;
-                _gameProcess!.OutputDataReceived += (sender, args) =>
+                if (redirectStreams)
                 {
-                    if (string.IsNullOrWhiteSpace(args.Data))
-                        return;
+                    _gameProcess!.OutputDataReceived += (sender, args) =>
+                    {
+                        if (string.IsNullOrWhiteSpace(args.Data))
+                            return;
 
-                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaLogStdoutStderr, display: Configuration!.LaShowStdoutStderr || _stdPrint);
-                };
-                
-                _gameProcess!.ErrorDataReceived += (sender, args) =>
-                {
-                    if (string.IsNullOrWhiteSpace(args.Data))
-                        return;
+                        ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray,
+                            log: Configuration!.LaLogStdoutStderr,
+                            display: Configuration!.LaShowStdoutStderr || _stdPrint);
+                    };
 
-                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaLogStdoutStderr, display: Configuration!.LaShowStdoutStderr || _stdPrint);
-                };
-                
-                _gameProcess!.BeginOutputReadLine();
-                _gameProcess!.BeginErrorReadLine();
+                    _gameProcess!.ErrorDataReceived += (sender, args) =>
+                    {
+                        if (string.IsNullOrWhiteSpace(args.Data))
+                            return;
+
+                        ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta,
+                            log: Configuration!.LaLogStdoutStderr,
+                            display: Configuration!.LaShowStdoutStderr || _stdPrint);
+                    };
+
+                    _gameProcess!.BeginOutputReadLine();
+                    _gameProcess!.BeginErrorReadLine();
+                }
 
                 _gameProcess!.Exited += (sender, args) =>
                 {
