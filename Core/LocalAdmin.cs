@@ -590,9 +590,8 @@ namespace LocalAdmin.V2.Core
                     if (currentLineCursor > 0)
                     {
                         Console.SetCursorPosition(0, currentLineCursor - 1);
-
-                        ConsoleUtil.Write(string.Empty.PadLeft(Console.WindowWidth));
-                        ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
+                        
+                        ConsoleUtil.WriteLine($"{string.Empty.PadLeft(Console.WindowWidth)}>>> {input}", ConsoleColor.DarkMagenta, -1);
                         Console.SetCursorPosition(0, currentLineCursor);
                     }
                     else
