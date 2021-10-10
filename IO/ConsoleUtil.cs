@@ -10,6 +10,8 @@ namespace LocalAdmin.V2.IO
         private static readonly char[] ToTrim = { '\n', '\r' };
 
         private static readonly object Lck = new object();
+        
+        private static string? _liveTimestampPadding, _logsTimestampPadding;
 
         public static void Clear()
         {
@@ -30,7 +32,7 @@ namespace LocalAdmin.V2.IO
         
         private static string GetLogsUtcTimestamp() => $"[{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}Z]";
         
-        public static string GetLogsTimestamp() => Core.LocalAdmin.Configuration != null && Core.LocalAdmin.Configuration!.LaLogsUseUtc
+        public static string GetLogsTimestamp() => Core.LocalAdmin.Configuration != null && Core.LocalAdmin.Configuration.LaLogsUseUtc
             ? GetLogsUtcTimestamp()
             : GetLogsLocalTimestamp();
         
@@ -38,15 +40,48 @@ namespace LocalAdmin.V2.IO
         
         private static string GetLiveViewUtcTimestamp() => $"[{DateTime.UtcNow.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeUtcFormat, CultureInfo.InvariantCulture)}Z]";
 
-        private static string GetLiveViewTimestamp() => Core.LocalAdmin.Configuration == null ? GetLogsLocalTimestamp() : Core.LocalAdmin.Configuration!.LaLiveViewUseUtc
+        private static string GetLiveViewTimestamp() => Core.LocalAdmin.Configuration == null ? GetLogsLocalTimestamp() : Core.LocalAdmin.Configuration.LaLiveViewUseUtc
             ? GetLiveViewUtcTimestamp()
             : GetLiveViewLocalTimestamp();
+        
+        private static string GetLiveViewPadding()
+        {
+            if (Core.LocalAdmin.NoPadding)
+                return string.Empty;
+            
+            if (_liveTimestampPadding == null)
+            {
+                int l = GetLiveViewTimestamp().Length + 1;
+                _liveTimestampPadding = "\n";
+                for (int i = 0; i < l; i++)
+                    _liveTimestampPadding += " ";
+            }
+               
+            return _liveTimestampPadding;
+        }
+        
+        private static string GetLogsPadding()
+        {
+            if (Core.LocalAdmin.NoPadding)
+                return string.Empty;
+            
+            if (_logsTimestampPadding == null)
+            {
+                int l = GetLogsTimestamp().Length + 1;
+                _logsTimestampPadding = "\n";
+                for (int i = 0; i < l; i++)
+                    _logsTimestampPadding += " ";
+            }
+               
+            return _logsTimestampPadding;
+        }
 
         public static void Write(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
         {
             lock (Lck)
             {
                 content = string.IsNullOrEmpty(content) ? string.Empty : content.Trim().Trim(ToTrim);
+                bool multiline = content.Contains('\n', StringComparison.Ordinal);
 
                 if (display)
                 {
@@ -63,15 +98,15 @@ namespace LocalAdmin.V2.IO
 
                     if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                         Console.CursorTop += height;
-
-                    Console.Write($"{GetLiveViewTimestamp()} {content}");
+                    
+                    Console.Write($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
                     Console.ForegroundColor = ConsoleColor.White;
                     Console.BackgroundColor = ConsoleColor.Black;
                 }
 
                 if (log)
-                    Logger.Log($"{GetLogsTimestamp()} {content}");
+                    Logger.Log($"{GetLogsTimestamp()} {(multiline ? content.Replace("\n", GetLogsPadding(), StringComparison.Ordinal) : content)}");
             }
         }
 
@@ -80,6 +115,7 @@ namespace LocalAdmin.V2.IO
             lock (Lck)
             {
                 content = string.IsNullOrEmpty(content) ? string.Empty : content.Trim().Trim(ToTrim);
+                bool multiline = content.Contains('\n', StringComparison.Ordinal);
 
                 if (display)
                 {
@@ -97,14 +133,14 @@ namespace LocalAdmin.V2.IO
                     if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                         Console.CursorTop += height;
 
-                    Console.WriteLine($"{GetLiveViewTimestamp()} {content}");
+                    Console.WriteLine($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
                     Console.ForegroundColor = ConsoleColor.White;
                     Console.BackgroundColor = ConsoleColor.Black;
                 }
 
                 if (log)
-                    Logger.Log($"{GetLogsTimestamp()} {content}");
+                    Logger.Log($"{GetLogsTimestamp()} {(multiline ? content.Replace("\n", GetLogsPadding(), StringComparison.Ordinal) : content)}");
             }
         }
     }

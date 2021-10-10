@@ -47,7 +47,7 @@ namespace LocalAdmin.V2.Core
             "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
         private static bool _exit, _processRefreshFail;
         private static readonly ConcurrentQueue<string> InputQueue = new ConcurrentQueue<string>();
-        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true;
+        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding = false;
         private static bool _stdPrint;
         private volatile bool _processClosing;
 
@@ -197,6 +197,10 @@ namespace LocalAdmin.V2.Core
                                             case 'd':
                                                 useDefault = true;
                                                 break;
+                                            
+                                            case 'a':
+                                                NoPadding = true;
+                                                break;
                                         }
                                     }
                                 }
@@ -229,6 +233,10 @@ namespace LocalAdmin.V2.Core
 
                                         case "--useDefault":
                                             useDefault = true;
+                                            break;
+                                        
+                                        case "--noAlign":
+                                            NoPadding = true;
                                             break;
 
                                         case "--config":
