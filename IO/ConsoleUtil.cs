@@ -46,9 +46,6 @@ namespace LocalAdmin.V2.IO
         
         private static string GetLiveViewPadding()
         {
-            if (Core.LocalAdmin.NoPadding)
-                return string.Empty;
-            
             if (_liveTimestampPadding == null)
             {
                 int l = GetLiveViewTimestamp().Length + 1;
@@ -62,9 +59,6 @@ namespace LocalAdmin.V2.IO
         
         private static string GetLogsPadding()
         {
-            if (Core.LocalAdmin.NoPadding)
-                return string.Empty;
-            
             if (_logsTimestampPadding == null)
             {
                 int l = GetLogsTimestamp().Length + 1;
@@ -81,7 +75,7 @@ namespace LocalAdmin.V2.IO
             lock (Lck)
             {
                 content = string.IsNullOrEmpty(content) ? string.Empty : content.Trim().Trim(ToTrim);
-                bool multiline = content.Contains('\n', StringComparison.Ordinal);
+                bool multiline = !Core.LocalAdmin.NoPadding && content.Contains('\n', StringComparison.Ordinal);
 
                 if (display)
                 {
@@ -115,7 +109,7 @@ namespace LocalAdmin.V2.IO
             lock (Lck)
             {
                 content = string.IsNullOrEmpty(content) ? string.Empty : content.Trim().Trim(ToTrim);
-                bool multiline = content.Contains('\n', StringComparison.Ordinal);
+                bool multiline = !Core.LocalAdmin.NoPadding && content.Contains('\n', StringComparison.Ordinal);
 
                 if (display)
                 {
