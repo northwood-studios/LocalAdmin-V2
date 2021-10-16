@@ -30,9 +30,9 @@ namespace LocalAdmin.V2.Core
     public sealed class LocalAdmin : IDisposable
     {
         public const string VersionString = "2.4.2";
-        public static LocalAdmin? Singleton;
-        public static ushort GamePort;
-        public static string? ConfigPath, LaLogsPath, GameLogsPath;
+        internal static LocalAdmin? Singleton;
+        internal static ushort GamePort;
+        internal static string? ConfigPath, LaLogsPath, GameLogsPath;
         private static bool _firstRun = true;
 
         private readonly CommandService _commandService = new CommandService();
@@ -42,12 +42,10 @@ namespace LocalAdmin.V2.Core
         private readonly string _scpslExecutable;
         private static string _gameArguments = string.Empty;
         internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
-        internal static readonly string GameUserDataRoot =
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
-            "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
+        internal static readonly string GameUserDataRoot;
         private static bool _exit, _processRefreshFail;
         private static readonly ConcurrentQueue<string> InputQueue = new ConcurrentQueue<string>();
-        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding = false;
+        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding;
         private static bool _stdPrint;
         private volatile bool _processClosing;
 
@@ -80,6 +78,15 @@ namespace LocalAdmin.V2.Core
             RestartsTimeWindow,
             LogLengthLimit,
             LogEntriesLimit
+        }
+
+        static LocalAdmin()
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && string.IsNullOrWhiteSpace(appData))
+                appData = $"~{Path.DirectorySeparatorChar}.config";
+            GameUserDataRoot =
+                $"{appData}{Path.DirectorySeparatorChar}SCP Secret Laboratory{Path.DirectorySeparatorChar}";
         }
 
         internal LocalAdmin()
