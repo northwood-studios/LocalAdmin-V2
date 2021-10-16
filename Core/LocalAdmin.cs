@@ -47,7 +47,7 @@ namespace LocalAdmin.V2.Core
             "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
         private static bool _exit, _processRefreshFail;
         private static readonly ConcurrentQueue<string> InputQueue = new ConcurrentQueue<string>();
-        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true;
+        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding = false;
         private static bool _stdPrint;
         private volatile bool _processClosing;
 
@@ -197,6 +197,10 @@ namespace LocalAdmin.V2.Core
                                             case 'd':
                                                 useDefault = true;
                                                 break;
+                                            
+                                            case 'a':
+                                                NoPadding = true;
+                                                break;
                                         }
                                     }
                                 }
@@ -229,6 +233,10 @@ namespace LocalAdmin.V2.Core
 
                                         case "--useDefault":
                                             useDefault = true;
+                                            break;
+                                        
+                                        case "--noAlign":
+                                            NoPadding = true;
                                             break;
 
                                         case "--config":
@@ -582,9 +590,8 @@ namespace LocalAdmin.V2.Core
                     if (currentLineCursor > 0)
                     {
                         Console.SetCursorPosition(0, currentLineCursor - 1);
-
-                        ConsoleUtil.Write(string.Empty.PadLeft(Console.WindowWidth));
-                        ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
+                        
+                        ConsoleUtil.WriteLine($"{string.Empty.PadLeft(Console.WindowWidth)}>>> {input}", ConsoleColor.DarkMagenta, -1);
                         Console.SetCursorPosition(0, currentLineCursor);
                     }
                     else
@@ -649,12 +656,14 @@ namespace LocalAdmin.V2.Core
             if (File.Exists(_scpslExecutable))
             {
                 ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
-                var redirectStreams = Configuration!.LaShowStdoutStderr || Configuration!.LaLogStdoutStderr || _stdPrint;
-                
+                var redirectStreams =
+                    Configuration!.LaShowStdoutStderr || Configuration!.LaLogStdoutStderr || _stdPrint;
+
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = _scpslExecutable,
-                    Arguments = $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId} {_gameArguments}",
+                    Arguments =
+                        $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId} {_gameArguments}",
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardOutput = redirectStreams,
@@ -663,25 +672,31 @@ namespace LocalAdmin.V2.Core
 
                 _gameProcess = Process.Start(startInfo);
 
-                if (!redirectStreams) return;
-                _gameProcess!.OutputDataReceived += (sender, args) =>
+                if (redirectStreams)
                 {
-                    if (string.IsNullOrWhiteSpace(args.Data))
-                        return;
+                    _gameProcess!.OutputDataReceived += (sender, args) =>
+                    {
+                        if (string.IsNullOrWhiteSpace(args.Data))
+                            return;
 
-                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray, log: Configuration!.LaLogStdoutStderr, display: Configuration!.LaShowStdoutStderr || _stdPrint);
-                };
-                
-                _gameProcess!.ErrorDataReceived += (sender, args) =>
-                {
-                    if (string.IsNullOrWhiteSpace(args.Data))
-                        return;
+                        ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray,
+                            log: Configuration!.LaLogStdoutStderr,
+                            display: Configuration!.LaShowStdoutStderr || _stdPrint);
+                    };
 
-                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta, log: Configuration!.LaLogStdoutStderr, display: Configuration!.LaShowStdoutStderr || _stdPrint);
-                };
-                
-                _gameProcess!.BeginOutputReadLine();
-                _gameProcess!.BeginErrorReadLine();
+                    _gameProcess!.ErrorDataReceived += (sender, args) =>
+                    {
+                        if (string.IsNullOrWhiteSpace(args.Data))
+                            return;
+
+                        ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta,
+                            log: Configuration!.LaLogStdoutStderr,
+                            display: Configuration!.LaShowStdoutStderr || _stdPrint);
+                    };
+
+                    _gameProcess!.BeginOutputReadLine();
+                    _gameProcess!.BeginErrorReadLine();
+                }
 
                 _gameProcess!.Exited += (sender, args) =>
                 {
