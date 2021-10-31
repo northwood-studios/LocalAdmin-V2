@@ -39,6 +39,7 @@ namespace LocalAdmin.V2.Core
         private Process? _gameProcess;
         internal TcpServer? Server { get; private set; }
         private Task? _readerTask;
+        private Task? _crashDetectorTask;
         private readonly string _scpslExecutable;
         private static string _gameArguments = string.Empty;
         internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
@@ -60,6 +61,10 @@ namespace LocalAdmin.V2.Core
         internal static Config? Configuration;
 
         internal ShutdownAction ExitAction = ShutdownAction.Crash;
+
+        private const string PingCharacter = "­";
+        
+        private static float _crashTime = 20;
 
         internal enum ShutdownAction : byte
         {
@@ -408,10 +413,12 @@ namespace LocalAdmin.V2.Core
                 
                 RegisterCommands();
                 SetupReader();
+                SetupCrashDetector();
 
                 StartSession();
 
                 _readerTask!.Start();
+                _crashDetectorTask!.Start();
                 
                 if (!EnableLogging)
                     ConsoleUtil.WriteLine("Logging has been disabled.", ConsoleColor.Red);
@@ -543,6 +550,12 @@ namespace LocalAdmin.V2.Core
             Server = new TcpServer();
             Server.Received += (sender, line) =>
             {
+                if (line[1..] == PingCharacter)
+                {
+                    _crashTime = 5;
+                    return;
+                }
+
                 if (!byte.TryParse(line.AsSpan(0, 1), NumberStyles.HexNumber, null, out var colorValue))
                     colorValue = (byte)ConsoleColor.Gray;
 
@@ -565,6 +578,31 @@ namespace LocalAdmin.V2.Core
                     InputQueue.Enqueue(input);
                 }
             }).Start();
+        }
+
+        private void SetupCrashDetector()
+        {
+            _crashDetectorTask = new Task(async () =>
+            {
+                while (!_exit)
+                {
+                    if (!(Server?.Connected ?? false))
+                        _crashTime = 20;
+                    else
+                    {
+                        if (_crashTime < 0)
+                        {
+                            ConsoleUtil.WriteLine("The game process has been detected as unresponsive...", ConsoleColor.Red);
+                            Exit(0, true);
+                            break;
+                        }
+
+                        _crashTime--;
+                    }
+
+                    await Task.Delay(1000);
+                }
+            });
         }
 
         private void SetupReader()
@@ -808,6 +846,16 @@ namespace LocalAdmin.V2.Core
                 {
                     if (_readerTask != null && _readerTask.IsCompleted)
                         _readerTask?.Dispose();
+                }
+                catch
+                {
+                    //Ignore
+                }
+                
+                try
+                {
+                    if (_crashDetectorTask != null && _crashDetectorTask.IsCompleted)
+                        _crashDetectorTask?.Dispose();
                 }
                 catch
                 {
