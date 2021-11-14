@@ -658,8 +658,7 @@ namespace LocalAdmin.V2.Core
                 ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
                 var printStd = Configuration!.LaShowStdoutStderr || _stdPrint;
                 var redirectStreams =
-                    Configuration!.LaShowStdoutStderr || printStd;
-                
+                    Configuration!.LaLogStdoutStderr || printStd;
 
                 var startInfo = new ProcessStartInfo
                 {
