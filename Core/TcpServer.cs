@@ -111,19 +111,23 @@ namespace LocalAdmin.V2.Core
                                             break;
 
                                         case OutputCodes.ExitActionReset:
-                                            LocalAdmin.Singleton!.ExitAction = LocalAdmin.ShutdownAction.Crash;
+                                            if (!LocalAdmin.Singleton!.DisableExitActionSignals)
+                                                LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Crash;
                                             break;
                                         
                                         case OutputCodes.ExitActionShutdown:
-                                            LocalAdmin.Singleton!.ExitAction = LocalAdmin.ShutdownAction.Shutdown;
+                                            if (!LocalAdmin.Singleton!.DisableExitActionSignals)
+                                                LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Shutdown;
                                             break;
                                         
                                         case OutputCodes.ExitActionSilentShutdown:
-                                            LocalAdmin.Singleton!.ExitAction = LocalAdmin.ShutdownAction.SilentShutdown;
+                                            if (!LocalAdmin.Singleton!.DisableExitActionSignals)
+                                                LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.SilentShutdown;
                                             break;
                                         
                                         case OutputCodes.ExitActionRestart:
-                                            LocalAdmin.Singleton!.ExitAction = LocalAdmin.ShutdownAction.Restart;
+                                            if (!LocalAdmin.Singleton!.DisableExitActionSignals)
+                                                LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Restart;
                                             break;
                                         
                                         default:
