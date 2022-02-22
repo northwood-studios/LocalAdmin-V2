@@ -60,6 +60,7 @@ namespace LocalAdmin.V2.Core
         internal static Config? Configuration;
 
         internal ShutdownAction ExitAction = ShutdownAction.Crash;
+        internal bool DisableExitActionSignals;
 
         internal enum ShutdownAction : byte
         {
@@ -122,6 +123,7 @@ namespace LocalAdmin.V2.Core
                 if (_restarts > _restartsLimit)
                 {
                     ConsoleUtil.WriteLine("Restarts limit exceeded.", ConsoleColor.Red);
+                    DisableExitActionSignals = true;
                     ExitAction = ShutdownAction.SilentShutdown;
                     Exit(1);
                 }
@@ -637,6 +639,7 @@ namespace LocalAdmin.V2.Core
                         input.Equals("stop", StringComparison.OrdinalIgnoreCase) ||
                         input.StartsWith("stop ", StringComparison.OrdinalIgnoreCase))
                     {
+                        DisableExitActionSignals = true;
                         ExitAction = ShutdownAction.SilentShutdown;
                         _exit = true;
                     }
@@ -744,6 +747,10 @@ namespace LocalAdmin.V2.Core
             else
             {
                 ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
+                
+                DisableExitActionSignals = true;
+                ExitAction = ShutdownAction.Shutdown;
+
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                     Exit((int)WindowsErrorCode.ERROR_FILE_NOT_FOUND, true);
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))

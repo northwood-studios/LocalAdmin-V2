@@ -74,7 +74,7 @@ namespace LocalAdmin.V2.IO
         {
             lock (Lck)
             {
-                content = string.IsNullOrEmpty(content) ? string.Empty : content.Trim().Trim(ToTrim);
+                content = string.IsNullOrEmpty(content) ? string.Empty : content.TrimStart().Trim(ToTrim);
                 bool multiline = !Core.LocalAdmin.NoPadding && content.Contains('\n', StringComparison.Ordinal);
 
                 if (display)

@@ -8,8 +8,9 @@ namespace LocalAdmin.V2.Commands
 
         internal override void Execute(string[] arguments)
         {
-            Core.LocalAdmin.Singleton!.ExitAction = Core.LocalAdmin.ShutdownAction.Restart;
-            if (Core.LocalAdmin.Singleton.Server != null && Core.LocalAdmin.Singleton.Server.Connected)
+            Core.LocalAdmin.Singleton!.DisableExitActionSignals = true;
+            Core.LocalAdmin.Singleton.ExitAction = Core.LocalAdmin.ShutdownAction.Restart;
+            if (Core.LocalAdmin.Singleton.Server is { Connected: true })
                 Core.LocalAdmin.Singleton.Server.WriteLine("exit");
         }
     }
