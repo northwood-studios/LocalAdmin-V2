@@ -13,7 +13,7 @@
         <PackageId>LocalAdmin V2</PackageId>
         <Company>Northwood Studios</Company>
         <Authors>KernelError, zabszk</Authors>
-        <Copyright>Copyright by KernelError and Łukasz Jurczyk, 2019 - 2021</Copyright>
+        <Copyright>Copyright by Łukasz "zabszk" Jurczyk and KernelError, 2019 - 2022</Copyright>
 
         <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
         <IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
