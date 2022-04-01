@@ -29,7 +29,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin : IDisposable
     {
-        public const string VersionString = "2.4.4";
+        public const string VersionString = "2.4.5";
         public static LocalAdmin? Singleton;
         public static ushort GamePort;
         public static string? ConfigPath, LaLogsPath, GameLogsPath;
