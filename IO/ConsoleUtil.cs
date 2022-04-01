@@ -79,8 +79,6 @@ namespace LocalAdmin.V2.IO
 
                 if (display)
                 {
-                    Console.BackgroundColor = ConsoleColor.Black;
-
                     try
                     {
                         Console.ForegroundColor = color;
@@ -96,7 +94,6 @@ namespace LocalAdmin.V2.IO
                     Console.Write($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
                     Console.ForegroundColor = ConsoleColor.White;
-                    Console.BackgroundColor = ConsoleColor.Black;
                 }
 
                 if (log)
@@ -113,8 +110,6 @@ namespace LocalAdmin.V2.IO
 
                 if (display)
                 {
-                    Console.BackgroundColor = ConsoleColor.Black;
-
                     try
                     {
                         Console.ForegroundColor = color;
@@ -130,7 +125,6 @@ namespace LocalAdmin.V2.IO
                     Console.WriteLine($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
                     Console.ForegroundColor = ConsoleColor.White;
-                    Console.BackgroundColor = ConsoleColor.Black;
                 }
 
                 if (log)
