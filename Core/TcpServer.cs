@@ -26,36 +26,36 @@ namespace LocalAdmin.V2.Core
         
         public event EventHandler<string>? Received;
 
-        private readonly TcpListener listener;
-        private TcpClient? client;
-        private NetworkStream? networkStream;
+        private readonly TcpListener _listener;
+        private TcpClient? _client;
+        private NetworkStream? _networkStream;
 
         internal ushort ConsolePort;
         internal bool Connected;
-        private bool exit = true;
-        private readonly object lck = new object();
-        private readonly UTF8Encoding encoding = new UTF8Encoding(false, true);
+        private bool _exit = true;
+        private readonly object _lck = new ();
+        private readonly UTF8Encoding _encoding = new(false, true);
 
-        public TcpServer() => listener = new TcpListener(IPAddress.Loopback, 0);
+        public TcpServer() => _listener = new TcpListener(IPAddress.Loopback, 0);
 
         public void Start()
         {
-            lock (lck)
+            lock (_lck)
             {
-                exit = false;
+                _exit = false;
 
-                listener.Start();
-                ConsolePort = (ushort)((IPEndPoint)(listener.LocalEndpoint)).Port;
-                listener.BeginAcceptTcpClient(result =>
+                _listener.Start();
+                ConsolePort = (ushort)((IPEndPoint)_listener.LocalEndpoint).Port;
+                _listener.BeginAcceptTcpClient(result =>
                 {
-                    lock (lck)
+                    lock (_lck)
                     {
-                        if (exit)
+                        if (_exit)
                             return;
                     }
 
-                    client = listener.EndAcceptTcpClient(result);
-                    networkStream = client.GetStream();
+                    _client = _listener.EndAcceptTcpClient(result);
+                    _networkStream = _client.GetStream();
                     Connected = true;
 
                     Task.Run(async () =>
@@ -63,113 +63,131 @@ namespace LocalAdmin.V2.Core
                         const int offset = sizeof(int);
                         var codeBuffer = new byte[1];
                         var lengthBuffer = new byte[offset];
-                        bool restartReceived = false;
+                        var restartReceived = false;
+                        
                         while (true)
                         {
-                            lock (lck)
+                            await Task.Delay(10);
+                            
+                            lock (_lck)
                             {
-                                if (exit)
+                                if (_exit)
                                     break;
                             }
 
-                            if (networkStream?.DataAvailable == true)
+                            if (_networkStream?.DataAvailable != true)
+                                continue;
+                            
+                            int readAmount = await _networkStream.ReadAsync(codeBuffer.AsMemory(0, 1));
+                            
+                            if (readAmount == 0)
+                                continue;
+
+                            if (codeBuffer[0] < 16)
                             {
-                                await networkStream.ReadAsync(codeBuffer, 0, 1);
+                                readAmount = await _networkStream.ReadAsync(lengthBuffer.AsMemory(0, offset));
 
-                                if (codeBuffer[0] < 16)
+                                if (readAmount < 4)
                                 {
-                                    await networkStream.ReadAsync(lengthBuffer, 0, offset);
-                                    var length = (lengthBuffer[0] << 24) | (lengthBuffer[1] << 16) |
-                                                 (lengthBuffer[2] << 8) | lengthBuffer[3];
-
-                                    var buffer = ArrayPool<byte>.Shared.Rent(length);
-                                    await networkStream.ReadAsync(buffer, 0, length);
-                                    var message = $"{codeBuffer[0]:X}{encoding.GetString(buffer, 0, length)}";
-                                    ArrayPool<byte>.Shared.Return(buffer);
-
-                                    Received?.Invoke(this, message);
+                                    Received?.Invoke(this, "4[LocalAdmin] Received **INVALID** data message length. Length: " + readAmount);
+                                    continue;
                                 }
-                                else
+                                
+                                var length = (lengthBuffer[0] << 24) | (lengthBuffer[1] << 16) |
+                                             (lengthBuffer[2] << 8) | lengthBuffer[3];
+
+                                var buffer = ArrayPool<byte>.Shared.Rent(length);
+                                readAmount = await _networkStream.ReadAsync(buffer.AsMemory(0, length));
+                                
+                                if (readAmount != length)
                                 {
-                                    if (LocalAdmin.PrintControlMessages)
-                                        Received?.Invoke(this, "7[LocalAdmin] Received control message: " + codeBuffer[0]);
+                                    Received?.Invoke(this, $"4[LocalAdmin] Received **INVALID** data message. Length received: {readAmount}. Length expected: {length}.");
+                                    continue;
+                                }
+                                
+                                var message = $"{codeBuffer[0]:X}{_encoding.GetString(buffer, 0, length)}";
+                                ArrayPool<byte>.Shared.Return(buffer);
 
-                                    switch ((OutputCodes) codeBuffer[0])
-                                    {
-                                        case OutputCodes.RoundRestart:
-                                            if (restartReceived)
-                                                Logger.Initialize();
-                                            else restartReceived = true;
-                                            break;
+                                Received?.Invoke(this, message);
+                            }
+                            else
+                            {
+                                if (LocalAdmin.PrintControlMessages)
+                                    Received?.Invoke(this, "7[LocalAdmin] Received control message: " + codeBuffer[0]);
 
-                                        case OutputCodes.IdleEnter:
-                                            Console.Title = "[IDLE] " + LocalAdmin.BaseWindowTitle;
-                                            break;
+                                switch ((OutputCodes) codeBuffer[0])
+                                {
+                                    case OutputCodes.RoundRestart:
+                                        if (restartReceived)
+                                            Logger.Initialize();
+                                        else restartReceived = true;
+                                        break;
 
-                                        case OutputCodes.IdleExit:
-                                            Console.Title = LocalAdmin.BaseWindowTitle;
-                                            break;
+                                    case OutputCodes.IdleEnter:
+                                        Console.Title = "[IDLE] " + LocalAdmin.BaseWindowTitle;
+                                        break;
 
-                                        case OutputCodes.ExitActionReset:
-                                            if (!LocalAdmin.Singleton!.DisableExitActionSignals)
-                                                LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Crash;
-                                            break;
+                                    case OutputCodes.IdleExit:
+                                        Console.Title = LocalAdmin.BaseWindowTitle;
+                                        break;
+
+                                    case OutputCodes.ExitActionReset:
+                                        if (!LocalAdmin.Singleton!.DisableExitActionSignals)
+                                            LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Crash;
+                                        break;
                                         
-                                        case OutputCodes.ExitActionShutdown:
-                                            if (!LocalAdmin.Singleton!.DisableExitActionSignals)
-                                                LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Shutdown;
-                                            break;
+                                    case OutputCodes.ExitActionShutdown:
+                                        if (!LocalAdmin.Singleton!.DisableExitActionSignals)
+                                            LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Shutdown;
+                                        break;
                                         
-                                        case OutputCodes.ExitActionSilentShutdown:
-                                            if (!LocalAdmin.Singleton!.DisableExitActionSignals)
-                                                LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.SilentShutdown;
-                                            break;
+                                    case OutputCodes.ExitActionSilentShutdown:
+                                        if (!LocalAdmin.Singleton!.DisableExitActionSignals)
+                                            LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.SilentShutdown;
+                                        break;
                                         
-                                        case OutputCodes.ExitActionRestart:
-                                            if (!LocalAdmin.Singleton!.DisableExitActionSignals)
-                                                LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Restart;
-                                            break;
+                                    case OutputCodes.ExitActionRestart:
+                                        if (!LocalAdmin.Singleton!.DisableExitActionSignals)
+                                            LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Restart;
+                                        break;
                                         
-                                        default:
-                                            Received?.Invoke(this, "4[LocalAdmin] Received **INVALID** control message: " + codeBuffer[0]);
-                                            break;
-                                    }
+                                    default:
+                                        Received?.Invoke(this, "4[LocalAdmin] Received **INVALID** control message: " + codeBuffer[0]);
+                                        break;
                                 }
                             }
-
-                            await Task.Delay(10);
                         }
                     });
-                }, listener);
+                }, _listener);
             }
         }
 
         public void Stop()
         {
-            lock (lck)
+            lock (_lck)
             {
-                if (exit) 
+                if (_exit) 
                     return;
-                exit = true;
+                _exit = true;
 
-                listener.Stop();
-                client?.Close();
+                _listener.Stop();
+                _client?.Close();
             }
         }
 
         public void WriteLine(string input)
         {
-            lock (lck)
+            lock (_lck)
             {
-                if (exit) return;
+                if (_exit) return;
                 const int offset = sizeof(int);
 
                 var buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(input.Length) + offset);
 
-                var length = encoding.GetBytes(input, 0, input.Length, buffer, offset);
+                var length = _encoding.GetBytes(input, 0, input.Length, buffer, offset);
                 MemoryMarshal.Cast<byte, int>(buffer)[0] = length;
 
-                networkStream!.Write(buffer, 0, length + offset);
+                _networkStream!.Write(buffer, 0, length + offset);
                 ArrayPool<byte>.Shared.Return(buffer);
             }
         }

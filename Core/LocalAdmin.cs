@@ -35,7 +35,7 @@ namespace LocalAdmin.V2.Core
         public static string? ConfigPath, LaLogsPath, GameLogsPath;
         private static bool _firstRun = true;
 
-        private readonly CommandService _commandService = new CommandService();
+        private readonly CommandService _commandService = new();
         private Process? _gameProcess;
         internal TcpServer? Server { get; private set; }
         private Task? _readerTask;
@@ -46,14 +46,14 @@ namespace LocalAdmin.V2.Core
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
             "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
         private static bool _exit, _processRefreshFail;
-        private static readonly ConcurrentQueue<string> InputQueue = new ConcurrentQueue<string>();
-        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding = false;
+        private static readonly ConcurrentQueue<string> InputQueue = new ();
+        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding;
         private static bool _stdPrint;
         private volatile bool _processClosing;
 
         private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
         private static bool _ignoreNextRestart;
-        private static readonly Stopwatch RestartsStopwatch = new Stopwatch();
+        private static readonly Stopwatch RestartsStopwatch = new();
 
         internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000; 
 
@@ -61,6 +61,9 @@ namespace LocalAdmin.V2.Core
 
         internal ShutdownAction ExitAction = ShutdownAction.Crash;
         internal bool DisableExitActionSignals;
+
+        internal static DataJson? DataJson;
+        internal static string InternalJsonDataPath => $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}localadmin_internal_data.json";
 
         internal enum ShutdownAction : byte
         {
@@ -123,14 +126,62 @@ namespace LocalAdmin.V2.Core
                 if (_restarts > _restartsLimit)
                 {
                     ConsoleUtil.WriteLine("Restarts limit exceeded.", ConsoleColor.Red);
-                    DisableExitActionSignals = true;
-                    ExitAction = ShutdownAction.SilentShutdown;
-                    Exit(1);
+                    Terminate();
                 }
             }
 
             try
             {
+                if (!File.Exists(InternalJsonDataPath))
+                {
+                    DataJson = new DataJson();
+
+                    SaveJsonOrTerminate();
+                }
+                else if (!DataJson.TryLoad(InternalJsonDataPath, out DataJson))
+                    Terminate();
+
+                if (DataJson!.EulaAccepted == null)
+                {
+                    ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Cyan);
+                    ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
+                    ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
+                    ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
+                    ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Cyan);
+
+                    ReadInput((input) =>
+                        {
+                            if (input == null)
+                                return false;
+                            
+                            switch (input.ToLowerInvariant())
+                            {
+                                case "y":
+                                case "yes":
+                                case "1":
+                                    DataJson.EulaAccepted = DateTime.UtcNow;
+                                    SaveJsonOrTerminate();
+                                    return true;
+                                
+                                case "n":
+                                case "no":
+                                case "nope":
+                                case "0":
+                                    ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin.", ConsoleColor.Red);
+                                    Terminate();
+                                    return true;
+                                
+                                default:
+                                    return false;
+                            }
+
+                        }, () => { },
+                        () =>
+                        {
+                            ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Red);
+                        });
+                }
+                
                 var reconfigure = false;
                 var useDefault = false;
                 
@@ -382,8 +433,8 @@ namespace LocalAdmin.V2.Core
                     ConfigWizard.RunConfigWizard(useDefault);
 
                 NoSetCursor |= Configuration!.LaNoSetCursor;
-                AutoFlush &= Configuration!.LaLogAutoFlush;
-                EnableLogging &= Configuration!.EnableLaLogs;
+                AutoFlush &= Configuration.LaLogAutoFlush;
+                EnableLogging &= Configuration.EnableLaLogs;
                 
                 InputQueue.Clear();
 
@@ -454,7 +505,7 @@ namespace LocalAdmin.V2.Core
         private void StartSession()
         {
             // Terminate the game, if the game process is exists
-            if (_gameProcess != null && !_gameProcess.HasExited)
+            if (_gameProcess is { HasExited: false })
                 TerminateGame();
 
             Menu();
@@ -543,7 +594,7 @@ namespace LocalAdmin.V2.Core
         private void SetupServer()
         {
             Server = new TcpServer();
-            Server.Received += (sender, line) =>
+            Server.Received += (_, line) =>
             {
                 if (!byte.TryParse(line.AsSpan(0, 1), NumberStyles.HexNumber, null, out var colorValue))
                     colorValue = (byte)ConsoleColor.Gray;
@@ -553,7 +604,7 @@ namespace LocalAdmin.V2.Core
             Server.Start();
         }
 
-        private void SetupKeyboardInput()
+        private static void SetupKeyboardInput()
         {
             new Task(() =>
             {
@@ -571,10 +622,9 @@ namespace LocalAdmin.V2.Core
 
         private void SetupReader()
         {
-            _readerTask = new Task(async () =>
+            async void ReaderTaskMethod()
             {
-                while (Server == null)
-                    await Task.Delay(20);
+                while (Server == null) await Task.Delay(20);
 
                 while (!_exit)
                 {
@@ -584,15 +634,14 @@ namespace LocalAdmin.V2.Core
                         continue;
                     }
 
-                    if (string.IsNullOrWhiteSpace(input))
-                        continue;
-                    
+                    if (string.IsNullOrWhiteSpace(input)) continue;
+
                     var currentLineCursor = NoSetCursor ? 0 : Console.CursorTop;
 
                     if (currentLineCursor > 0)
                     {
                         Console.SetCursorPosition(0, currentLineCursor - 1);
-                        
+
                         ConsoleUtil.WriteLine($"{string.Empty.PadLeft(Console.WindowWidth)}>>> {input}", ConsoleColor.DarkMagenta, -1);
                         Console.SetCursorPosition(0, currentLineCursor);
                     }
@@ -605,8 +654,7 @@ namespace LocalAdmin.V2.Core
                         {
                             if (_gameProcess.HasExited)
                             {
-                                ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...",
-                                    ConsoleColor.Red);
+                                ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
                                 _exit = true;
                                 continue;
                             }
@@ -619,8 +667,7 @@ namespace LocalAdmin.V2.Core
 
                     var split = input.Split(' ');
 
-                    if (split.Length == 0)
-                        continue;
+                    if (split.Length == 0) continue;
                     var name = split[0].ToUpperInvariant();
 
                     var command = _commandService.GetCommandByName(name);
@@ -628,16 +675,10 @@ namespace LocalAdmin.V2.Core
                     if (command != null)
                     {
                         command.Execute(split.Skip(1).ToArray());
-                        if (!command.SendToGame)
-                            continue;
+                        if (!command.SendToGame) continue;
                     }
 
-                    if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
-                        input.StartsWith("exit ", StringComparison.OrdinalIgnoreCase) ||
-                        input.Equals("quit", StringComparison.OrdinalIgnoreCase) ||
-                        input.StartsWith("quit ", StringComparison.OrdinalIgnoreCase) ||
-                        input.Equals("stop", StringComparison.OrdinalIgnoreCase) ||
-                        input.StartsWith("stop ", StringComparison.OrdinalIgnoreCase))
+                    if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("exit ", StringComparison.OrdinalIgnoreCase) || input.Equals("quit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("quit ", StringComparison.OrdinalIgnoreCase) || input.Equals("stop", StringComparison.OrdinalIgnoreCase) || input.StartsWith("stop ", StringComparison.OrdinalIgnoreCase))
                     {
                         DisableExitActionSignals = true;
                         ExitAction = ShutdownAction.SilentShutdown;
@@ -647,11 +688,11 @@ namespace LocalAdmin.V2.Core
                     if (Server.Connected)
                         Server.WriteLine(input);
                     else
-                        ConsoleUtil.WriteLine(
-                            "Failed to send command - connection to server process hasn't been established yet.",
-                            ConsoleColor.Yellow);
+                        ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
                 }
-            });
+            }
+
+            _readerTask = new Task(ReaderTaskMethod);
         }
 
         private void RunScpsl()
@@ -661,7 +702,7 @@ namespace LocalAdmin.V2.Core
                 ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
                 var printStd = Configuration!.LaShowStdoutStderr || _stdPrint;
                 var redirectStreams =
-                    Configuration!.LaLogStdoutStderr || printStd;
+                    Configuration.LaLogStdoutStderr || printStd;
 
                 var startInfo = new ProcessStartInfo
                 {
@@ -676,34 +717,34 @@ namespace LocalAdmin.V2.Core
 
                 _gameProcess = Process.Start(startInfo);
 
-                _gameProcess!.OutputDataReceived += (sender, args) =>
+                _gameProcess!.OutputDataReceived += (_, args) =>
                 {
                     if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
                         return;
 
                     ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray,
-                        log: Configuration!.LaLogStdoutStderr,
+                        log: Configuration.LaLogStdoutStderr,
                         display: printStd);
                 };
 
-                _gameProcess!.ErrorDataReceived += (sender, args) =>
+                _gameProcess!.ErrorDataReceived += (_, args) =>
                 {
                     if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
                         return;
 
                     ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta,
-                        log: Configuration!.LaLogStdoutStderr,
+                        log: Configuration.LaLogStdoutStderr,
                         display: printStd);
                 };
 
                 _gameProcess!.BeginOutputReadLine();
                 _gameProcess!.BeginErrorReadLine();
 
-                _gameProcess!.Exited += (sender, args) =>
+                _gameProcess!.Exited += (_, _) =>
                 {
                     try
                     {
-                        if (_gameProcess != null && !_gameProcess.HasExited)
+                        if (_gameProcess is { HasExited: false })
                         {
                             ConsoleUtil.WriteLine("Game process exited and has been killed.", ConsoleColor.Gray);
                             _gameProcess.Kill();
@@ -788,7 +829,7 @@ namespace LocalAdmin.V2.Core
         private void TerminateGame()
         {
             Server?.Stop();
-            if (_gameProcess != null && !_gameProcess.HasExited)
+            if (_gameProcess is { HasExited: false })
                 _gameProcess.Kill();
         }
 
@@ -811,7 +852,7 @@ namespace LocalAdmin.V2.Core
                 
                 try
                 {
-                    if (_readerTask != null && _readerTask.IsCompleted)
+                    if (_readerTask is { IsCompleted: true })
                         _readerTask?.Dispose();
                 }
                 catch
@@ -825,7 +866,7 @@ namespace LocalAdmin.V2.Core
                     return;
                 }
 
-                if (ExitAction == ShutdownAction.Crash && Configuration != null && Configuration.RestartOnCrash)
+                if (ExitAction == ShutdownAction.Crash && Configuration is { RestartOnCrash: true })
                     return;
                 
                 if (waitForKey && ExitAction != ShutdownAction.SilentShutdown)
@@ -844,6 +885,19 @@ namespace LocalAdmin.V2.Core
         {
             Exit(0);
             GC.SuppressFinalize(this);
+        }
+
+        private void SaveJsonOrTerminate()
+        {
+            if (!DataJson!.TrySave(InternalJsonDataPath))
+                Terminate();
+        }
+
+        private void Terminate()
+        {
+            DisableExitActionSignals = true;
+            ExitAction = ShutdownAction.SilentShutdown;
+            Exit(1);
         }
 
         ~LocalAdmin()
