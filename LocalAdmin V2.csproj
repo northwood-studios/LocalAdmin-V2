@@ -2,10 +2,10 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
-        <TargetFramework Condition="$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net5.0-windows</TargetFramework>
-        <TargetFramework Condition="!$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net5.0</TargetFramework>
+        <TargetFramework Condition="$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net6.0-windows</TargetFramework>
+        <TargetFramework Condition="!$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net6.0</TargetFramework>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <LangVersion>8</LangVersion>
+        <LangVersion>10</LangVersion>
         <Nullable>enable</Nullable>
         <RootNamespace>LocalAdmin.V2</RootNamespace>
         <AssemblyName>LocalAdmin</AssemblyName>
@@ -15,13 +15,16 @@
         <Authors>KernelError, zabszk</Authors>
         <Copyright>Copyright by Łukasz "zabszk" Jurczyk and KernelError, 2019 - 2022</Copyright>
 
+        <SuppressAotAnalysisWarnings>true</SuppressAotAnalysisWarnings>
         <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
-        <IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
+        <IlcTrimMetadata>true</IlcTrimMetadata>
+        <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
         <IlcDisableReflection>false</IlcDisableReflection>
         <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
         <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
         <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
         <Optimize>true</Optimize>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -35,20 +38,35 @@
     <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('linux', StringComparison.OrdinalIgnoreCase))">
         <DefineConstants>LINUX_SIGNALS</DefineConstants>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <PlatformTarget>x64</PlatformTarget>
+      <DebugType>none</DebugType>
+    </PropertyGroup>
     <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('linux', StringComparison.OrdinalIgnoreCase))">
         <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
     </ItemGroup>
 
     <ItemGroup>
+        <Content Include="LICENSE">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+
+        <Content Include="NOTICE-LocalAdmin">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        
         <None Remove=".editorconfig" />
         <None Remove=".gitignore" />
-        <None Remove="LICENSE" />
         <None Remove="LocalAdmin V2.sln.DotSettings" />
         <None Remove="nuget.config" />
         <None Remove="Properties\launchSettings.json" />
         <None Remove="README.md" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-alpha.1.22074.1" />
+        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-preview.7.22375.6" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta2" />
     </ItemGroup>
 </Project>
