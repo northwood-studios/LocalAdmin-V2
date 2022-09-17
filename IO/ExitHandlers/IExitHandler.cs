@@ -1,7 +1,6 @@
-﻿namespace LocalAdmin.V2.IO.ExitHandlers
+﻿namespace LocalAdmin.V2.IO.ExitHandlers;
+
+internal interface IExitHandler
 {
-    internal interface IExitHandler
-    {
-        void Setup();
-    }
+    void Setup();
 }
