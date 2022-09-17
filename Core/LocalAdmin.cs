@@ -167,7 +167,7 @@ namespace LocalAdmin.V2.Core
                                 case "no":
                                 case "nope":
                                 case "0":
-                                    ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin.", ConsoleColor.Red);
+                                    ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red);
                                     Terminate();
                                     return true;
                                 
