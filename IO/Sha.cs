@@ -4,9 +4,9 @@ using System.Text;
 
 namespace LocalAdmin.V2.IO;
 
-public static class Sha
+internal static class Sha
 {
-	public static string Sha256File(string path)
+	internal static string Sha256File(string path)
 	{
 		using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 		using var sha256 = SHA256.Create();

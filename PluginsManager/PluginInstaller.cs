@@ -62,7 +62,16 @@ internal static class PluginInstaller
             foreach (var asset in data.Assets)
             {
                 if (asset.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (pluginUrl != null)
+                    {
+                        if (interactive)
+                            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name} - multiple plugin DLLs found.", ConsoleColor.Red);
+                        return new();
+                    }
+                    
                     pluginUrl = asset.DownloadUrl;
+                }
                 else if (asset.Name.Equals("dependencies.zip", StringComparison.OrdinalIgnoreCase))
                     dependenciesUrl = asset.DownloadUrl;
             }
