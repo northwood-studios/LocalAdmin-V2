@@ -13,6 +13,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using LocalAdmin.V2.Commands.PluginManager;
 using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.Core;
@@ -817,6 +818,7 @@ public sealed class LocalAdmin : IDisposable
         _commandService.RegisterCommand(new ForceRestartCommand());
         _commandService.RegisterCommand(new HelpCommand());
         _commandService.RegisterCommand(new LicenseCommand());
+        _commandService.RegisterCommand(new PluginManagerCommand());
     }
 
     private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)

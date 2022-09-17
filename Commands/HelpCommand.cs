@@ -11,18 +11,14 @@ internal class HelpCommand : CommandBase
     internal override void Execute(string[] arguments)
     {
         ConsoleUtil.WriteLine(string.Empty);
-        ConsoleUtil.WriteLine("----HELP----", ConsoleColor.DarkGray);
-        ConsoleUtil.WriteLine("BAN - time-bans player using IP address or part of the nickname.");
-        ConsoleUtil.WriteLine("FORCESTART - forces the round to start.");
-        ConsoleUtil.WriteLine("ROUNDRESTART - forces the round to restart.");
-        ConsoleUtil.WriteLine("HELLO - tests if server is responding.");
-        ConsoleUtil.WriteLine("CONFIG - opens the server's configuration file.");
-        ConsoleUtil.WriteLine("CONFIG RELOAD - applies config changes.");
+        ConsoleUtil.WriteLine("---- Local Admin Commands ----", ConsoleColor.DarkGray);
         ConsoleUtil.WriteLine("EXIT - stops the server.");
-        ConsoleUtil.WriteLine("RESTART - restarts the server.");
         ConsoleUtil.WriteLine("FORCERESTART - kills the server and restarts it.");
-        ConsoleUtil.WriteLine("SEED - shows the current map seed in order to re-generate level in the future.");
-        ConsoleUtil.WriteLine("BANREFRESH - forces ban database to refresh.");
+        ConsoleUtil.WriteLine("HELP - prints this help.");
+        ConsoleUtil.WriteLine("LICENSE - prints Local Admin license details.");
+        ConsoleUtil.WriteLine("P - Plugin Manager.");
+        ConsoleUtil.WriteLine("RESTART - restarts the server.");
         ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
+        ConsoleUtil.WriteLine("---- Game Commands Commands ----", ConsoleColor.DarkGray);
     }
 }
