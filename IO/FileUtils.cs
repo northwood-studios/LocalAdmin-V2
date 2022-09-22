@@ -4,15 +4,21 @@ namespace LocalAdmin.V2.IO;
 
 internal static class FileUtils
 {
-    internal static void DeleteIfExists(string path)
+    internal static bool DeleteIfExists(string path)
     {
-        if (File.Exists(path))
-            File.Delete(path);
+        if (!File.Exists(path))
+            return false;
+        
+        File.Delete(path);
+        return true;
     }
     
-    internal static void DeleteDirectoryIfExists(string path)
+    internal static bool DeleteDirectoryIfExists(string path)
     {
-        if (Directory.Exists(path))
-            Directory.Delete(path, true);
+        if (!Directory.Exists(path))
+            return false;
+        
+        Directory.Delete(path, true);
+        return true;
     }
 }
