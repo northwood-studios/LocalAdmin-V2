@@ -62,7 +62,8 @@ internal static class JsonFile
             if (File.Exists(path))
                 return false;
             
-            File.Create(path);
+            var fs = File.Create(path);
+            fs.Close();
             return true;
         }
         catch (Exception e)
