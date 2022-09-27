@@ -4,6 +4,7 @@ using LocalAdmin.V2.IO;
 using LocalAdmin.V2.IO.ExitHandlers;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -12,543 +13,559 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using LocalAdmin.V2.Commands.PluginManager;
 using LocalAdmin.V2.IO.Logging;
 
-namespace LocalAdmin.V2.Core
+namespace LocalAdmin.V2.Core;
+/*
+    * Console colors:
+    * Gray - LocalAdmin log
+    * Red - critical error
+    * DarkGray - insignificant info
+    * Cyan - Header or important tip
+    * Yellow - warning
+    * DarkGreen - success
+    * Blue - normal SCPSL log
+*/
+
+public sealed class LocalAdmin : IDisposable
 {
-    /*
-        * Console colors:
-        * Gray - LocalAdmin log
-        * Red - critical error
-        * DarkGray - insignificant info
-        * Cyan - Header or important tip
-        * Yellow - warning
-        * DarkGreen - success
-        * Blue - normal SCPSL log
-    */
+    public const string VersionString = "2.4.5";
+    internal static LocalAdmin? Singleton;
+    internal static ushort GamePort;
+    internal static string? ConfigPath, LaLogsPath, GameLogsPath;
+    private static bool _firstRun = true;
 
-    public sealed class LocalAdmin : IDisposable
+    private readonly CommandService _commandService = new();
+    private Process? _gameProcess;
+    internal TcpServer? Server { get; private set; }
+    private Task? _readerTask;
+    private readonly string _scpslExecutable;
+    private static string _gameArguments = string.Empty;
+    internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
+    
+    private static bool _exit, _processRefreshFail;
+    private static readonly ConcurrentQueue<string> InputQueue = new ();
+    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
+    private static bool _noTrueColor;
+    private static bool _stdPrint;
+    private volatile bool _processClosing;
+
+    private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
+    private static bool _ignoreNextRestart;
+    private static readonly Stopwatch RestartsStopwatch = new();
+
+    internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000; 
+
+    internal static Config? Configuration;
+
+    internal ShutdownAction ExitAction = ShutdownAction.Crash;
+    internal bool DisableExitActionSignals;
+
+    internal static DataJson? DataJson;
+
+    internal enum ShutdownAction : byte
     {
-        public const string VersionString = "2.4.5";
-        public static LocalAdmin? Singleton;
-        public static ushort GamePort;
-        public static string? ConfigPath, LaLogsPath, GameLogsPath;
-        private static bool _firstRun = true;
+        Crash,
+        Shutdown,
+        SilentShutdown,
+        Restart
+    }
 
-        private readonly CommandService _commandService = new();
-        private Process? _gameProcess;
-        internal TcpServer? Server { get; private set; }
-        private Task? _readerTask;
-        private readonly string _scpslExecutable;
-        private static string _gameArguments = string.Empty;
-        internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
-        internal static readonly string GameUserDataRoot =
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
-            "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
-        private static bool _exit, _processRefreshFail;
-        private static readonly ConcurrentQueue<string> InputQueue = new ();
-        internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding;
-        private static bool _stdPrint;
-        private volatile bool _processClosing;
+    private enum CaptureArgs : byte
+    {
+        None,
+        ArgsPassthrough,
+        ConfigPath,
+        LaLogsPath,
+        GameLogsPath,
+        RestartsLimit,
+        RestartsTimeWindow,
+        LogLengthLimit,
+        LogEntriesLimit
+    }
 
-        private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
-        private static bool _ignoreNextRestart;
-        private static readonly Stopwatch RestartsStopwatch = new();
-
-        internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000; 
-
-        internal static Config? Configuration;
-
-        internal ShutdownAction ExitAction = ShutdownAction.Crash;
-        internal bool DisableExitActionSignals;
-
-        internal static DataJson? DataJson;
-        internal static string InternalJsonDataPath => $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}localadmin_internal_data.json";
-
-        internal enum ShutdownAction : byte
+    internal LocalAdmin()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            _scpslExecutable = "SCPSL.exe";
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            _scpslExecutable = "SCPSL.x86_64";
+        else
         {
-            Crash,
-            Shutdown,
-            SilentShutdown,
-            Restart
+            ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
+            // shut up dotnet
+            _scpslExecutable = string.Empty;
+            Exit(1);
+        }
+    }
+
+    public async Task Start(string[] args)
+    {
+        Singleton = this;
+        Console.Title = BaseWindowTitle;
+
+        if (_restartsLimit > -1)
+        {
+            if (_restartsTimeWindow > 0)
+            {
+                if (!RestartsStopwatch.IsRunning)
+                    RestartsStopwatch.Start();
+                else if (RestartsStopwatch.Elapsed.TotalSeconds > _restartsTimeWindow)
+                {
+                    RestartsStopwatch.Restart();
+                    _restarts = 0;
+                }
+            }
+
+            if (!_ignoreNextRestart)
+                _restarts++;
+            else _ignoreNextRestart = false;
+
+            if (_restarts > _restartsLimit)
+            {
+                ConsoleUtil.WriteLine("Restarts limit exceeded.", ConsoleColor.Red);
+                Terminate();
+            }
         }
 
-        private enum CaptureArgs : byte
+        try
         {
-            None,
-            ArgsPassthrough,
-            ConfigPath,
-            LaLogsPath,
-            GameLogsPath,
-            RestartsLimit,
-            RestartsTimeWindow,
-            LogLengthLimit,
-            LogEntriesLimit
-        }
-
-        internal LocalAdmin()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                _scpslExecutable = "SCPSL.exe";
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                _scpslExecutable = "SCPSL.x86_64";
+            if (!File.Exists(PathManager.InternalJsonDataPath))
+            {
+                DataJson = new DataJson();
+                await SaveJsonOrTerminate();
+            }
             else
             {
-                ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
-                // shut up dotnet
-                _scpslExecutable = string.Empty;
-                Exit(1);
+                DataJson = await JsonFile.Load<DataJson>(PathManager.InternalJsonDataPath);
+                    
+                if (DataJson == null)
+                    Terminate();
             }
-        }
 
-        public void Start(string[] args)
-        {
-            Singleton = this;
-            Console.Title = BaseWindowTitle;
+            if (DataJson!.PluginVersionCache == null)
+                DataJson.PluginVersionCache = new Dictionary<string, PluginVersionCache>();
 
-            if (_restartsLimit > -1)
+            if (DataJson.EulaAccepted == null)
             {
-                if (_restartsTimeWindow > 0)
-                {
-                    if (!RestartsStopwatch.IsRunning)
-                        RestartsStopwatch.Start();
-                    else if (RestartsStopwatch.Elapsed.TotalSeconds > _restartsTimeWindow)
+                ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Cyan);
+                ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
+                ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
+                ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
+                ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Cyan);
+
+                ReadInput((input) =>
                     {
-                        RestartsStopwatch.Restart();
-                        _restarts = 0;
-                    }
-                }
+                        if (input == null)
+                            return false;
+                            
+                        switch (input.ToLowerInvariant())
+                        {
+                            case "y":
+                            case "yes":
+                            case "1":
+                                DataJson.EulaAccepted = DateTime.UtcNow;
+                                return true;
+                                
+                            case "n":
+                            case "no":
+                            case "nope":
+                            case "0":
+                                ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red);
+                                Terminate();
+                                return true;
+                                
+                            default:
+                                return false;
+                        }
 
-                if (!_ignoreNextRestart)
-                    _restarts++;
-                else _ignoreNextRestart = false;
-
-                if (_restarts > _restartsLimit)
-                {
-                    ConsoleUtil.WriteLine("Restarts limit exceeded.", ConsoleColor.Red);
-                    Terminate();
-                }
+                    }, () => { },
+                    () =>
+                    {
+                        ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Red);
+                    });
+                    
+                if (!_exit)
+                    await SaveJsonOrTerminate();
             }
-
-            try
+                
+            var reconfigure = false;
+            var useDefault = false;
+                
+            if (_firstRun)
             {
-                if (!File.Exists(InternalJsonDataPath))
+                if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
                 {
-                    DataJson = new DataJson();
-
-                    SaveJsonOrTerminate();
-                }
-                else if (!DataJson.TryLoad(InternalJsonDataPath, out DataJson))
-                    Terminate();
-
-                if (DataJson!.EulaAccepted == null)
-                {
-                    ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Cyan);
-                    ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
-                    ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
-                    ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
-                    ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Cyan);
+                    ConsoleUtil.WriteLine("You can pass port number as first startup argument.",
+                        ConsoleColor.Green);
+                    Console.WriteLine(string.Empty);
+                    ConsoleUtil.Write("Port number (default: 7777): ", ConsoleColor.Green);
 
                     ReadInput((input) =>
                         {
-                            if (input == null)
-                                return false;
-                            
-                            switch (input.ToLowerInvariant())
-                            {
-                                case "y":
-                                case "yes":
-                                case "1":
-                                    DataJson.EulaAccepted = DateTime.UtcNow;
-                                    SaveJsonOrTerminate();
-                                    return true;
-                                
-                                case "n":
-                                case "no":
-                                case "nope":
-                                case "0":
-                                    ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red);
-                                    Terminate();
-                                    return true;
-                                
-                                default:
-                                    return false;
-                            }
+                            if (!string.IsNullOrEmpty(input))
+                                return ushort.TryParse(input, out GamePort);
+                            GamePort = 7777;
+                            return true;
 
                         }, () => { },
                         () =>
                         {
-                            ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Red);
+                            ConsoleUtil.WriteLine("Port number must be a unsigned short integer.",
+                                ConsoleColor.Red);
                         });
                 }
-                
-                var reconfigure = false;
-                var useDefault = false;
-                
-                if (_firstRun)
+
+                var capture = CaptureArgs.None;
+
+                foreach (var arg in args)
                 {
-                    if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
+                    switch (capture)
                     {
-                        ConsoleUtil.WriteLine("You can pass port number as first startup argument.",
-                            ConsoleColor.Green);
-                        Console.WriteLine(string.Empty);
-                        ConsoleUtil.Write("Port number (default: 7777): ", ConsoleColor.Green);
-
-                        ReadInput((input) =>
+                        case CaptureArgs.None:
+                            if (arg.StartsWith("-", StringComparison.Ordinal) &&
+                                !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
                             {
-                                if (!string.IsNullOrEmpty(input))
-                                    return ushort.TryParse(input, out GamePort);
-                                GamePort = 7777;
-                                return true;
-
-                            }, () => { },
-                            () =>
-                            {
-                                ConsoleUtil.WriteLine("Port number must be a unsigned short integer.",
-                                    ConsoleColor.Red);
-                            });
-                    }
-
-                    var capture = CaptureArgs.None;
-
-                    foreach (var arg in args)
-                    {
-                        switch (capture)
-                        {
-                            case CaptureArgs.None:
-                                if (arg.StartsWith("-", StringComparison.Ordinal) &&
-                                    !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
+                                for (var i = 1; i < arg.Length; i++)
                                 {
-                                    for (var i = 1; i < arg.Length; i++)
+                                    switch (arg[i])
                                     {
-                                        switch (arg[i])
-                                        {
-                                            case 'c':
-                                                NoSetCursor = true;
-                                                break;
-
-                                            case 'p':
-                                                PrintControlMessages = true;
-                                                break;
-
-                                            case 'n':
-                                                AutoFlush = false;
-                                                break;
-
-                                            case 'l':
-                                                EnableLogging = false;
-                                                break;
-
-                                            case 'r':
-                                                reconfigure = true;
-                                                break;
-
-                                            case 's':
-                                                _stdPrint = true;
-                                                break;
-
-                                            case 'd':
-                                                useDefault = true;
-                                                break;
-                                            
-                                            case 'a':
-                                                NoPadding = true;
-                                                break;
-                                        }
-                                    }
-                                }
-                                else
-                                    switch (arg)
-                                    {
-                                        case "--noSetCursor":
+                                        case 'c':
                                             NoSetCursor = true;
                                             break;
 
-                                        case "--printControl":
+                                        case 'p':
                                             PrintControlMessages = true;
                                             break;
 
-                                        case "--noAutoFlush":
+                                        case 'n':
                                             AutoFlush = false;
                                             break;
 
-                                        case "--noLogs":
+                                        case 'l':
                                             EnableLogging = false;
                                             break;
 
-                                        case "--reconfigure":
+                                        case 'r':
                                             reconfigure = true;
                                             break;
 
-                                        case "--printStd":
+                                        case 's':
                                             _stdPrint = true;
                                             break;
 
-                                        case "--useDefault":
+                                        case 'd':
                                             useDefault = true;
                                             break;
-                                        
-                                        case "--noAlign":
+                                            
+                                        case 'a':
                                             NoPadding = true;
                                             break;
-
-                                        case "--config":
-                                            capture = CaptureArgs.ConfigPath;
-                                            break;
-                                        
-                                        case "--logs":
-                                            capture = CaptureArgs.LaLogsPath;
-                                            break;
-                                        
-                                        case "--gameLogs":
-                                            capture = CaptureArgs.GameLogsPath;
-                                            break;
-                                        
-                                        case "--restartsLimit":
-                                            capture = CaptureArgs.RestartsLimit;
-                                            break;
-                                        
-                                        case "--restartsTimeWindow":
-                                            capture = CaptureArgs.RestartsTimeWindow;
-                                            break;
-                                        
-                                        case "--logLengthLimit":
-                                            capture = CaptureArgs.LogLengthLimit;
-                                            break;
-                                        
-                                        case "--logEntriesLimit":
-                                            capture = CaptureArgs.LogEntriesLimit;
-                                            break;
-
-                                        case "--":
-                                            capture = CaptureArgs.ArgsPassthrough;
-                                            break;
                                     }
-                                break;
-
-                            case CaptureArgs.ArgsPassthrough:
-                                _gameArguments += $"\"{arg}\" ";
-                                break;
-
-                            case CaptureArgs.ConfigPath:
-                                ConfigPath = arg;
-                                capture = CaptureArgs.None;
-                                break;
-
-                            case CaptureArgs.LaLogsPath:
-                                LaLogsPath = arg + Path.DirectorySeparatorChar;
-                                capture = CaptureArgs.None;
-                                break;
-
-                            case CaptureArgs.GameLogsPath:
-                                GameLogsPath = arg + Path.DirectorySeparatorChar;
-                                capture = CaptureArgs.None;
-                                break;
-                            
-                            case CaptureArgs.RestartsLimit:
-                                if (!int.TryParse(arg, out _restartsLimit) || _restartsLimit < -1)
-                                {
-                                    _restartsLimit = 4;
-                                    ConsoleUtil.WriteLine("restartsLimit argument value must be an integer greater or equal to -1.", ConsoleColor.Red);
                                 }
-                                capture = CaptureArgs.None;
-                                break;
-                            
-                            case CaptureArgs.RestartsTimeWindow:
-                                if (!int.TryParse(arg, out _restartsTimeWindow) || _restartsLimit < 0)
-                                {
-                                    _restartsTimeWindow = 480;
-                                    ConsoleUtil.WriteLine("restartsTimeWindow argument value must be an integer greater or equal to 0.", ConsoleColor.Red);
-                                }
-                                capture = CaptureArgs.None;
-                                break;
-
-                            case CaptureArgs.LogLengthLimit:
-                            {
-                                string a = arg.Replace("k", "000", StringComparison.Ordinal)
-                                    .Replace("M", "000000", StringComparison.Ordinal)
-                                    .Replace("G", "000000000", StringComparison.Ordinal)
-                                    .Replace("T", "000000000000", StringComparison.Ordinal);
-                                if (!ulong.TryParse(a, out LogLengthLimit))
-                                {
-                                    ConsoleUtil.WriteLine(
-                                        "logLengthLimit argument value must be an integer greater or equal to 0.",
-                                        ConsoleColor.Red);
-                                    LogLengthLimit = 25000000000;
-                                }
-
-                                capture = CaptureArgs.None;
                             }
-                                break;
-
-                            case CaptureArgs.LogEntriesLimit:
-                            {
-                                string a = arg.Replace("k", "000", StringComparison.Ordinal)
-                                    .Replace("M", "000000", StringComparison.Ordinal)
-                                    .Replace("G", "000000000", StringComparison.Ordinal)
-                                    .Replace("T", "000000000000", StringComparison.Ordinal);
-                                if (!ulong.TryParse(a, out LogEntriesLimit))
+                            else
+                                switch (arg)
                                 {
-                                    ConsoleUtil.WriteLine(
-                                        "logEntriesLimit argument value must be an integer greater or equal to 0.",
-                                        ConsoleColor.Red);
-                                    LogEntriesLimit = 10000000000;
+                                    case "--noSetCursor":
+                                        NoSetCursor = true;
+                                        break;
+
+                                    case "--printControl":
+                                        PrintControlMessages = true;
+                                        break;
+
+                                    case "--noAutoFlush":
+                                        AutoFlush = false;
+                                        break;
+
+                                    case "--noLogs":
+                                        EnableLogging = false;
+                                        break;
+
+                                    case "--reconfigure":
+                                        reconfigure = true;
+                                        break;
+
+                                    case "--printStd":
+                                        _stdPrint = true;
+                                        break;
+
+                                    case "--useDefault":
+                                        useDefault = true;
+                                        break;
+                                        
+                                    case "--noAlign":
+                                        NoPadding = true;
+                                        break;
+                                    
+                                    case "--disableTrueColor":
+                                        _noTrueColor = true;
+                                        break;
+                                    
+                                    case "--dismissPluginManagerSecurityWarning":
+                                        ConsoleUtil.WriteLine("Plugin manager has been enabled. USE AT YOUR OWN RISK.", ConsoleColor.Yellow);
+                                        DismissPluginsSecurityWarning = true;
+                                        break;
+
+                                    case "--config":
+                                        capture = CaptureArgs.ConfigPath;
+                                        break;
+                                        
+                                    case "--logs":
+                                        capture = CaptureArgs.LaLogsPath;
+                                        break;
+                                        
+                                    case "--gameLogs":
+                                        capture = CaptureArgs.GameLogsPath;
+                                        break;
+                                        
+                                    case "--restartsLimit":
+                                        capture = CaptureArgs.RestartsLimit;
+                                        break;
+                                        
+                                    case "--restartsTimeWindow":
+                                        capture = CaptureArgs.RestartsTimeWindow;
+                                        break;
+                                        
+                                    case "--logLengthLimit":
+                                        capture = CaptureArgs.LogLengthLimit;
+                                        break;
+                                        
+                                    case "--logEntriesLimit":
+                                        capture = CaptureArgs.LogEntriesLimit;
+                                        break;
+
+                                    case "--":
+                                        capture = CaptureArgs.ArgsPassthrough;
+                                        break;
                                 }
+                            break;
 
-                                capture = CaptureArgs.None;
+                        case CaptureArgs.ArgsPassthrough:
+                            _gameArguments += $"\"{arg}\" ";
+                            break;
+
+                        case CaptureArgs.ConfigPath:
+                            ConfigPath = arg;
+                            capture = CaptureArgs.None;
+                            break;
+
+                        case CaptureArgs.LaLogsPath:
+                            LaLogsPath = arg + Path.DirectorySeparatorChar;
+                            capture = CaptureArgs.None;
+                            break;
+
+                        case CaptureArgs.GameLogsPath:
+                            GameLogsPath = arg + Path.DirectorySeparatorChar;
+                            capture = CaptureArgs.None;
+                            break;
+                            
+                        case CaptureArgs.RestartsLimit:
+                            if (!int.TryParse(arg, out _restartsLimit) || _restartsLimit < -1)
+                            {
+                                _restartsLimit = 4;
+                                ConsoleUtil.WriteLine("restartsLimit argument value must be an integer greater or equal to -1.", ConsoleColor.Red);
                             }
-                                break;
+                            capture = CaptureArgs.None;
+                            break;
+                            
+                        case CaptureArgs.RestartsTimeWindow:
+                            if (!int.TryParse(arg, out _restartsTimeWindow) || _restartsLimit < 0)
+                            {
+                                _restartsTimeWindow = 480;
+                                ConsoleUtil.WriteLine("restartsTimeWindow argument value must be an integer greater or equal to 0.", ConsoleColor.Red);
+                            }
+                            capture = CaptureArgs.None;
+                            break;
 
-                            default:
-                                throw new ArgumentOutOfRangeException();
+                        case CaptureArgs.LogLengthLimit:
+                        {
+                            string a = arg.Replace("k", "000", StringComparison.Ordinal)
+                                .Replace("M", "000000", StringComparison.Ordinal)
+                                .Replace("G", "000000000", StringComparison.Ordinal)
+                                .Replace("T", "000000000000", StringComparison.Ordinal);
+                            if (!ulong.TryParse(a, out LogLengthLimit))
+                            {
+                                ConsoleUtil.WriteLine(
+                                    "logLengthLimit argument value must be an integer greater or equal to 0.",
+                                    ConsoleColor.Red);
+                                LogLengthLimit = 25000000000;
+                            }
+
+                            capture = CaptureArgs.None;
                         }
+                            break;
+
+                        case CaptureArgs.LogEntriesLimit:
+                        {
+                            string a = arg.Replace("k", "000", StringComparison.Ordinal)
+                                .Replace("M", "000000", StringComparison.Ordinal)
+                                .Replace("G", "000000000", StringComparison.Ordinal)
+                                .Replace("T", "000000000000", StringComparison.Ordinal);
+                            if (!ulong.TryParse(a, out LogEntriesLimit))
+                            {
+                                ConsoleUtil.WriteLine(
+                                    "logEntriesLimit argument value must be an integer greater or equal to 0.",
+                                    ConsoleColor.Red);
+                                LogEntriesLimit = 10000000000;
+                            }
+
+                            capture = CaptureArgs.None;
+                        }
+                            break;
+
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
                 }
+            }
 
-                if (ConfigPath != null)
-                {
-                    if (File.Exists(ConfigPath))
-                        Configuration = Config.DeserializeConfig(File.ReadAllLines(ConfigPath, Encoding.UTF8));
-                    else reconfigure = true;
-                }
+            if (ConfigPath != null)
+            {
+                if (File.Exists(ConfigPath))
+                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(ConfigPath, Encoding.UTF8));
+                else reconfigure = true;
+            }
+            else
+            {
+                var cfgPath =
+                    $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
+
+                if (File.Exists(cfgPath))
+                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
                 else
                 {
-                    var cfgPath =
-                        $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
+                    cfgPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
 
                     if (File.Exists(cfgPath))
-                        Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
+                        Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
                     else
-                    {
-                        cfgPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
-
-                        if (File.Exists(cfgPath))
-                            Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
-                        else
-                            reconfigure = true;
-                    }
+                        reconfigure = true;
                 }
+            }
 
-                if (reconfigure)
-                    ConfigWizard.RunConfigWizard(useDefault);
+            if (reconfigure)
+                ConfigWizard.RunConfigWizard(useDefault);
 
-                NoSetCursor |= Configuration!.LaNoSetCursor;
-                AutoFlush &= Configuration.LaLogAutoFlush;
-                EnableLogging &= Configuration.EnableLaLogs;
+            NoSetCursor |= Configuration!.LaNoSetCursor;
+            AutoFlush &= Configuration.LaLogAutoFlush;
+            EnableLogging &= Configuration.EnableLaLogs;
                 
-                InputQueue.Clear();
+            InputQueue.Clear();
 
-                if (_firstRun)
+            if (_firstRun)
+            {
+                try
                 {
-                    try
-                    {
-                        SetupExitHandlers();
-                    }
-                    catch (Exception ex)
-                    {
-                        ConsoleUtil.WriteLine(
-                            $"Starting exit handlers threw {ex}. Game process will NOT be closed on console closing!",
-                            ConsoleColor.Yellow);
-                    }
+                    SetupExitHandlers();
                 }
-
-                if (_firstRun || _exit)
+                catch (Exception ex)
                 {
-                    _exit = false;
-                    _firstRun = false;
-                    SetupKeyboardInput();
+                    ConsoleUtil.WriteLine(
+                        $"Starting exit handlers threw {ex}. Game process will NOT be closed on console closing!",
+                        ConsoleColor.Yellow);
                 }
-                
-                RegisterCommands();
-                SetupReader();
-
-                StartSession();
-
-                _readerTask!.Start();
-                
-                if (!EnableLogging)
-                    ConsoleUtil.WriteLine("Logging has been disabled.", ConsoleColor.Red);
-                else if (!AutoFlush)
-                    ConsoleUtil.WriteLine("Logs auto flush has been disabled.", ConsoleColor.Yellow);
-                
-                if (PrintControlMessages)
-                    ConsoleUtil.WriteLine("Printing control messages been enabled using startup argument.", ConsoleColor.Gray);
-                
-                if (NoSetCursor)
-                    ConsoleUtil.WriteLine("Cursor management been disabled.", ConsoleColor.Gray);
-                
-                if (Configuration.LaDeleteOldLogs || Configuration.DeleteOldRoundLogs || Configuration.CompressOldRoundLogs)
-                    LogCleaner.Initialize();
-                
-                while (!_exit)
-                    Thread.Sleep(250);
-
-                // If the game was terminated intentionally, then wait, otherwise no
-                Exit(0, true); // After the readerTask is completed this will happen
             }
-            catch (Exception ex)
+
+            if (_firstRun || _exit)
             {
-                File.WriteAllText($"LocalAdmin Crash {DateTime.UtcNow:yyyy-MM-ddTHH-mm-ssZ}.txt", ex.ToString());
-                
-                Logger.Log("|===| Exception |===|");
-                Logger.Log(ex);
-                Logger.Log("|===================|");
-                Logger.Log("");
+                _exit = false;
+                _firstRun = false;
+                SetupKeyboardInput();
             }
+                
+            RegisterCommands();
+            SetupReader();
+
+            StartSession();
+
+            _readerTask!.Start();
+                
+            if (!EnableLogging)
+                ConsoleUtil.WriteLine("Logging has been disabled.", ConsoleColor.Red);
+            else if (!AutoFlush)
+                ConsoleUtil.WriteLine("Logs auto flush has been disabled.", ConsoleColor.Yellow);
+                
+            if (PrintControlMessages)
+                ConsoleUtil.WriteLine("Printing control messages been enabled using startup argument.", ConsoleColor.Gray);
+                
+            if (NoSetCursor)
+                ConsoleUtil.WriteLine("Cursor management been disabled.", ConsoleColor.Gray);
+                
+            if (Configuration.LaDeleteOldLogs || Configuration.DeleteOldRoundLogs || Configuration.CompressOldRoundLogs)
+                LogCleaner.Initialize();
+                
+            while (!_exit)
+                Thread.Sleep(250);
+
+            // If the game was terminated intentionally, then wait, otherwise no
+            Exit(0, true); // After the readerTask is completed this will happen
         }
-
-        /// <summary>
-        /// Starts a session,
-        /// if the session has already begun,
-        /// then terminates it.
-        /// </summary>
-        private void StartSession()
+        catch (Exception ex)
         {
-            // Terminate the game, if the game process is exists
-            if (_gameProcess is { HasExited: false })
-                TerminateGame();
+            await File.WriteAllTextAsync($"LocalAdmin Crash {DateTime.UtcNow:yyyy-MM-ddTHH-mm-ssZ}.txt", ex.ToString());
+                
+            Logger.Log("|===| Exception |===|");
+            Logger.Log(ex);
+            Logger.Log("|===================|");
+            Logger.Log("");
+        }
+    }
 
-            Menu();
+    /// <summary>
+    /// Starts a session,
+    /// if the session has already begun,
+    /// then terminates it.
+    /// </summary>
+    private void StartSession()
+    {
+        // Terminate the game, if the game process is exists
+        if (_gameProcess is { HasExited: false })
+            TerminateGame();
 
-            BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {GamePort}";
-            Console.Title = BaseWindowTitle;
+        Menu();
+
+        BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {GamePort}";
+        Console.Title = BaseWindowTitle;
             
-            Logger.Initialize();
+        Logger.Initialize();
 
-            ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen);
-            ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
+        ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen);
+        ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
 
-            SetupServer();
+        SetupServer();
 
-            while (Server!.ConsolePort == 0)
-                Thread.Sleep(200);
+        while (Server!.ConsolePort == 0)
+            Thread.Sleep(200);
             
-            RunScpsl();
-        }
+        RunScpsl();
+    }
 
-        private void Menu()
+    private void Menu()
+    {
+        ConsoleUtil.Clear();
+        ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine(string.Empty);
+        ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine("Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2022", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine(string.Empty);
+        ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine(string.Empty);
+    }
+
+    private static void SetupExitHandlers()
+    {
+        ProcessHandler.Handler.Setup();
+        AppDomainHandler.Handler.Setup();
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            ConsoleUtil.Clear();
-            ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
-            ConsoleUtil.WriteLine(string.Empty);
-            ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
-            ConsoleUtil.WriteLine("Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2022", ConsoleColor.Cyan);
-            ConsoleUtil.WriteLine(string.Empty);
-            ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
-            ConsoleUtil.WriteLine(string.Empty);
+            WindowsHandler.Handler.Setup();
         }
-
-        private static void SetupExitHandlers()
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            ProcessHandler.Handler.Setup();
-            AppDomainHandler.Handler.Setup();
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                WindowsHandler.Handler.Setup();
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
 #if LINUX_SIGNALS
                 try
                 {
@@ -577,10 +594,10 @@ namespace LocalAdmin.V2.Core
                     }
                 }
 #else
-                ConsoleUtil.WriteLine("Invalid Linux build! Please download LocalAdmin from an official source!", ConsoleColor.Red);
+            ConsoleUtil.WriteLine("Invalid Linux build! Please download LocalAdmin from an official source!", ConsoleColor.Red);
 #endif
-            }
         }
+    }
 
 #if LINUX_SIGNALS
         private static bool CheckMonoException(Exception ex)
@@ -591,318 +608,322 @@ namespace LocalAdmin.V2.Core
         }
 #endif
 
-        private void SetupServer()
+    private void SetupServer()
+    {
+        Server = new TcpServer();
+        Server.Received += (_, line) =>
         {
-            Server = new TcpServer();
-            Server.Received += (_, line) =>
-            {
-                if (!byte.TryParse(line.AsSpan(0, 1), NumberStyles.HexNumber, null, out var colorValue))
-                    colorValue = (byte)ConsoleColor.Gray;
+            if (!byte.TryParse(line.AsSpan(0, 1), NumberStyles.HexNumber, null, out var colorValue))
+                colorValue = (byte)ConsoleColor.Gray;
 
-                ConsoleUtil.WriteLine(line[1..], (ConsoleColor)colorValue);
-            };
-            Server.Start();
-        }
+            ConsoleUtil.WriteLine(line[1..], (ConsoleColor)colorValue);
+        };
+        Server.Start();
+    }
 
-        private static void SetupKeyboardInput()
+    private static void SetupKeyboardInput()
+    {
+        new Task(() =>
         {
-            new Task(() =>
+            while (!_exit)
             {
-                while (!_exit)
-                {
-                    var input = Console.ReadLine();
+                var input = Console.ReadLine();
 
-                    if (string.IsNullOrWhiteSpace(input))
-                        continue;
+                if (string.IsNullOrWhiteSpace(input))
+                    continue;
 
-                    InputQueue.Enqueue(input);
-                }
-            }).Start();
-        }
-
-        private void SetupReader()
-        {
-            async void ReaderTaskMethod()
-            {
-                while (Server == null) await Task.Delay(20);
-
-                while (!_exit)
-                {
-                    if (!InputQueue.TryDequeue(out var input))
-                    {
-                        await Task.Delay(65);
-                        continue;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(input)) continue;
-
-                    var currentLineCursor = NoSetCursor ? 0 : Console.CursorTop;
-
-                    if (currentLineCursor > 0)
-                    {
-                        Console.SetCursorPosition(0, currentLineCursor - 1);
-
-                        ConsoleUtil.WriteLine($"{string.Empty.PadLeft(Console.WindowWidth)}>>> {input}", ConsoleColor.DarkMagenta, -1);
-                        Console.SetCursorPosition(0, currentLineCursor);
-                    }
-                    else
-                        ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
-
-                    if (!_processRefreshFail && _gameProcess != null)
-                    {
-                        try
-                        {
-                            if (_gameProcess.HasExited)
-                            {
-                                ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
-                                _exit = true;
-                                continue;
-                            }
-                        }
-                        catch
-                        {
-                            _processRefreshFail = true;
-                        }
-                    }
-
-                    var split = input.Split(' ');
-
-                    if (split.Length == 0) continue;
-                    var name = split[0].ToUpperInvariant();
-
-                    var command = _commandService.GetCommandByName(name);
-
-                    if (command != null)
-                    {
-                        command.Execute(split.Skip(1).ToArray());
-                        if (!command.SendToGame) continue;
-                    }
-
-                    if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("exit ", StringComparison.OrdinalIgnoreCase) || input.Equals("quit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("quit ", StringComparison.OrdinalIgnoreCase) || input.Equals("stop", StringComparison.OrdinalIgnoreCase) || input.StartsWith("stop ", StringComparison.OrdinalIgnoreCase))
-                    {
-                        DisableExitActionSignals = true;
-                        ExitAction = ShutdownAction.SilentShutdown;
-                        _exit = true;
-                    }
-
-                    if (Server.Connected)
-                        Server.WriteLine(input);
-                    else
-                        ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
-                }
+                InputQueue.Enqueue(input);
             }
+        }).Start();
+    }
 
-            _readerTask = new Task(ReaderTaskMethod);
-        }
-
-        private void RunScpsl()
+    private void SetupReader()
+    {
+        async void ReaderTaskMethod()
         {
-            if (File.Exists(_scpslExecutable))
+            while (Server == null) await Task.Delay(20);
+
+            while (!_exit)
             {
-                ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
-                var printStd = Configuration!.LaShowStdoutStderr || _stdPrint;
-                var redirectStreams =
-                    Configuration.LaLogStdoutStderr || printStd;
-
-                var startInfo = new ProcessStartInfo
+                if (!InputQueue.TryDequeue(out var input))
                 {
-                    FileName = _scpslExecutable,
-                    Arguments =
-                        $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId} {_gameArguments}",
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                };
+                    await Task.Delay(65);
+                    continue;
+                }
 
-                _gameProcess = Process.Start(startInfo);
+                if (string.IsNullOrWhiteSpace(input)) continue;
 
-                _gameProcess!.OutputDataReceived += (_, args) =>
+                var currentLineCursor = NoSetCursor ? 0 : Console.CursorTop;
+
+                if (currentLineCursor > 0)
                 {
-                    if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
-                        return;
+                    Console.SetCursorPosition(0, currentLineCursor - 1);
 
-                    ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray,
-                        log: Configuration.LaLogStdoutStderr,
-                        display: printStd);
-                };
+                    ConsoleUtil.WriteLine($"{string.Empty.PadLeft(Console.WindowWidth)}>>> {input}", ConsoleColor.DarkMagenta, -1);
+                    Console.SetCursorPosition(0, currentLineCursor);
+                }
+                else
+                    ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
 
-                _gameProcess!.ErrorDataReceived += (_, args) =>
-                {
-                    if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
-                        return;
-
-                    ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta,
-                        log: Configuration.LaLogStdoutStderr,
-                        display: printStd);
-                };
-
-                _gameProcess!.BeginOutputReadLine();
-                _gameProcess!.BeginErrorReadLine();
-
-                _gameProcess!.Exited += (_, _) =>
+                if (!_processRefreshFail && _gameProcess != null)
                 {
                     try
                     {
-                        if (_gameProcess is { HasExited: false })
+                        if (_gameProcess.HasExited)
                         {
-                            ConsoleUtil.WriteLine("Game process exited and has been killed.", ConsoleColor.Gray);
-                            _gameProcess.Kill();
+                            ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
+                            _exit = true;
+                            continue;
                         }
-                        else ConsoleUtil.WriteLine("Game process exited and has been killed, no need to kill it.", ConsoleColor.Gray);
                     }
-                    catch (Exception e)
+                    catch
                     {
-                        ConsoleUtil.WriteLine($"Game process exited and has been killed, can't kill it: {e.Message}.", ConsoleColor.Gray);
+                        _processRefreshFail = true;
                     }
-                    
-                    if (_processClosing)
-                        return;
+                }
 
-                    switch (ExitAction)
-                    {
-                        case ShutdownAction.Crash:
-                            ConsoleUtil.WriteLine("The game process has been terminated...", ConsoleColor.Red);
-                            Exit(0, true);
-                            break;
-                        
-                        case ShutdownAction.Shutdown:
-                            Exit(0, true);
-                            break;
-                        
-                        case ShutdownAction.SilentShutdown:
-                            Exit(0);
-                            break;
-                        
-                        case ShutdownAction.Restart:
-                            Exit(0, false, true);
-                            break;
-                        
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                };
+                var split = input.Split(' ');
 
-                _gameProcess!.EnableRaisingEvents = true;
-            }
-            else
-            {
-                ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
-                
-                DisableExitActionSignals = true;
-                ExitAction = ShutdownAction.Shutdown;
+                if (split.Length == 0) continue;
+                var name = split[0].ToUpperInvariant();
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    Exit((int)WindowsErrorCode.ERROR_FILE_NOT_FOUND, true);
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    Exit((int)UnixErrorCode.ERROR_FILE_NOT_FOUND, true);
+                var command = _commandService.GetCommandByName(name);
+
+                if (command != null)
+                {
+                    command.Execute(split.Skip(1).ToArray());
+                    if (!command.SendToGame) continue;
+                }
+
+                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("exit ", StringComparison.OrdinalIgnoreCase) || input.Equals("quit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("quit ", StringComparison.OrdinalIgnoreCase) || input.Equals("stop", StringComparison.OrdinalIgnoreCase) || input.StartsWith("stop ", StringComparison.OrdinalIgnoreCase))
+                {
+                    DisableExitActionSignals = true;
+                    ExitAction = ShutdownAction.SilentShutdown;
+                    _exit = true;
+                }
+
+                if (Server.Connected)
+                    Server.WriteLine(input);
                 else
-                    Exit(1);
+                    ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
             }
         }
 
-        private void RegisterCommands()
-        {
-            _commandService.RegisterCommand(new RestartCommand());
-            _commandService.RegisterCommand(new ForceRestartCommand());
-            _commandService.RegisterCommand(new HelpCommand());
-            _commandService.RegisterCommand(new LicenseCommand());
-        }
+        _readerTask = new Task(ReaderTaskMethod);
+    }
 
-        private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)
+    private void RunScpsl()
+    {
+        if (File.Exists(_scpslExecutable))
         {
-            var input = Console.ReadLine();
+            ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
+            var printStd = Configuration!.LaShowStdoutStderr || _stdPrint;
+            var redirectStreams =
+                Configuration.LaLogStdoutStderr || printStd;
 
-            while (!checkInput(input))
+            var extraArgs = string.Empty;
+            if (_noTrueColor || !Configuration.EnableTrueColor)
+                extraArgs = " -disableAnsiColor";
+
+            var startInfo = new ProcessStartInfo
             {
-                invalidInputAction();
+                FileName = _scpslExecutable,
+                Arguments =
+                    $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId}{extraArgs} {_gameArguments}",
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
 
-                input = Console.ReadLine();
-            }
+            _gameProcess = Process.Start(startInfo);
 
-            validInputAction();
-        }
-
-        /// <summary>
-        ///     Terminates the game.
-        /// </summary>
-        private void TerminateGame()
-        {
-            Server?.Stop();
-            if (_gameProcess is { HasExited: false })
-                _gameProcess.Kill();
-        }
-
-        /// <summary>
-        ///     Terminates the game and console.
-        /// </summary>
-        public void Exit(int code = -1, bool waitForKey = false, bool restart = false)
-        {
-            lock (this)
+            _gameProcess!.OutputDataReceived += (_, args) =>
             {
+                if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
+                    return;
+
+                ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray,
+                    log: Configuration.LaLogStdoutStderr,
+                    display: printStd);
+            };
+
+            _gameProcess!.ErrorDataReceived += (_, args) =>
+            {
+                if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
+                    return;
+
+                ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta,
+                    log: Configuration.LaLogStdoutStderr,
+                    display: printStd);
+            };
+
+            _gameProcess!.BeginOutputReadLine();
+            _gameProcess!.BeginErrorReadLine();
+
+            _gameProcess!.Exited += (_, _) =>
+            {
+                try
+                {
+                    if (_gameProcess is { HasExited: false })
+                    {
+                        ConsoleUtil.WriteLine("Game process exited and has been killed.", ConsoleColor.Gray);
+                        _gameProcess.Kill();
+                    }
+                    else ConsoleUtil.WriteLine("Game process exited and has been killed, no need to kill it.", ConsoleColor.Gray);
+                }
+                catch (Exception e)
+                {
+                    ConsoleUtil.WriteLine($"Game process exited and has been killed, can't kill it: {e.Message}.", ConsoleColor.Gray);
+                }
+                    
                 if (_processClosing)
                     return;
 
-                _exit = true;
-                _processClosing = true;
-                LogCleaner.Abort();
-                Logger.EndLogging();
-                TerminateGame(); // Forcefully terminating the process
-                _gameProcess?.Dispose();
+                switch (ExitAction)
+                {
+                    case ShutdownAction.Crash:
+                        ConsoleUtil.WriteLine("The game process has been terminated...", ConsoleColor.Red);
+                        Exit(0, true);
+                        break;
+                        
+                    case ShutdownAction.Shutdown:
+                        Exit(0, true);
+                        break;
+                        
+                    case ShutdownAction.SilentShutdown:
+                        Exit(0);
+                        break;
+                        
+                    case ShutdownAction.Restart:
+                        Exit(0, false, true);
+                        break;
+                        
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            };
+
+            _gameProcess!.EnableRaisingEvents = true;
+        }
+        else
+        {
+            ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
                 
-                try
-                {
-                    if (_readerTask is { IsCompleted: true })
-                        _readerTask?.Dispose();
-                }
-                catch
-                {
-                    //Ignore
-                }
-
-                if (restart || ExitAction == ShutdownAction.Restart)
-                {
-                    _ignoreNextRestart = true;
-                    return;
-                }
-
-                if (ExitAction == ShutdownAction.Crash && Configuration is { RestartOnCrash: true })
-                    return;
-                
-                if (waitForKey && ExitAction != ShutdownAction.SilentShutdown)
-                {
-                    ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
-                    Console.ReadKey(true);
-                }
-                Environment.Exit(code);
-            }
-        }
-
-        /// <summary>
-        ///     Releases resources used by the program
-        /// </summary>
-        public void Dispose()
-        {
-            Exit(0);
-            GC.SuppressFinalize(this);
-        }
-
-        private void SaveJsonOrTerminate()
-        {
-            if (!DataJson!.TrySave(InternalJsonDataPath))
-                Terminate();
-        }
-
-        private void Terminate()
-        {
             DisableExitActionSignals = true;
-            ExitAction = ShutdownAction.SilentShutdown;
-            Exit(1);
+            ExitAction = ShutdownAction.Shutdown;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Exit((int)WindowsErrorCode.ERROR_FILE_NOT_FOUND, true);
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                Exit((int)UnixErrorCode.ERROR_FILE_NOT_FOUND, true);
+            else
+                Exit(1);
+        }
+    }
+
+    private void RegisterCommands()
+    {
+        _commandService.RegisterCommand(new RestartCommand());
+        _commandService.RegisterCommand(new ForceRestartCommand());
+        _commandService.RegisterCommand(new HelpCommand());
+        _commandService.RegisterCommand(new LicenseCommand());
+        _commandService.RegisterCommand(new PluginManagerCommand());
+    }
+
+    private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)
+    {
+        var input = Console.ReadLine();
+
+        while (!checkInput(input))
+        {
+            invalidInputAction();
+
+            input = Console.ReadLine();
         }
 
-        ~LocalAdmin()
+        validInputAction();
+    }
+
+    /// <summary>
+    ///     Terminates the game.
+    /// </summary>
+    private void TerminateGame()
+    {
+        Server?.Stop();
+        if (_gameProcess is { HasExited: false })
+            _gameProcess.Kill();
+    }
+
+    /// <summary>
+    ///     Terminates the game and console.
+    /// </summary>
+    public void Exit(int code = -1, bool waitForKey = false, bool restart = false)
+    {
+        lock (this)
         {
-            Exit(0);
+            if (_processClosing)
+                return;
+
+            _exit = true;
+            _processClosing = true;
+            LogCleaner.Abort();
+            Logger.EndLogging();
+            TerminateGame(); // Forcefully terminating the process
+            _gameProcess?.Dispose();
+                
+            try
+            {
+                if (_readerTask is { IsCompleted: true })
+                    _readerTask?.Dispose();
+            }
+            catch
+            {
+                //Ignore
+            }
+
+            if (restart || ExitAction == ShutdownAction.Restart)
+            {
+                _ignoreNextRestart = true;
+                return;
+            }
+
+            if (ExitAction == ShutdownAction.Crash && Configuration is { RestartOnCrash: true })
+                return;
+                
+            if (waitForKey && ExitAction != ShutdownAction.SilentShutdown)
+            {
+                ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
+                Console.ReadKey(true);
+            }
+            Environment.Exit(code);
         }
+    }
+
+    /// <summary>
+    ///     Releases resources used by the program
+    /// </summary>
+    public void Dispose()
+    {
+        Exit(0);
+        GC.SuppressFinalize(this);
+    }
+
+    private async Task SaveJsonOrTerminate()
+    {
+        if (!(await DataJson!.TrySave(PathManager.InternalJsonDataPath)))
+            Terminate();
+    }
+
+    private void Terminate()
+    {
+        DisableExitActionSignals = true;
+        ExitAction = ShutdownAction.SilentShutdown;
+        Exit(1);
+    }
+
+    ~LocalAdmin()
+    {
+        Exit(0);
     }
 }

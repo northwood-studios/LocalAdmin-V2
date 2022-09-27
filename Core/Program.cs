@@ -1,15 +1,16 @@
-﻿namespace LocalAdmin.V2.Core
+﻿using System.Threading.Tasks;
+
+namespace LocalAdmin.V2.Core;
+
+internal static class Program
 {
-    static class Program
+    private static async Task Main(string[] args)
     {
-        static void Main(string[] args)
+        while (true)
         {
-            while (true)
-            {
-                using var la = new LocalAdmin();
-                la.Start(args);
-            }
-            // ReSharper disable once FunctionNeverReturns
+            using var la = new LocalAdmin();
+            await la.Start(args);
         }
+        // ReSharper disable once FunctionNeverReturns
     }
 }

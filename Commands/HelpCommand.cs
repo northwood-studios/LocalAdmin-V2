@@ -2,28 +2,23 @@
 using LocalAdmin.V2.IO;
 using System;
 
-namespace LocalAdmin.V2.Commands
-{
-    internal class HelpCommand : CommandBase
-    {
-        public HelpCommand() : base("Help", true) { }
+namespace LocalAdmin.V2.Commands;
 
-        internal override void Execute(string[] arguments)
-        {
-            ConsoleUtil.WriteLine(string.Empty);
-            ConsoleUtil.WriteLine("----HELP----", ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("BAN - time-bans player using IP address or part of the nickname.");
-            ConsoleUtil.WriteLine("FORCESTART - forces the round to start.");
-            ConsoleUtil.WriteLine("ROUNDRESTART - forces the round to restart.");
-            ConsoleUtil.WriteLine("HELLO - tests if server is responding.");
-            ConsoleUtil.WriteLine("CONFIG - opens the server's configuration file.");
-            ConsoleUtil.WriteLine("CONFIG RELOAD - applies config changes.");
-            ConsoleUtil.WriteLine("EXIT - stops the server.");
-            ConsoleUtil.WriteLine("RESTART - restarts the server.");
-            ConsoleUtil.WriteLine("FORCERESTART - kills the server and restarts it.");
-            ConsoleUtil.WriteLine("SEED - shows the current map seed in order to re-generate level in the future.");
-            ConsoleUtil.WriteLine("BANREFRESH - forces ban database to refresh.");
-            ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
-        }
+internal class HelpCommand : CommandBase
+{
+    public HelpCommand() : base("Help", true) { }
+
+    internal override void Execute(string[] arguments)
+    {
+        ConsoleUtil.WriteLine(string.Empty);
+        ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
+        ConsoleUtil.WriteLine("EXIT - stops the server.");
+        ConsoleUtil.WriteLine("FORCERESTART - kills the server and restarts it.");
+        ConsoleUtil.WriteLine("HELP - prints this help.");
+        ConsoleUtil.WriteLine("LICENSE - prints LocalAdmin license details.");
+        ConsoleUtil.WriteLine("P - Plugin Manager.");
+        ConsoleUtil.WriteLine("RESTART - restarts the server.");
+        ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
+        ConsoleUtil.WriteLine("---- Game Commands Commands ----", ConsoleColor.DarkGray);
     }
 }
