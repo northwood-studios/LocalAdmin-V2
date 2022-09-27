@@ -458,7 +458,7 @@ internal static class PluginInstaller
         }
     }
 
-    private static async Task<bool> TryUninstall(string name, string port, bool ignoreLocks)
+    internal static async Task<bool> TryUninstallPlugin(string name, string port, bool ignoreLocks)
     {
         var safeName = name.Replace("/", "_", StringComparison.Ordinal);
         var metadataPath = PluginsPath(port) + "metadata.json";

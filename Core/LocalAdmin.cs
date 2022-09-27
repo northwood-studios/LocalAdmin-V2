@@ -48,7 +48,7 @@ public sealed class LocalAdmin : IDisposable
         "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
     private static bool _exit, _processRefreshFail;
     private static readonly ConcurrentQueue<string> InputQueue = new ();
-    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding;
+    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
     private static bool _stdPrint;
     private volatile bool _processClosing;
 
@@ -302,6 +302,10 @@ public sealed class LocalAdmin : IDisposable
                                     case "--noAlign":
                                         NoPadding = true;
                                         break;
+                                    
+                                    case "--dismissPluginManagerSecurityWarning":
+                                        DismissPluginsSecurityWarning = true;
+                                        break;
 
                                     case "--config":
                                         capture = CaptureArgs.ConfigPath;
@@ -419,7 +423,7 @@ public sealed class LocalAdmin : IDisposable
             if (ConfigPath != null)
             {
                 if (File.Exists(ConfigPath))
-                    Configuration = Config.DeserializeConfig(File.ReadAllLines(ConfigPath, Encoding.UTF8));
+                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(ConfigPath, Encoding.UTF8));
                 else reconfigure = true;
             }
             else
@@ -428,13 +432,13 @@ public sealed class LocalAdmin : IDisposable
                     $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
 
                 if (File.Exists(cfgPath))
-                    Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
+                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
                 else
                 {
                     cfgPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
 
                     if (File.Exists(cfgPath))
-                        Configuration = Config.DeserializeConfig(File.ReadAllLines(cfgPath, Encoding.UTF8));
+                        Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
                     else
                         reconfigure = true;
                 }
@@ -499,7 +503,7 @@ public sealed class LocalAdmin : IDisposable
         }
         catch (Exception ex)
         {
-            File.WriteAllText($"LocalAdmin Crash {DateTime.UtcNow:yyyy-MM-ddTHH-mm-ssZ}.txt", ex.ToString());
+            await File.WriteAllTextAsync($"LocalAdmin Crash {DateTime.UtcNow:yyyy-MM-ddTHH-mm-ssZ}.txt", ex.ToString());
                 
             Logger.Log("|===| Exception |===|");
             Logger.Log(ex);

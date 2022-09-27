@@ -26,7 +26,7 @@ internal static class InstallCommand
         {
             if (args[1].Contains('/', StringComparison.Ordinal))
             {
-                ConsoleUtil.WriteLine("Invalid plugin version!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Invalid plugin version!", ConsoleColor.Red);
                 return;
             }
             

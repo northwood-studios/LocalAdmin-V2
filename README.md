@@ -22,6 +22,7 @@ Linux: `./LocalAdmin [port] [arguments] [-- arguments passthrough]`
 | --noLogs | -l | Disables LocalAdmin logging. |
 | --noAutoFlush | -n | Disables auto flush of LocalAdmin log files.<br>**Not compatible with --noLogs argument.** |
 | --noAlign | -a | Disables multiline log entries alignment. |
+| --dismissPluginManagerSecurityWarning | | Dismisses Plugin Manager security warning. |
 | --restartsLimit |  | Specifies a limit of auto-restarts in a specified time window.<br>Setting this argument to 0 disables auto-restarts.<br>Setting this argument to -1 disables the limit.<br>*Default value: 4* |
 | --restartsTimeWindow |  | Specifies a time window (in seconds) for the auto-restarts limit.<br>Setting this argument to 0 disables resetting the amount of auto-restarts after a specified amount of time.<br>*Default value: 480* |
 | --logLengthLimit |  | Specifies the limit of characters in LocalAdmin log file.<br>Suffixes `k`, `M`, `G` and `T` are supported, eg. `5G` is equal to `5000000000` characters.<br>Setting this argument to 0 disables the limit.<br>*Default value: 25G* |

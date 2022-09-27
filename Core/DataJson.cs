@@ -9,6 +9,9 @@ internal class DataJson
     [JsonProperty("EulaAccepted")]
     public DateTime? EulaAccepted;
 
+    [JsonProperty("PluginManagerWarningDismissed")]
+    public bool PluginManagerWarningDismissed;
+
     [JsonProperty("PluginVersionCache")]
     public Dictionary<string, PluginVersionCache>? PluginVersionCache = new();
 }
