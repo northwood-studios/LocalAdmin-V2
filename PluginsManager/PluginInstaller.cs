@@ -19,7 +19,7 @@ internal static class PluginInstaller
         DefaultRequestHeaders = { { "User-Agent", "LocalAdmin (SCP: Secret Laboratory Dedicated Server Tool)" } }
     };
     
-    private static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}PluginAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
+    private static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}PluginAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
     private static string DependenciesPath(string port) => $"{PluginsPath(port)}dependencies{Path.DirectorySeparatorChar}";
     private static string TempPath(ushort port) => $"{PathManager.GameUserDataRoot}internal{Path.DirectorySeparatorChar}LA Temp{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
     
