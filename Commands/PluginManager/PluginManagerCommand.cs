@@ -43,8 +43,10 @@ internal class PluginManagerCommand : CommandBase
             }
 
             _securityWarningStopwatch = null;
+            ConsoleUtil.WriteLine("Plugin manager has been enabled. USE AT YOUR OWN RISK.", ConsoleColor.Yellow);
             Core.LocalAdmin.DataJson.PluginManagerWarningDismissed = true;
             await Core.LocalAdmin.DataJson.TrySave(PathManager.InternalJsonDataPath);
+            return;
         }
         
         if (arguments.Length == 0)

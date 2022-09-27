@@ -305,6 +305,7 @@ public sealed class LocalAdmin : IDisposable
                                         break;
                                     
                                     case "--dismissPluginManagerSecurityWarning":
+                                        ConsoleUtil.WriteLine("Plugin manager has been enabled. USE AT YOUR OWN RISK.", ConsoleColor.Yellow);
                                         DismissPluginsSecurityWarning = true;
                                         break;
 
