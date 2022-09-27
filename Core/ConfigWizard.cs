@@ -139,6 +139,7 @@ public static class ConfigWizard
             
         LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin live view?");
         LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console, may cause issues especially on linux)?");
+        LocalAdmin.Configuration.EnableTrueColor = BoolInput("Should True Color output be enabled (disable if you can see some weird characters in some output lines, recommended to DISABLE if running LocalAdmin on WINDOWS)?");
         LocalAdmin.Configuration.EnableLaLogs = BoolInput("Do you want to enable LocalAdmin logs?");
 
         if (LocalAdmin.Configuration.EnableLaLogs)

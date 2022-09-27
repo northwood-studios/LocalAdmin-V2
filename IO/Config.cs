@@ -23,9 +23,10 @@ public class Config
                 ? LaLiveViewTimeFormat.Replace(" z", string.Empty).Replace("z", string.Empty) : LaLiveViewTimeFormat;
         }
     }
-        
+
     public bool LaShowStdoutStderr;
     public bool LaNoSetCursor = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+    public bool EnableTrueColor = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
     public bool EnableLaLogs = true;
     public bool LaLogsUseUtc;
     public bool LaLogAutoFlush = true;
@@ -59,6 +60,9 @@ public class Config
             
         sb.Append("la_no_set_cursor: ");
         sb.AppendLine(LaNoSetCursor.ToString().ToLowerInvariant());
+        
+        sb.Append("enable_true_color: ");
+        sb.AppendLine(EnableTrueColor.ToString().ToLowerInvariant());
             
         sb.Append("enable_la_logs: ");
         sb.AppendLine(EnableLaLogs.ToString().ToLowerInvariant());
@@ -127,6 +131,10 @@ public class Config
                 case "la_no_set_cursor" when bool.TryParse(sp[1], out var b):
                     cfg.LaNoSetCursor = b;
                     break;
+                
+                case "enable_true_color" when bool.TryParse(sp[1], out var b):
+                    cfg.EnableTrueColor = b;
+                    break;
                     
                 case "enable_la_logs" when bool.TryParse(sp[1], out var b):
                     cfg.EnableLaLogs = b;
@@ -188,12 +196,13 @@ public class Config
     public override string ToString()
     {
         var sb = new StringBuilder();
-            
+        
         sb.AppendLine(RestartOnCrash ? "- Server will be automatically restarted after a crash." : "- Server will NOT be automatically restarted after a crash.");
         sb.AppendLine(LaLiveViewUseUtc ? "- LocalAdmin live view will use UTC timezone." : "- LocalAdmin live view will use local timezone.");
         sb.AppendLine($"- LocalAdmin live will use the following timestamp format: {LaLiveViewTimeFormat}");
         sb.AppendLine(LaShowStdoutStderr ? "- Standard outputs (that contain a lot of debug information) will be displayed." : "- Standard outputs (that contain a lot of debug information) will NOT be displayed.");
         sb.AppendLine(LaNoSetCursor ? "- Cursor position management is DISABLED." : "- Cursor position management is ENABLED.");
+        sb.AppendLine(EnableTrueColor ? "- True Color output is ENABLED." : "- True Color output is DISABLED.");
         sb.AppendLine(EnableLaLogs ? "- LocalAdmin logs are ENABLED." : "- LocalAdmin logs are DISABLED.");
 
         if (EnableLaLogs)

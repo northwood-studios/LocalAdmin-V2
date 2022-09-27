@@ -8,7 +8,7 @@ internal static class PathManager
     private static bool _configDirOverride;
     
     internal static readonly string GameUserDataRoot;
-    internal static string InternalJsonDataPath;
+    internal static readonly string InternalJsonDataPath;
     
     static PathManager()
     {

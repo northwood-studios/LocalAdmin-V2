@@ -46,7 +46,7 @@ public sealed class LocalAdmin : IDisposable
     
     private static bool _exit, _processRefreshFail;
     private static readonly ConcurrentQueue<string> InputQueue = new ();
-    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
+    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning, NoTrueColor;
     private static bool _stdPrint;
     private volatile bool _processClosing;
 
@@ -62,8 +62,6 @@ public sealed class LocalAdmin : IDisposable
     internal bool DisableExitActionSignals;
 
     internal static DataJson? DataJson;
-        
-    
 
     internal enum ShutdownAction : byte
     {
@@ -299,6 +297,10 @@ public sealed class LocalAdmin : IDisposable
                                         
                                     case "--noAlign":
                                         NoPadding = true;
+                                        break;
+                                    
+                                    case "--disableTrueColor":
+                                        NoTrueColor = true;
                                         break;
                                     
                                     case "--dismissPluginManagerSecurityWarning":
@@ -717,11 +719,15 @@ public sealed class LocalAdmin : IDisposable
             var redirectStreams =
                 Configuration.LaLogStdoutStderr || printStd;
 
+            var extraArgs = string.Empty;
+            if (NoTrueColor || !Configuration.EnableTrueColor)
+                extraArgs = " --disableAnsiColor";
+
             var startInfo = new ProcessStartInfo
             {
                 FileName = _scpslExecutable,
                 Arguments =
-                    $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId} {_gameArguments}",
+                    $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId}{extraArgs} {_gameArguments}",
                 CreateNoWindow = true,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,

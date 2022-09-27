@@ -11,11 +11,11 @@ internal class HelpCommand : CommandBase
     internal override void Execute(string[] arguments)
     {
         ConsoleUtil.WriteLine(string.Empty);
-        ConsoleUtil.WriteLine("---- Local Admin Commands ----", ConsoleColor.DarkGray);
+        ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
         ConsoleUtil.WriteLine("EXIT - stops the server.");
         ConsoleUtil.WriteLine("FORCERESTART - kills the server and restarts it.");
         ConsoleUtil.WriteLine("HELP - prints this help.");
-        ConsoleUtil.WriteLine("LICENSE - prints Local Admin license details.");
+        ConsoleUtil.WriteLine("LICENSE - prints LocalAdmin license details.");
         ConsoleUtil.WriteLine("P - Plugin Manager.");
         ConsoleUtil.WriteLine("RESTART - restarts the server.");
         ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);

@@ -27,7 +27,7 @@ internal class PluginManagerCommand : CommandBase
                 ConsoleUtil.WriteLine("===== SECURITY WARNING =====", ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine("Plugin Manager is a tool designed to installing 3rd party modifications.", ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine("These modifications are NOT developed by Northwood Studios (SCP:SL developers) and MAY contain malicious code that may harm the server.", ConsoleColor.Yellow);
-                ConsoleUtil.WriteLine("Northwood Studios and Local Admin developers take NO RESPONSIBILITY for any damage caused by any plugin.", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine("Northwood Studios and LocalAdmin developers take NO RESPONSIBILITY for any damage caused by any plugin.", ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine("We recommend installing only well-known plugins from trusted sources.", ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine("If you wish to continue, please type \"p confirm\" command.", ConsoleColor.Yellow);
