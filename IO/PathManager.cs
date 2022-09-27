@@ -8,6 +8,7 @@ internal static class PathManager
     private static bool _configDirOverride;
     
     internal static readonly string GameUserDataRoot;
+    internal static readonly string ConfigPath;
     internal static readonly string InternalJsonDataPath;
     
     static PathManager()
@@ -18,9 +19,10 @@ internal static class PathManager
             ? "AppData" + Path.DirectorySeparatorChar
             : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
               "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
+        
+        ConfigPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}";
 
-        InternalJsonDataPath =
-            $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}localadmin_internal_data.json";
+        InternalJsonDataPath = ConfigPath + "localadmin_internal_data.json";
     }
 
     private static void ProcessHostPolicy()
