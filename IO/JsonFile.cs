@@ -27,14 +27,14 @@ internal static class JsonFile
         }
     }
 
-    internal static async Task<bool> TrySave<T>(this T obj, string path, uint timeout = 2000) where T : class
+    internal static async Task<bool> TrySave<T>(this T obj, string path, uint timeout = 2000, bool forceUnlock = false) where T : class
     {
         try
         {
             bool lockGranted = await LockFile(path, timeout);
             await File.WriteAllTextAsync(path, JsonConvert.SerializeObject(obj, Formatting.Indented), Encoding.UTF8);
             
-            if (lockGranted)
+            if (lockGranted || forceUnlock)
                 UnlockFile(path);
 
             return true;
