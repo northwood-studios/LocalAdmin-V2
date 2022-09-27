@@ -46,7 +46,8 @@ public sealed class LocalAdmin : IDisposable
     
     private static bool _exit, _processRefreshFail;
     private static readonly ConcurrentQueue<string> InputQueue = new ();
-    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning, NoTrueColor;
+    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
+    private static bool _noTrueColor;
     private static bool _stdPrint;
     private volatile bool _processClosing;
 
@@ -300,7 +301,7 @@ public sealed class LocalAdmin : IDisposable
                                         break;
                                     
                                     case "--disableTrueColor":
-                                        NoTrueColor = true;
+                                        _noTrueColor = true;
                                         break;
                                     
                                     case "--dismissPluginManagerSecurityWarning":
@@ -720,7 +721,7 @@ public sealed class LocalAdmin : IDisposable
                 Configuration.LaLogStdoutStderr || printStd;
 
             var extraArgs = string.Empty;
-            if (NoTrueColor || !Configuration.EnableTrueColor)
+            if (_noTrueColor || !Configuration.EnableTrueColor)
                 extraArgs = " -disableAnsiColor";
 
             var startInfo = new ProcessStartInfo
