@@ -131,6 +131,9 @@ public sealed class LocalAdmin : IDisposable
 
         try
         {
+            if (!Directory.Exists(PathManager.InternalJsonDataPath))
+                Directory.CreateDirectory(PathManager.InternalJsonDataPath);
+            
             if (!File.Exists(PathManager.InternalJsonDataPath))
             {
                 DataJson = new DataJson();
