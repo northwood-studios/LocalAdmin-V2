@@ -44,7 +44,7 @@ internal class PluginManagerCommand : CommandBase
 
             _securityWarningStopwatch = null;
             Core.LocalAdmin.DataJson.PluginManagerWarningDismissed = true;
-            await Core.LocalAdmin.DataJson.TrySave(Core.LocalAdmin.InternalJsonDataPath);
+            await Core.LocalAdmin.DataJson.TrySave(PathManager.InternalJsonDataPath);
         }
         
         if (arguments.Length == 0)

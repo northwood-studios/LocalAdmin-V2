@@ -17,7 +17,7 @@ internal static class InstallCommand
             if (!res.Success)
                 return;
 
-            if (!await Core.LocalAdmin.DataJson!.TrySave(Core.LocalAdmin.InternalJsonDataPath))
+            if (!await Core.LocalAdmin.DataJson!.TrySave(PathManager.InternalJsonDataPath))
                 return;
             
             version = "latest";
@@ -30,7 +30,7 @@ internal static class InstallCommand
                 return;
             }
             
-            res = await PluginInstaller.TryGetVersionDetails(args[0], args[1], true);
+            res = await PluginInstaller.TryGetVersionDetails(args[0], args[1]);
             if (!res.Success)
                 return;
 

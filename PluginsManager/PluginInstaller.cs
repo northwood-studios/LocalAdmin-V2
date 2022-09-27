@@ -17,9 +17,9 @@ internal static class PluginInstaller
         Timeout = TimeSpan.FromSeconds(45)
     };
     
-    private static string PluginsPath(string port) => $"{LocalAdmin.V2.Core.LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}PluginAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
+    private static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}PluginAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
     private static string DependenciesPath(string port) => $"{PluginsPath(port)}dependencies{Path.DirectorySeparatorChar}";
-    private static string TempPath(ushort port) => $"{LocalAdmin.V2.Core.LocalAdmin.GameUserDataRoot}internal{Path.DirectorySeparatorChar}LA Temp{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
+    private static string TempPath(ushort port) => $"{PathManager.GameUserDataRoot}internal{Path.DirectorySeparatorChar}LA Temp{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
     
     private static async Task<QueryResult> QueryRelease(string name, string url, bool interactive)
     {

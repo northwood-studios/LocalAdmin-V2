@@ -24,7 +24,7 @@ public static class ConfigWizard
         Console.WriteLine();
         Console.WriteLine(
             "We will ask you a couple of questions. You can always change your answers by running LocalAdmin with \"--reconfigure\" argument or manually editing configuration files in " +
-            (LocalAdmin.ConfigPath ?? LocalAdmin.GameUserDataRoot) + "config directory.");
+            (LocalAdmin.ConfigPath ?? PathManager.GameUserDataRoot) + "config directory.");
         Console.WriteLine();
             
         Console.WriteLine(LocalAdmin.Configuration == null ? "This is the default LocalAdmin configuration:" : "That's your current LocalAdmin configuration:");
@@ -288,7 +288,7 @@ public static class ConfigWizard
         }
 
         var cfgPath =
-            $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
+            $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
 
         if (!Directory.Exists(cfgPath))
         {
@@ -359,7 +359,7 @@ public static class ConfigWizard
             }
         }
             
-        cfgPath = $"{LocalAdmin.GameUserDataRoot}config{Path.DirectorySeparatorChar}";
+        cfgPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}";
             
         if (!Directory.Exists(cfgPath))
         {

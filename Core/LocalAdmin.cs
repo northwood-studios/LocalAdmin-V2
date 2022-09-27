@@ -43,9 +43,7 @@ public sealed class LocalAdmin : IDisposable
     private readonly string _scpslExecutable;
     private static string _gameArguments = string.Empty;
     internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
-    internal static readonly string GameUserDataRoot =
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
-        "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
+    
     private static bool _exit, _processRefreshFail;
     private static readonly ConcurrentQueue<string> InputQueue = new ();
     internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
@@ -65,7 +63,7 @@ public sealed class LocalAdmin : IDisposable
 
     internal static DataJson? DataJson;
         
-    internal static string InternalJsonDataPath => $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}localadmin_internal_data.json";
+    
 
     internal enum ShutdownAction : byte
     {
@@ -134,14 +132,14 @@ public sealed class LocalAdmin : IDisposable
 
         try
         {
-            if (!File.Exists(InternalJsonDataPath))
+            if (!File.Exists(PathManager.InternalJsonDataPath))
             {
                 DataJson = new DataJson();
                 await SaveJsonOrTerminate();
             }
             else
             {
-                DataJson = await JsonFile.Load<DataJson>(InternalJsonDataPath);
+                DataJson = await JsonFile.Load<DataJson>(PathManager.InternalJsonDataPath);
                     
                 if (DataJson == null)
                     Terminate();
@@ -429,13 +427,13 @@ public sealed class LocalAdmin : IDisposable
             else
             {
                 var cfgPath =
-                    $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
+                    $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
 
                 if (File.Exists(cfgPath))
                     Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
                 else
                 {
-                    cfgPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
+                    cfgPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
 
                     if (File.Exists(cfgPath))
                         Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
@@ -905,7 +903,7 @@ public sealed class LocalAdmin : IDisposable
 
     private async Task SaveJsonOrTerminate()
     {
-        if (!(await DataJson!.TrySave(InternalJsonDataPath)))
+        if (!(await DataJson!.TrySave(PathManager.InternalJsonDataPath)))
             Terminate();
     }
 

@@ -59,9 +59,9 @@ public static class LogCleaner
             }
 
             if (Core.LocalAdmin.Configuration!.DeleteOldRoundLogs ||
-                Core.LocalAdmin.Configuration!.CompressOldRoundLogs)
+                Core.LocalAdmin.Configuration.CompressOldRoundLogs)
             {
-                var root = Core.LocalAdmin.GameLogsPath ?? $"{Core.LocalAdmin.GameUserDataRoot}ServerLogs{Path.DirectorySeparatorChar}{Core.LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
+                var root = Core.LocalAdmin.GameLogsPath ?? $"{PathManager.GameUserDataRoot}ServerLogs{Path.DirectorySeparatorChar}{Core.LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
 
                 if (Directory.Exists(root))
                 {
@@ -88,16 +88,16 @@ public static class LogCleaner
                             var diff = now - date;
 
                             stage = "File name processed";
-                            if (Core.LocalAdmin.Configuration!.DeleteOldRoundLogs && diff.TotalDays >
-                                Core.LocalAdmin.Configuration!.RoundLogsExpirationDays)
+                            if (Core.LocalAdmin.Configuration.DeleteOldRoundLogs && diff.TotalDays >
+                                Core.LocalAdmin.Configuration.RoundLogsExpirationDays)
                             {
                                 stage = "Deletion";
                                 File.Delete(file);
                                 continue;
                             }
                                 
-                            if (Core.LocalAdmin.Configuration!.CompressOldRoundLogs && diff.TotalDays >
-                                Core.LocalAdmin.Configuration!.RoundLogsCompressionThresholdDays)
+                            if (Core.LocalAdmin.Configuration.CompressOldRoundLogs && diff.TotalDays >
+                                Core.LocalAdmin.Configuration.RoundLogsCompressionThresholdDays)
                             {
                                 stage = "Compression - p2";
                                 var p2 = root + "LA-ToCompress-" + d + Path.DirectorySeparatorChar;
@@ -139,8 +139,8 @@ public static class LogCleaner
                             var diff = now - date;
 
                             stage = "File name processed";
-                            if (Core.LocalAdmin.Configuration!.DeleteOldRoundLogs && diff.TotalDays >
-                                Core.LocalAdmin.Configuration!.RoundLogsExpirationDays)
+                            if (Core.LocalAdmin.Configuration.DeleteOldRoundLogs && diff.TotalDays >
+                                Core.LocalAdmin.Configuration.RoundLogsExpirationDays)
                             {
                                 stage = "Deletion";
                                 File.Delete(file);
@@ -202,9 +202,9 @@ public static class LogCleaner
                 }
             }
 
-            if (Core.LocalAdmin.Configuration!.LaDeleteOldLogs)
+            if (Core.LocalAdmin.Configuration.LaDeleteOldLogs)
             {
-                var root = Core.LocalAdmin.LaLogsPath ?? $"{Core.LocalAdmin.GameUserDataRoot}{Logger.LogFolderName}{Path.DirectorySeparatorChar}{Core.LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
+                var root = Core.LocalAdmin.LaLogsPath ?? $"{PathManager.GameUserDataRoot}{Logger.LogFolderName}{Path.DirectorySeparatorChar}{Core.LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
                 if (Directory.Exists(root))
                 {
                     foreach (var file in Directory.GetFiles(root, "LocalAdmin Log *", SearchOption.TopDirectoryOnly))
@@ -230,7 +230,7 @@ public static class LogCleaner
                             var diff = (now - date);
 
                             stage = "File name processed";
-                            if (diff.TotalDays > Core.LocalAdmin.Configuration!.LaLogsExpirationDays)
+                            if (diff.TotalDays > Core.LocalAdmin.Configuration.LaLogsExpirationDays)
                             {
                                 stage = "Deletion";
                                 File.Delete(file);

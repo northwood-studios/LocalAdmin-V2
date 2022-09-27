@@ -19,7 +19,7 @@ public static class Logger
         if (_logging)
             EndLogging();
             
-        string dir = Core.LocalAdmin.LaLogsPath ?? Core.LocalAdmin.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.GamePort + Path.DirectorySeparatorChar;
+        string dir = Core.LocalAdmin.LaLogsPath ?? PathManager.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.GamePort + Path.DirectorySeparatorChar;
         if (!Directory.Exists(dir))
             Directory.CreateDirectory(dir);
 
