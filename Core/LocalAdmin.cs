@@ -721,7 +721,7 @@ public sealed class LocalAdmin : IDisposable
 
             var extraArgs = string.Empty;
             if (NoTrueColor || !Configuration.EnableTrueColor)
-                extraArgs = " --disableAnsiColor";
+                extraArgs = " -disableAnsiColor";
 
             var startInfo = new ProcessStartInfo
             {
