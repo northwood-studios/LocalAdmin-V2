@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using LocalAdmin.V2.Core;
@@ -28,7 +29,7 @@ internal static class PluginInstaller
         {
             using var response = await HttpClient.GetAsync(url);
             
-            if (!response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotFound)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to query {url}! (Status code: {response.StatusCode})", ConsoleColor.Red);
                 return new();
@@ -46,7 +47,7 @@ internal static class PluginInstaller
             
             if (data.Message != null)
             {
-                if (data.Message.Equals("Not Found", StringComparison.Ordinal))
+                if (response.StatusCode == HttpStatusCode.NotFound || data.Message.Equals("Not Found", StringComparison.Ordinal))
                 {
                     if (interactive)
                         ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name} - plugin release not found or no public release/specified version found.", ConsoleColor.Red);
@@ -117,8 +118,8 @@ internal static class PluginInstaller
             return response;
         
         if (Core.LocalAdmin.DataJson!.PluginVersionCache!.ContainsKey(name))
-            Core.LocalAdmin.DataJson.PluginVersionCache!.Add(name, response.Result);
-        else Core.LocalAdmin.DataJson.PluginVersionCache![name] = response.Result;
+            Core.LocalAdmin.DataJson.PluginVersionCache![name] = response.Result;
+        else Core.LocalAdmin.DataJson.PluginVersionCache!.Add(name, response.Result);
 
         return response;
     }
@@ -482,6 +483,8 @@ internal static class PluginInstaller
         
         if (!Directory.Exists(pluginsPath))
             Directory.CreateDirectory(pluginsPath);
+
+        bool success = false;
         
         var metadataPath = PluginsPath(port) + "metadata.json";
 
@@ -563,7 +566,8 @@ internal static class PluginInstaller
                         ConsoleColor.Yellow);
                 }
             }
-            
+
+            success = true;
             return true;
         }
         catch (Exception e)
@@ -581,6 +585,9 @@ internal static class PluginInstaller
                 if (!await metadata.TrySave(metadataPath, 0, true))
                     ConsoleUtil.WriteLine("[PLUGIN MANAGER] Failed to save metadata!", ConsoleColor.Red);
             }
+            
+            if (success)
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {name} has been successfully uninstalled!", ConsoleColor.DarkGreen);
         }
     }
     

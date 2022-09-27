@@ -11,7 +11,7 @@ internal static class InstallCommand
         PluginInstaller.QueryResult res;
         string version;
 
-        if (args.Length == 1)
+        if (args.Length == 1 || args.Length == 2 && args[1].Equals("latest", StringComparison.OrdinalIgnoreCase))
         {
             res = await PluginInstaller.TryCachePlugin(args[0], true);
             if (!res.Success)

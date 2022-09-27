@@ -16,13 +16,13 @@ public class ServerPluginsConfig
 internal class InstalledPlugin
 {
     [JsonProperty("TargetVersion")]
-    public string TargetVersion;
+    public string? TargetVersion;
 
     [JsonProperty("CurrentVersion")]
-    public string CurrentVersion;
+    public string? CurrentVersion;
 
     [JsonProperty("FileHash")]
-    public string FileHash;
+    public string? FileHash;
 
     [JsonProperty("InstallationDate")]
     public DateTime InstallationDate;
@@ -34,7 +34,7 @@ internal class InstalledPlugin
 internal class Dependency
 {
     [JsonProperty("FileHash")]
-    public string FileHash;
+    public string? FileHash;
     
     [JsonProperty("InstallationDate")]
     public DateTime InstallationDate;
@@ -43,5 +43,5 @@ internal class Dependency
     public DateTime UpdateDate;
 
     [JsonProperty("InstalledByPlugins")]
-    public List<string> InstalledByPlugins;
+    public List<string> InstalledByPlugins = new();
 }
