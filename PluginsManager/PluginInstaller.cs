@@ -14,7 +14,8 @@ internal static class PluginInstaller
 {
     private static readonly HttpClient HttpClient = new ()
     {
-        Timeout = TimeSpan.FromSeconds(45)
+        Timeout = TimeSpan.FromSeconds(45),
+        DefaultRequestHeaders = { { "User-Agent", "LocalAdmin (SCP: Secret Laboratory Dedicated Server Tool)" } }
     };
     
     private static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}PluginAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
