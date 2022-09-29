@@ -100,7 +100,7 @@ public sealed class LocalAdmin : IDisposable
         }
     }
 
-    public async Task Start(string[] args)
+    internal async Task Start(string[] args)
     {
         Singleton = this;
         Console.Title = BaseWindowTitle;
@@ -131,7 +131,7 @@ public sealed class LocalAdmin : IDisposable
 
         try
         {
-            LoadJsonOrTerminate();
+            await LoadJsonOrTerminate();
 
             if (DataJson!.EulaAccepted == null)
             {
@@ -175,7 +175,7 @@ public sealed class LocalAdmin : IDisposable
                 if (!_exit)
                     await SaveJsonOrTerminate();
             }
-                
+
             var reconfigure = false;
             var useDefault = false;
                 
@@ -896,29 +896,39 @@ public sealed class LocalAdmin : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    internal async void LoadJsonOrTerminate()
+    internal async Task LoadJsonOrTerminate()
     {
-        if (!Directory.Exists(PathManager.ConfigPath))
-            Directory.CreateDirectory(PathManager.ConfigPath);
+        try
+        {
+            if (!Directory.Exists(PathManager.ConfigPath))
+                Directory.CreateDirectory(PathManager.ConfigPath);
             
-        if (!File.Exists(PathManager.InternalJsonDataPath))
-        {
-            DataJson = new DataJson();
-            await SaveJsonOrTerminate();
-        }
-        else
-        {
-            DataJson = await JsonFile.Load<DataJson>(PathManager.InternalJsonDataPath);
-
-            if (DataJson == null)
+            if (!File.Exists(PathManager.InternalJsonDataPath))
             {
-                ConsoleUtil.WriteLine("Json file is corrupted! Terminating the LocalAdmin. If the issue persists, please delete the file and restart LocalAdmin.", ConsoleColor.Red);
-                Terminate();
+                DataJson = new DataJson();
+                await SaveJsonOrTerminate();
             }
-        }
+            else
+            {
+                DataJson = await JsonFile.Load<DataJson>(PathManager.InternalJsonDataPath);
 
-        if (DataJson!.PluginVersionCache == null)
-            DataJson.PluginVersionCache = new Dictionary<string, PluginVersionCache>();
+                if (DataJson == null)
+                {
+                    ConsoleUtil.WriteLine("Json file is corrupted! Terminating the LocalAdmin. If the issue persists, please delete the file and restart LocalAdmin.", ConsoleColor.Red);
+                    Terminate();
+                }
+            }
+
+            if (DataJson!.PluginVersionCache == null)
+                DataJson.PluginVersionCache = new Dictionary<string, PluginVersionCache>();
+        }
+        catch (Exception e)
+        {
+            ConsoleUtil.WriteLine($"Failed to read JSON config file: {e.Message}", ConsoleColor.Red);
+            DataJson = null;
+            Terminate();
+            throw;
+        }
     }
 
     internal async Task SaveJsonOrTerminate()

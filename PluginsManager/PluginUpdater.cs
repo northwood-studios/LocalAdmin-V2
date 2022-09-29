@@ -32,7 +32,7 @@ internal static class PluginUpdater
             }
             
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading LocalAdmin config file...", ConsoleColor.Blue);
-            Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+            await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Processing installed plugins...", ConsoleColor.Blue);
 
@@ -152,7 +152,7 @@ internal static class PluginUpdater
             }
             
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading LocalAdmin config file...", ConsoleColor.Blue);
-            Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+            await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
 
             var i = 0;
             List<string> toRemove = new();
