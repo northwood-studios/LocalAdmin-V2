@@ -321,7 +321,8 @@ internal static class PluginInstaller
                                 metadata.Dependencies[fn].UpdateDate = DateTime.UtcNow;
                             }
 
-                            metadata.Dependencies[fn].InstalledByPlugins.Add(name);
+                            if (!metadata.Dependencies[fn].InstalledByPlugins.Contains(name))
+                                metadata.Dependencies[fn].InstalledByPlugins.Add(name);
 
                             if (overwrite)
                             {

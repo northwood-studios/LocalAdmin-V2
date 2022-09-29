@@ -10,11 +10,11 @@ internal static class PluginUpdater
 {
     internal static async Task<bool> CheckForUpdates(string port, bool ignoreLocks)
     {
-        var metadataPath = PluginInstaller.PluginsPath(port);
+        var metadataPath = PluginInstaller.PluginsPath(port) + "metadata.json";
         
         try
         {
-            if (!Directory.Exists(metadataPath))
+            if (!File.Exists(metadataPath))
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No metadata file for port {port}. Skipped.", ConsoleColor.Blue);
                 return true;
@@ -97,12 +97,12 @@ internal static class PluginUpdater
 
     internal static async Task UpdatePlugins(string port, bool ignoreLocks, bool overwrite)
     {
-        var metadataPath = PluginInstaller.PluginsPath(port);
         var pluginsPath = PluginInstaller.PluginsPath(port);
+        var metadataPath = pluginsPath + "metadata.json";
 
         try
         {
-            if (!Directory.Exists(metadataPath) || !Directory.Exists(pluginsPath))
+            if (!File.Exists(metadataPath) || !Directory.Exists(pluginsPath))
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No metadata file for port {port}. Skipped.", ConsoleColor.Blue);
                 return;
@@ -159,9 +159,12 @@ internal static class PluginUpdater
             foreach (var plugin in metadata.InstalledPlugins)
             {
                 i++;
+                
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Processing plugin {plugin.Key} ({i}/{metadata.InstalledPlugins.Count})...", ConsoleColor.Blue);
+                
                 var safeName = plugin.Key.Replace("/", "_", StringComparison.Ordinal);
                 var pluginPath = pluginsPath + $"{safeName}.dll";
-                
+
                 if (!File.Exists(pluginPath))
                 {
                     toRemove.Add(plugin.Key);
@@ -170,16 +173,18 @@ internal static class PluginUpdater
                 }
                 
                 var currentHash = Sha.Sha256File(pluginPath);
+                var skipVersionCheck = false;
 
                 if (currentHash != plugin.Value.FileHash)
                 {
                     if (!overwrite)
                     {
-                        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {plugin.Key} has been manually updated! Run update with \"-o\" argument to overwrite. Skipped.", ConsoleColor.Gray);
+                        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {plugin.Key} has been manually updated! Run update with \"-o\" argument to overwrite. Skipped.", ConsoleColor.Yellow);
                         continue;
                     }
-                    
-                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {plugin.Key} has been manually updated!", ConsoleColor.Gray);
+
+                    skipVersionCheck = true;
+                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {plugin.Key} has been manually updated!", ConsoleColor.Yellow);
                 }
                 
                 if (plugin.Value.TargetVersion != null &&
@@ -197,13 +202,13 @@ internal static class PluginUpdater
                 
                 var cachedPlugin = Core.LocalAdmin.DataJson.PluginVersionCache[plugin.Key];
                 
-                if (cachedPlugin.Version.Equals(plugin.Value.CurrentVersion, StringComparison.OrdinalIgnoreCase))
+                if (!skipVersionCheck && cachedPlugin.Version.Equals(plugin.Value.CurrentVersion, StringComparison.OrdinalIgnoreCase))
                 {
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {plugin.Key} is up to date! Skipped.", ConsoleColor.DarkGreen);
                     continue;
                 }
 
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Updating plugin {plugin.Key} ({i}/{metadata.InstalledPlugins.Count})...", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Updating plugin {plugin.Key}...", ConsoleColor.Blue);
                 await PluginInstaller.TryInstallPlugin(plugin.Key, cachedPlugin, "latest", port, overwrite, ignoreLocks);
             }
 
@@ -216,7 +221,7 @@ internal static class PluginUpdater
                 
                 if (metadata == null || metadata.InstalledPlugins.Count == 0)
                 {
-                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata filed.", ConsoleColor.Red);
+                    ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading metadata filed.", ConsoleColor.Red);
                     JsonFile.UnlockFile(metadataPath);
                     return;
                 }

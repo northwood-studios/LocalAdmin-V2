@@ -11,7 +11,7 @@ internal static class UpdateCommand
         bool iSet = options.Contains('i', StringComparison.Ordinal),
             gSet = options.Contains('g', StringComparison.Ordinal),
             lSet = options.Contains('l', StringComparison.Ordinal),
-            oSet = options.Contains('l', StringComparison.Ordinal);
+            oSet = options.Contains('o', StringComparison.Ordinal);
 
         bool local = false, global = false;
         
