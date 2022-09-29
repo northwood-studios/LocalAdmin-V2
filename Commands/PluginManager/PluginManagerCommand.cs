@@ -56,6 +56,7 @@ internal class PluginManagerCommand : CommandBase
             ConsoleUtil.WriteLine("p check [-igl] - checks for plugins updates.");
             ConsoleUtil.WriteLine("p install [-igo] <plugin name> [version] - downloads and installs a plugin.");
             //ConsoleUtil.WriteLine("p list - lists all installed plugins.");
+            ConsoleUtil.WriteLine("p maintenance [-igl] - runs a dependency files maintenance.");
             ConsoleUtil.WriteLine("p remove [-ig] <plugin name> - uninstalls a plugin.");
             ConsoleUtil.WriteLine("p update [-iglo] - updates all installed plugins.");
             ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
@@ -111,6 +112,13 @@ internal class PluginManagerCommand : CommandBase
             
             /*case "list":
                 break;*/
+            
+            case "maintenance":
+            case "m":
+            case "mn":
+            case "mnt":
+                MaintenanceCommand.Maintenance(options);
+                break;
             
             case "remove":
             case "r":
