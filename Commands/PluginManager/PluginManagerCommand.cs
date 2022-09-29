@@ -53,18 +53,19 @@ internal class PluginManagerCommand : CommandBase
         {
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("---- Plugin Manager Commands ----", ConsoleColor.DarkGray);
-            //ConsoleUtil.WriteLine("p check [-gl] [plugin name]- checks for plugins updates.");
-            ConsoleUtil.WriteLine("p install [-igo] <plugin name> [version] - downloads and install a plugin.");
+            ConsoleUtil.WriteLine("p check [-igl] - checks for plugins updates.");
+            ConsoleUtil.WriteLine("p install [-igo] <plugin name> [version] - downloads and installs a plugin.");
             //ConsoleUtil.WriteLine("p list - lists all installed plugins.");
+            ConsoleUtil.WriteLine("p maintenance [-igl] - runs a dependency files maintenance.");
             ConsoleUtil.WriteLine("p remove [-ig] <plugin name> - uninstalls a plugin.");
-            //ConsoleUtil.WriteLine("p update [-glo] - updates all installed plugins.");
+            ConsoleUtil.WriteLine("p update [-iglo] - updates all installed plugins.");
             ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("<required argument>, [optional argument] -g = global, -l = local, -o = overwrite", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("<required argument>, [optional argument] -g = global (all ports), -l = local (current port), -o = overwrite", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("-i = ignore locks (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("plugin name = GitHub repository author and name, eg. author-name/repo-name", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If no version is specified then latest non-preview release is used.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If version is specified the plugin will be exempted from \"update\" command.", ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("If both -g and -l arguments exist then by default (if unset) BOTH are checked.", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("If both -g and -l arguments exist then by default (if unset) BOTH are used.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
             return;
         }
@@ -85,8 +86,12 @@ internal class PluginManagerCommand : CommandBase
         
         switch (arguments[0].ToLowerInvariant())
         {
-            /*case "check":
-                break;*/
+            case "check":
+            case "c":
+            case "ch":
+            case "chk":
+                CheckCommand.Check(options);
+                break;
             
             //Install
             case "i" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
@@ -108,17 +113,28 @@ internal class PluginManagerCommand : CommandBase
             /*case "list":
                 break;*/
             
+            case "maintenance":
+            case "m":
+            case "mn":
+            case "mnt":
+                MaintenanceCommand.Maintenance(options);
+                break;
+            
             case "remove":
             case "r":
             case "rm":
             case "uninstall":
-                await PluginInstaller.TryUninstallPlugin(args[0],
+                _ = PluginInstaller.TryUninstallPlugin(args[0],
                     options.Contains('g', StringComparison.Ordinal) ? "global" : Core.LocalAdmin.GamePort.ToString(),
                     options.Contains('i', StringComparison.Ordinal));
                 break;
             
-            /*case "update":
-                break;*/
+            case "update":
+            case "u":
+            case "up":
+            case "upd":
+                UpdateCommand.Update(options);
+                break;
             
             default:
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Unknown command: p " + arguments[0].ToLowerInvariant(), ConsoleColor.Red);

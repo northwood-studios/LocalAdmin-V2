@@ -100,7 +100,7 @@ public sealed class LocalAdmin : IDisposable
         }
     }
 
-    public async Task Start(string[] args)
+    internal async Task Start(string[] args)
     {
         Singleton = this;
         Console.Title = BaseWindowTitle;
@@ -131,26 +131,9 @@ public sealed class LocalAdmin : IDisposable
 
         try
         {
-            if (!Directory.Exists(PathManager.ConfigPath))
-                Directory.CreateDirectory(PathManager.ConfigPath);
-            
-            if (!File.Exists(PathManager.InternalJsonDataPath))
-            {
-                DataJson = new DataJson();
-                await SaveJsonOrTerminate();
-            }
-            else
-            {
-                DataJson = await JsonFile.Load<DataJson>(PathManager.InternalJsonDataPath);
-                    
-                if (DataJson == null)
-                    Terminate();
-            }
+            await LoadJsonOrTerminate();
 
-            if (DataJson!.PluginVersionCache == null)
-                DataJson.PluginVersionCache = new Dictionary<string, PluginVersionCache>();
-
-            if (DataJson.EulaAccepted == null)
+            if (DataJson!.EulaAccepted == null)
             {
                 ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
@@ -192,7 +175,7 @@ public sealed class LocalAdmin : IDisposable
                 if (!_exit)
                     await SaveJsonOrTerminate();
             }
-                
+
             var reconfigure = false;
             var useDefault = false;
                 
@@ -899,6 +882,7 @@ public sealed class LocalAdmin : IDisposable
                 ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
                 Console.ReadKey(true);
             }
+            
             Environment.Exit(code);
         }
     }
@@ -912,7 +896,42 @@ public sealed class LocalAdmin : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private async Task SaveJsonOrTerminate()
+    internal async Task LoadJsonOrTerminate()
+    {
+        try
+        {
+            if (!Directory.Exists(PathManager.ConfigPath))
+                Directory.CreateDirectory(PathManager.ConfigPath);
+            
+            if (!File.Exists(PathManager.InternalJsonDataPath))
+            {
+                DataJson = new DataJson();
+                await SaveJsonOrTerminate();
+            }
+            else
+            {
+                DataJson = await JsonFile.Load<DataJson>(PathManager.InternalJsonDataPath);
+
+                if (DataJson == null)
+                {
+                    ConsoleUtil.WriteLine("Json file is corrupted! Terminating the LocalAdmin. If the issue persists, please delete the file and restart LocalAdmin.", ConsoleColor.Red);
+                    Terminate();
+                }
+            }
+
+            if (DataJson!.PluginVersionCache == null)
+                DataJson.PluginVersionCache = new Dictionary<string, PluginVersionCache>();
+        }
+        catch (Exception e)
+        {
+            ConsoleUtil.WriteLine($"Failed to read JSON config file: {e.Message}", ConsoleColor.Red);
+            DataJson = null;
+            Terminate();
+            throw;
+        }
+    }
+
+    internal async Task SaveJsonOrTerminate()
     {
         if (!(await DataJson!.TrySave(PathManager.InternalJsonDataPath)))
             Terminate();
