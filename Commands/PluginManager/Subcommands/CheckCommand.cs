@@ -8,9 +8,9 @@ internal static class CheckCommand
 {
     internal static async void Check(string options)
     {
-        bool iSet = options.Contains('i', StringComparison.OrdinalIgnoreCase),
-            gSet = options.Contains('g', StringComparison.OrdinalIgnoreCase),
-            lSet = options.Contains('l', StringComparison.OrdinalIgnoreCase);
+        bool iSet = options.Contains('i', StringComparison.Ordinal),
+            gSet = options.Contains('g', StringComparison.Ordinal),
+            lSet = options.Contains('l', StringComparison.Ordinal);
         
         bool local = false, global = false;
         

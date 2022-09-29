@@ -8,10 +8,10 @@ internal static class UpdateCommand
 {
     internal static async void Update(string options)
     {
-        bool iSet = options.Contains('i', StringComparison.OrdinalIgnoreCase),
-            gSet = options.Contains('g', StringComparison.OrdinalIgnoreCase),
-            lSet = options.Contains('l', StringComparison.OrdinalIgnoreCase),
-            oSet = options.Contains('l', StringComparison.OrdinalIgnoreCase);
+        bool iSet = options.Contains('i', StringComparison.Ordinal),
+            gSet = options.Contains('g', StringComparison.Ordinal),
+            lSet = options.Contains('l', StringComparison.Ordinal),
+            oSet = options.Contains('l', StringComparison.Ordinal);
 
         bool local = false, global = false;
         

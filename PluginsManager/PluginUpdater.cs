@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO;
 
 namespace LocalAdmin.V2.PluginsManager;
