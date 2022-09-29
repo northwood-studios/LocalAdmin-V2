@@ -59,12 +59,12 @@ internal class PluginManagerCommand : CommandBase
             ConsoleUtil.WriteLine("p remove [-ig] <plugin name> - uninstalls a plugin.");
             ConsoleUtil.WriteLine("p update [-iglo] - updates all installed plugins.");
             ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("<required argument>, [optional argument] -g = global, -l = local, -o = overwrite", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("<required argument>, [optional argument] -g = global (all ports), -l = local (current port), -o = overwrite", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("-i = ignore locks (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("plugin name = GitHub repository author and name, eg. author-name/repo-name", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If no version is specified then latest non-preview release is used.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If version is specified the plugin will be exempted from \"update\" command.", ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("If both -g and -l arguments exist then by default (if unset) BOTH are checked.", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("If both -g and -l arguments exist then by default (if unset) BOTH are used.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
             return;
         }
