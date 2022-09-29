@@ -73,7 +73,7 @@ internal static class JsonFile
         }
     }
     
-    private static void UnlockFile(string path)
+    internal static void UnlockFile(string path)
     {
         try
         {

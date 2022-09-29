@@ -13,6 +13,8 @@ internal static class InstallCommand
 
         if (args.Length == 1 || args.Length == 2 && args[1].Equals("latest", StringComparison.OrdinalIgnoreCase))
         {
+            Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+            
             res = await PluginInstaller.TryCachePlugin(args[0], true);
             if (!res.Success)
                 return;

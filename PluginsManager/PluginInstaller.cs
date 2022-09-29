@@ -19,9 +19,11 @@ internal static class PluginInstaller
         DefaultRequestHeaders = { { "User-Agent", "LocalAdmin (SCP: Secret Laboratory Dedicated Server Tool)" } }
     };
     
-    private static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}PluginAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
+    internal static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}PluginAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
     private static string DependenciesPath(string port) => $"{PluginsPath(port)}dependencies{Path.DirectorySeparatorChar}";
     private static string TempPath(ushort port) => $"{PathManager.GameUserDataRoot}internal{Path.DirectorySeparatorChar}LA Temp{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
+
+    internal const uint DefaultLockTime = 30000;
     
     private static async Task<QueryResult> QueryRelease(string name, string url, bool interactive)
     {
@@ -166,7 +168,7 @@ internal static class PluginInstaller
             {
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Checking if plugin is already installed...", ConsoleColor.Blue);
 
-                metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? (uint)0 : 20000);
+                metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : DefaultLockTime);
                 
                 if (metadata!.InstalledPlugins.ContainsKey(name))
                 {
@@ -217,7 +219,7 @@ internal static class PluginInstaller
                     ZipFile.ExtractToDirectory($"{tempPath}{safeName}-dependencies.zip", extractDir);
 
                     ConsoleUtil.WriteLine("[PLUGIN MANAGER] Loading metadata file...", ConsoleColor.Blue);
-                    metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? (uint)0 : 20000, true);
+                    metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : DefaultLockTime, true);
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Processing dependencies for plugin {name}...",
                         ConsoleColor.Blue);
 
@@ -378,7 +380,7 @@ internal static class PluginInstaller
                 var hash = Sha.Sha256File(pluginPath);
 
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading metadata...", ConsoleColor.Blue);
-                metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? (uint)0 : 20000, true);
+                metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : DefaultLockTime, true);
 
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Processing metadata...", ConsoleColor.Blue);
                 if (metadata!.InstalledPlugins.ContainsKey(name))
@@ -520,7 +522,7 @@ internal static class PluginInstaller
             }
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading metadata...", ConsoleColor.Blue);
-            metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? (uint)0 : 20000, true);
+            metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : DefaultLockTime, true);
 
             if (metadata == null)
             {

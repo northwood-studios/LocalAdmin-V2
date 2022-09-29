@@ -53,11 +53,11 @@ internal class PluginManagerCommand : CommandBase
         {
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("---- Plugin Manager Commands ----", ConsoleColor.DarkGray);
-            //ConsoleUtil.WriteLine("p check [-gl] [plugin name]- checks for plugins updates.");
-            ConsoleUtil.WriteLine("p install [-igo] <plugin name> [version] - downloads and install a plugin.");
+            ConsoleUtil.WriteLine("p check [-igl] - checks for plugins updates.");
+            ConsoleUtil.WriteLine("p install [-igo] <plugin name> [version] - downloads and installs a plugin.");
             //ConsoleUtil.WriteLine("p list - lists all installed plugins.");
             ConsoleUtil.WriteLine("p remove [-ig] <plugin name> - uninstalls a plugin.");
-            //ConsoleUtil.WriteLine("p update [-glo] - updates all installed plugins.");
+            ConsoleUtil.WriteLine("p update [-iglo] - updates all installed plugins.");
             ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("<required argument>, [optional argument] -g = global, -l = local, -o = overwrite", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("-i = ignore locks (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
@@ -85,8 +85,12 @@ internal class PluginManagerCommand : CommandBase
         
         switch (arguments[0].ToLowerInvariant())
         {
-            /*case "check":
-                break;*/
+            case "check":
+            case "c":
+            case "ch":
+            case "chk":
+                CheckCommand.Check(options);
+                break;
             
             //Install
             case "i" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
@@ -112,13 +116,17 @@ internal class PluginManagerCommand : CommandBase
             case "r":
             case "rm":
             case "uninstall":
-                await PluginInstaller.TryUninstallPlugin(args[0],
+                _ = PluginInstaller.TryUninstallPlugin(args[0],
                     options.Contains('g', StringComparison.Ordinal) ? "global" : Core.LocalAdmin.GamePort.ToString(),
                     options.Contains('i', StringComparison.Ordinal));
                 break;
             
-            /*case "update":
-                break;*/
+            case "update":
+            case "u":
+            case "up":
+            case "upd":
+                UpdateCommand.Update(options);
+                break;
             
             default:
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Unknown command: p " + arguments[0].ToLowerInvariant(), ConsoleColor.Red);

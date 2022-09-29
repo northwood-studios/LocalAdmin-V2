@@ -11,6 +11,9 @@ public class ServerPluginsConfig
     
     [JsonProperty("Dependencies")]
     internal Dictionary<string, Dependency> Dependencies = new();
+    
+    [JsonProperty("LastUpdateCheck")]
+    internal DateTime? LastUpdateCheck;
 }
 
 internal class InstalledPlugin
