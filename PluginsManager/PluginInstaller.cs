@@ -632,6 +632,20 @@ internal static class PluginInstaller
             
             List<string> depToRemove = new(), plToRemove = new();
 
+            foreach (var pl in metadata.InstalledPlugins)
+            {
+                var pluginPath = pluginsPath + $"{pl.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
+
+                if (File.Exists(pluginPath))
+                    continue;
+                
+                plToRemove.Add(pl.Key);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {pl.Key} has been manually removed.", ConsoleColor.Blue);
+            }
+            
+            foreach (var pl in plToRemove)
+                metadata.InstalledPlugins.Remove(pl);
+
             foreach (var dep in metadata.Dependencies)
             {
                 if (!File.Exists(depPath + dep.Key))
@@ -646,7 +660,6 @@ internal static class PluginInstaller
                 {
                     if (metadata.InstalledPlugins.ContainsKey(pl))
                         continue;
-                    
                     
                     plToRemove.Add(pl);
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Removed non-existing plugin {pl} from dependency {dep.Key}.", ConsoleColor.Blue);
@@ -700,7 +713,7 @@ internal static class PluginInstaller
             }
             
             if (success)
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependencies maintenance for port {port} complete!", ConsoleColor.DarkGreen);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins maintenance for port {port} complete!", ConsoleColor.DarkGreen);
         }
     }
 

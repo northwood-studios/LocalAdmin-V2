@@ -36,6 +36,6 @@ internal static class MaintenanceCommand
         if (global)
             await PluginInstaller.DependenciesMaintenance("global", iSet);
         
-        ConsoleUtil.WriteLine("[PLUGIN MANAGER] Dependencies maintenance complete.", ConsoleColor.DarkGreen);
+        ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins maintenance complete.", ConsoleColor.DarkGreen);
     }
 }
