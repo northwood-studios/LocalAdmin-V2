@@ -55,13 +55,14 @@ internal class PluginManagerCommand : CommandBase
             ConsoleUtil.WriteLine("---- Plugin Manager Commands ----", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("p check [-igl] - checks for plugins updates.");
             ConsoleUtil.WriteLine("p install [-igo] <plugin name> [version] - downloads and installs a plugin.");
-            //ConsoleUtil.WriteLine("p list - lists all installed plugins.");
-            ConsoleUtil.WriteLine("p maintenance [-igl] - runs a dependency files maintenance.");
+            ConsoleUtil.WriteLine("p list [-igls] - lists all installed plugins.");
+            ConsoleUtil.WriteLine("p maintenance [-igl] - runs a plugins maintenance.");
             ConsoleUtil.WriteLine("p remove [-ig] <plugin name> - uninstalls a plugin.");
-            ConsoleUtil.WriteLine("p update [-iglo] - updates all installed plugins.");
+            ConsoleUtil.WriteLine("p update [-iglos] - updates all installed plugins.");
             ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("<required argument>, [optional argument] -g = global (all ports), -l = local (current port), -o = overwrite", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("-i = ignore locks (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("-s = skip checking for updates (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("plugin name = GitHub repository author and name, eg. author-name/repo-name", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If no version is specified then latest non-preview release is used.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If version is specified the plugin will be exempted from \"update\" command.", ConsoleColor.DarkGray);
@@ -110,8 +111,11 @@ internal class PluginManagerCommand : CommandBase
                 InstallCommand.Install(args, options);
                 break;
             
-            /*case "list":
-                break;*/
+            case "list":
+            case "l":
+            case "ls":
+                ListCommand.List(options);
+                break;
             
             case "maintenance":
             case "m":

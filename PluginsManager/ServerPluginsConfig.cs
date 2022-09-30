@@ -45,6 +45,9 @@ internal class Dependency
     [JsonProperty("UpdateDate")]
     public DateTime UpdateDate;
 
+    [JsonProperty("ManuallyInstalled")]
+    public bool ManuallyInstalled;
+
     [JsonProperty("InstalledByPlugins")]
     public List<string> InstalledByPlugins = new();
 }

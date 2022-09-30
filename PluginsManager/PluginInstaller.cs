@@ -258,7 +258,6 @@ internal static class PluginInstaller
                                         ConsoleColor.Yellow);
                                 }
 
-                                usedBy.Add("unknown plugin");
                                 ConsoleUtil.WriteLine(
                                     $"[PLUGIN MANAGER] Dependency {fn} is already installed, but not registered in metadata file! Adding to metadata file...",
                                     ConsoleColor.Yellow);
@@ -269,7 +268,8 @@ internal static class PluginInstaller
                                 FileHash = newHash,
                                 InstallationDate = DateTime.UtcNow,
                                 UpdateDate = DateTime.UtcNow,
-                                InstalledByPlugins = usedBy
+                                InstalledByPlugins = usedBy,
+                                ManuallyInstalled = installed
                             });
 
                             File.Move(dep, depPath + fn, true);
@@ -545,7 +545,7 @@ internal static class PluginInstaller
                 if (dep.Value.InstalledByPlugins.Contains(name))
                     dep.Value.InstalledByPlugins.Remove(name);
 
-                if (dep.Value.InstalledByPlugins.Count == 0)
+                if (dep.Value.InstalledByPlugins.Count == 0 && !dep.Value.ManuallyInstalled)
                     depToRemove.Add(dep.Key);
             }
 
@@ -593,13 +593,13 @@ internal static class PluginInstaller
         }
     }
 
-    internal static async Task<bool> DependenciesMaintenance(string port, bool ignoreLocks)
+    internal static async Task<bool> PluginsMaintenance(string port, bool ignoreLocks)
     {
         var pluginsPath = PluginsPath(port);
 
         if (!Directory.Exists(pluginsPath))
         {
-            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins path doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins path for port {port} doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
             return true;
         }
         
@@ -610,13 +610,13 @@ internal static class PluginInstaller
 
         ServerPluginsConfig? metadata = null;
         var success = false;
-        var metadataPath = PluginsPath(port) + "metadata.json";
+        var metadataPath = pluginsPath + "metadata.json";
         
         try
         {
             if (!File.Exists(metadataPath))
             {
-                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Metadata file doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Metadata file for port {port} doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
                 success = true;
                 return true;
             }
@@ -626,11 +626,25 @@ internal static class PluginInstaller
 
             if (metadata == null)
             {
-                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Failed to parse metadata file!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to parse metadata file for port {port}!", ConsoleColor.Red);
                 return false;
             }
             
             List<string> depToRemove = new(), plToRemove = new();
+
+            foreach (var pl in metadata.InstalledPlugins)
+            {
+                var pluginPath = pluginsPath + $"{pl.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
+
+                if (File.Exists(pluginPath))
+                    continue;
+                
+                plToRemove.Add(pl.Key);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {pl.Key} has been manually removed.", ConsoleColor.Blue);
+            }
+            
+            foreach (var pl in plToRemove)
+                metadata.InstalledPlugins.Remove(pl);
 
             foreach (var dep in metadata.Dependencies)
             {
@@ -647,7 +661,6 @@ internal static class PluginInstaller
                     if (metadata.InstalledPlugins.ContainsKey(pl))
                         continue;
                     
-                    
                     plToRemove.Add(pl);
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Removed non-existing plugin {pl} from dependency {dep.Key}.", ConsoleColor.Blue);
                 }
@@ -655,7 +668,7 @@ internal static class PluginInstaller
                 foreach (var pl in plToRemove)
                     metadata.Dependencies[dep.Key].InstalledByPlugins.Remove(pl);
 
-                if (dep.Value.InstalledByPlugins.Count == 0)
+                if (dep.Value.InstalledByPlugins.Count == 0 && !dep.Value.ManuallyInstalled)
                     depToRemove.Add(dep.Key);
             }
 
@@ -700,7 +713,7 @@ internal static class PluginInstaller
             }
             
             if (success)
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependencies maintenance for port {port} complete!", ConsoleColor.DarkGreen);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins maintenance for port {port} complete!", ConsoleColor.DarkGreen);
         }
     }
 

@@ -23,10 +23,20 @@ internal static class PluginUpdater
             ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
             var metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime, true);
 
-            if (metadata == null || metadata.InstalledPlugins.Count == 0)
+            if (metadata == null)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
                 JsonFile.UnlockFile(metadataPath);
+                return true;
+            }
+            
+            if ( metadata.InstalledPlugins.Count == 0)
+            {
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
+                metadata.LastUpdateCheck = DateTime.UtcNow;
+            
+                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing metadata...", ConsoleColor.Blue);
+                await metadata.TrySave(metadataPath, 0, true);
                 return true;
             }
             
@@ -95,7 +105,7 @@ internal static class PluginUpdater
         }
     }
 
-    internal static async Task UpdatePlugins(string port, bool ignoreLocks, bool overwrite)
+    internal static async Task UpdatePlugins(string port, bool ignoreLocks, bool overwrite, bool skipUpdateCheck)
     {
         var pluginsPath = PluginInstaller.PluginsPath(port);
         var metadataPath = pluginsPath + "metadata.json";
@@ -130,7 +140,7 @@ internal static class PluginUpdater
                 performUpdate = true;
             }
 
-            if (performUpdate)
+            if (performUpdate && !skipUpdateCheck)
             {
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Performing plugins update check...", ConsoleColor.Yellow);
 

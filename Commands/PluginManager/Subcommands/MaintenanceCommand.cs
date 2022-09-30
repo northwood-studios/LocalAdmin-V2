@@ -31,11 +31,11 @@ internal static class MaintenanceCommand
         }
         
         if (local)
-            await PluginInstaller.DependenciesMaintenance(Core.LocalAdmin.GamePort.ToString(), iSet);
+            await PluginInstaller.PluginsMaintenance(Core.LocalAdmin.GamePort.ToString(), iSet);
 
         if (global)
-            await PluginInstaller.DependenciesMaintenance("global", iSet);
+            await PluginInstaller.PluginsMaintenance("global", iSet);
         
-        ConsoleUtil.WriteLine("[PLUGIN MANAGER] Dependencies maintenance complete.", ConsoleColor.DarkGreen);
+        ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins maintenance complete.", ConsoleColor.DarkGreen);
     }
 }

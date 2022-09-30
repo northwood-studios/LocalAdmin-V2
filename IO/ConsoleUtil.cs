@@ -101,7 +101,7 @@ public static class ConsoleUtil
         }
     }
 
-    public static void WriteLine(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
+    public static void WriteLine(string? content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
     {
         lock (Lck)
         {
