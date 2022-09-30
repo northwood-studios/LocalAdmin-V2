@@ -258,7 +258,6 @@ internal static class PluginInstaller
                                         ConsoleColor.Yellow);
                                 }
 
-                                usedBy.Add("unknown plugin");
                                 ConsoleUtil.WriteLine(
                                     $"[PLUGIN MANAGER] Dependency {fn} is already installed, but not registered in metadata file! Adding to metadata file...",
                                     ConsoleColor.Yellow);
@@ -269,7 +268,8 @@ internal static class PluginInstaller
                                 FileHash = newHash,
                                 InstallationDate = DateTime.UtcNow,
                                 UpdateDate = DateTime.UtcNow,
-                                InstalledByPlugins = usedBy
+                                InstalledByPlugins = usedBy,
+                                ManuallyInstalled = installed
                             });
 
                             File.Move(dep, depPath + fn, true);
@@ -545,7 +545,7 @@ internal static class PluginInstaller
                 if (dep.Value.InstalledByPlugins.Contains(name))
                     dep.Value.InstalledByPlugins.Remove(name);
 
-                if (dep.Value.InstalledByPlugins.Count == 0)
+                if (dep.Value.InstalledByPlugins.Count == 0 && !dep.Value.ManuallyInstalled)
                     depToRemove.Add(dep.Key);
             }
 
@@ -655,7 +655,7 @@ internal static class PluginInstaller
                 foreach (var pl in plToRemove)
                     metadata.Dependencies[dep.Key].InstalledByPlugins.Remove(pl);
 
-                if (dep.Value.InstalledByPlugins.Count == 0)
+                if (dep.Value.InstalledByPlugins.Count == 0 && !dep.Value.ManuallyInstalled)
                     depToRemove.Add(dep.Key);
             }
 
