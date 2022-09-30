@@ -593,13 +593,13 @@ internal static class PluginInstaller
         }
     }
 
-    internal static async Task<bool> DependenciesMaintenance(string port, bool ignoreLocks)
+    internal static async Task<bool> PluginsMaintenance(string port, bool ignoreLocks)
     {
         var pluginsPath = PluginsPath(port);
 
         if (!Directory.Exists(pluginsPath))
         {
-            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins path doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins path for port {port} doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
             return true;
         }
         
@@ -610,13 +610,13 @@ internal static class PluginInstaller
 
         ServerPluginsConfig? metadata = null;
         var success = false;
-        var metadataPath = PluginsPath(port) + "metadata.json";
+        var metadataPath = pluginsPath + "metadata.json";
         
         try
         {
             if (!File.Exists(metadataPath))
             {
-                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Metadata file doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Metadata file for port {port} doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
                 success = true;
                 return true;
             }
@@ -626,7 +626,7 @@ internal static class PluginInstaller
 
             if (metadata == null)
             {
-                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Failed to parse metadata file!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to parse metadata file for port {port}!", ConsoleColor.Red);
                 return false;
             }
             
