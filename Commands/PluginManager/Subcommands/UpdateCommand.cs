@@ -11,7 +11,8 @@ internal static class UpdateCommand
         bool iSet = options.Contains('i', StringComparison.Ordinal),
             gSet = options.Contains('g', StringComparison.Ordinal),
             lSet = options.Contains('l', StringComparison.Ordinal),
-            oSet = options.Contains('o', StringComparison.Ordinal);
+            oSet = options.Contains('o', StringComparison.Ordinal),
+            sSet = options.Contains('s', StringComparison.Ordinal);
 
         bool local = false, global = false;
         
@@ -32,10 +33,10 @@ internal static class UpdateCommand
         }
         
         if (local)
-            await PluginUpdater.UpdatePlugins(Core.LocalAdmin.GamePort.ToString(), iSet, oSet);
+            await PluginUpdater.UpdatePlugins(Core.LocalAdmin.GamePort.ToString(), iSet, oSet, sSet);
 
         if (global)
-            await PluginUpdater.UpdatePlugins("global", iSet, oSet);
+            await PluginUpdater.UpdatePlugins("global", iSet, oSet, sSet);
         
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Updating plugins update complete.", ConsoleColor.DarkGreen);
     }

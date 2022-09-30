@@ -8,7 +8,7 @@ namespace LocalAdmin.V2.PluginsManager;
 
 internal static class PluginStorage
 {
-    internal static async Task<List<PluginListEntry>?> ListPlugins(string port, bool ignoreLocks)
+    internal static async Task<List<PluginListEntry>?> ListPlugins(string port, bool ignoreLocks, bool skipUpdateCheck)
     {
         try
         {
@@ -51,7 +51,7 @@ internal static class PluginStorage
                 performUpdate = true;
             }
 
-            if (performUpdate)
+            if (performUpdate && !skipUpdateCheck)
             {
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Performing plugins update check...", ConsoleColor.Yellow);
 
@@ -97,7 +97,7 @@ internal static class PluginStorage
                         continue;
 
                     dependencies ??= new();
-                    dependencies.Add(plugin.Key);
+                    dependencies.Add(dep.Key);
                 }
                 
                 plugins.Add(new PluginListEntry(plugin.Key, plugin.Value.CurrentVersion, plugin.Value.TargetVersion, latestVersion, currentHash == plugin.Value.FileHash, dependencies));
@@ -116,25 +116,28 @@ internal static class PluginStorage
     internal readonly struct PluginListEntry
     {
         internal readonly string Name;
-        internal readonly string? InstalledVersion;
-        internal readonly string? TargetVersion;
-        internal readonly string? LatestVersion;
+        internal readonly string InstalledVersion;
+        internal readonly string TargetVersion;
+        internal readonly string LatestVersion;
         internal readonly bool IntegrityCheckPassed;
         internal readonly List<string>? Dependencies;
         
         internal PluginListEntry(string name, string? installedVersion, string? targetVersion, string? latestVersion, bool integrityCheckPassed, List<string>? dependencies)
         {
             Name = name;
-            InstalledVersion = installedVersion;
-            TargetVersion = targetVersion;
-            LatestVersion = latestVersion;
+            InstalledVersion = installedVersion ?? "(null)";
+            TargetVersion = targetVersion ?? "(null)";
+            LatestVersion = latestVersion ?? "(null)";
             IntegrityCheckPassed = integrityCheckPassed;
             Dependencies = dependencies;
         }
 
-        internal bool UpToDate => InstalledVersion != null && LatestVersion != null && InstalledVersion.Equals(LatestVersion, StringComparison.Ordinal);
+        internal bool UpToDate => InstalledVersion.Equals(LatestVersion, StringComparison.Ordinal);
 
         internal bool FixedVersion =>
             TargetVersion != null && !TargetVersion.Equals("latest", StringComparison.OrdinalIgnoreCase);
+
+        internal string InstalledVersionValidated =>
+            IntegrityCheckPassed ? InstalledVersion : "UNKNOWN - manually modified";
     }
 }
