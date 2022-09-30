@@ -12,7 +12,7 @@
         <Product>LocalAdmin V2</Product>
         <PackageId>LocalAdmin V2</PackageId>
         <Company>Northwood Studios</Company>
-        <Authors>KernelError, zabszk</Authors>
+        <Authors>Łukasz "zabszk" Jurczyk, KernelError</Authors>
         <Copyright>Copyright by Łukasz "zabszk" Jurczyk and KernelError, 2019 - 2022</Copyright>
 
         <SuppressAotAnalysisWarnings>true</SuppressAotAnalysisWarnings>
