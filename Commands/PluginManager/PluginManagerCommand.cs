@@ -54,19 +54,29 @@ internal class PluginManagerCommand : CommandBase
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("---- Plugin Manager Commands ----", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("p check [-igl] - checks for plugins updates.");
-            ConsoleUtil.WriteLine("p install [-igo] <plugin name> [version] - downloads and installs a plugin.");
+            ConsoleUtil.WriteLine("p install [-igos] <plugin name> [version] - downloads and installs a plugin.");
             ConsoleUtil.WriteLine("p list [-igls] - lists all installed plugins.");
             ConsoleUtil.WriteLine("p maintenance [-igl] - runs a plugins maintenance.");
+            ConsoleUtil.WriteLine("p refresh - refreshes list of plugin aliases.");
             ConsoleUtil.WriteLine("p remove [-ig] <plugin name> - uninstalls a plugin.");
+            ConsoleUtil.WriteLine("p token [GitHub PAT] - sets, clears or provides more info about GitHub Personal Authentication Token.");
             ConsoleUtil.WriteLine("p update [-iglos] - updates all installed plugins.");
             ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("<required argument>, [optional argument] -g = global (all ports), -l = local (current port), -o = overwrite", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("-i = ignore locks (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("-s = skip checking for updates (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("-s = skip checking for updates and refreshing list (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("plugin name = GitHub repository author and name, eg. author-name/repo-name", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If no version is specified then latest non-preview release is used.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If version is specified the plugin will be exempted from \"update\" command.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If both -g and -l arguments exist then by default (if unset) BOTH are used.", ConsoleColor.DarkGray);
+            
+            if (string.IsNullOrEmpty(Core.LocalAdmin.DataJson!.GitHubPersonalAccessToken))
+            {
+                ConsoleUtil.WriteLine("GitHub Personal Access Token is not set in LocalAdmin.", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine("You may exceed GitHub rate limits if you use Plugin Manager extensively.", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine("Run \"p token\" command to get more details.", ConsoleColor.Yellow);
+            }
+            
             ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
             return;
         }
@@ -103,6 +113,11 @@ internal class PluginManagerCommand : CommandBase
             case "r" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
             case "rm" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
             case "uninstall" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
+                
+            //token
+            case "token" when args is { Length: > 1 }:
+            case "t" when args is { Length: > 1 }:
+            case "pat" when args is { Length: > 1 }:
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Syntax error!", ConsoleColor.Red);
                 break;
             
@@ -124,6 +139,12 @@ internal class PluginManagerCommand : CommandBase
                 MaintenanceCommand.Maintenance(options);
                 break;
             
+            case "refresh":
+            case "ref":
+            case "rf":
+                _ = OfficialPluginsList.RefreshOfficialPluginsList();
+                break;
+            
             case "remove":
             case "r":
             case "rm":
@@ -131,6 +152,12 @@ internal class PluginManagerCommand : CommandBase
                 _ = PluginInstaller.TryUninstallPlugin(args[0],
                     options.Contains('g', StringComparison.Ordinal) ? "global" : Core.LocalAdmin.GamePort.ToString(),
                     options.Contains('i', StringComparison.Ordinal));
+                break;
+            
+            case "token":
+            case "t":
+            case "pat":
+                TokenCommand.Token(args == null || args.Length == 0 ? null : args[0]);
                 break;
             
             case "update":

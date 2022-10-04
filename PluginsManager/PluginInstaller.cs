@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO;
@@ -19,6 +20,11 @@ internal static class PluginInstaller
         DefaultRequestHeaders = { { "User-Agent", "LocalAdmin (SCP: Secret Laboratory Dedicated Server Tool)" } }
     };
     
+    internal static void RefreshPat() => HttpClient.DefaultRequestHeaders.Authorization =
+        Core.LocalAdmin.DataJson!.GitHubPersonalAccessToken == null
+            ? null
+            : new AuthenticationHeaderValue("Bearer", Core.LocalAdmin.DataJson.GitHubPersonalAccessToken);
+
     internal static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}PluginAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
     private static string DependenciesPath(string port) => $"{PluginsPath(port)}dependencies{Path.DirectorySeparatorChar}";
     private static string TempPath(ushort port) => $"{PathManager.GameUserDataRoot}internal{Path.DirectorySeparatorChar}LA Temp{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
@@ -30,6 +36,12 @@ internal static class PluginInstaller
         try
         {
             using var response = await HttpClient.GetAsync(url);
+            
+            if (response.StatusCode != HttpStatusCode.Unauthorized)
+            {
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to query {url}! Is the GitHub Personal Access Token set correctly? (Status code: {response.StatusCode})", ConsoleColor.Red);
+                return new();
+            }
             
             if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotFound)
             {
@@ -453,6 +465,12 @@ internal static class PluginInstaller
         try
         {
             using var response = await HttpClient.GetAsync(url);
+            
+            if (response.StatusCode != HttpStatusCode.Unauthorized)
+            {
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to query {url}! Is the GitHub Personal Access Token set correctly? (Status code: {response.StatusCode})", ConsoleColor.Red);
+                return false;
+            }
 
             if (!response.IsSuccessStatusCode)
             {

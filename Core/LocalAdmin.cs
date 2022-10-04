@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LocalAdmin.V2.Commands.PluginManager;
 using LocalAdmin.V2.IO.Logging;
+using LocalAdmin.V2.PluginsManager;
 
 namespace LocalAdmin.V2.Core;
 /*
@@ -34,6 +35,7 @@ public sealed class LocalAdmin : IDisposable
     internal static LocalAdmin? Singleton;
     internal static ushort GamePort;
     internal static string? ConfigPath, LaLogsPath, GameLogsPath;
+    private static string? _previousPat;
     private static bool _firstRun = true;
 
     private readonly CommandService _commandService = new();
@@ -921,6 +923,14 @@ public sealed class LocalAdmin : IDisposable
 
             if (DataJson!.PluginVersionCache == null)
                 DataJson.PluginVersionCache = new Dictionary<string, PluginVersionCache>();
+            
+            DataJson.PluginAliases ??= new Dictionary<string, PluginAlias>();
+
+            if (_previousPat != DataJson.GitHubPersonalAccessToken)
+            {
+                _previousPat = DataJson.GitHubPersonalAccessToken;
+                PluginInstaller.RefreshPat();
+            }
         }
         catch (Exception e)
         {

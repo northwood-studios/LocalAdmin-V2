@@ -131,7 +131,7 @@ internal static class PluginUpdater
             
             if (metadata.LastUpdateCheck == null)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Last plugins update check for port {port} was never performed.", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins update check for port {port} was never performed.", ConsoleColor.Yellow);
                 performUpdate = true;
             }
             else if ((DateTime.UtcNow - metadata.LastUpdateCheck).Value.TotalMinutes > 30)
