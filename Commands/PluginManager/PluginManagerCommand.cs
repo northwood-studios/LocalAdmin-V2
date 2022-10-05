@@ -114,6 +114,7 @@ internal class PluginManagerCommand : CommandBase
             case "r" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
             case "rm" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
             case "uninstall" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
+            case "un" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
                 
             //token
             case "token" when args is { Length: > 1 }:
@@ -150,6 +151,7 @@ internal class PluginManagerCommand : CommandBase
             case "r":
             case "rm":
             case "uninstall":
+            case "un":
                 _ = PluginInstaller.TryUninstallPlugin(args[0],
                     options.Contains('g', StringComparison.Ordinal) ? "global" : Core.LocalAdmin.GamePort.ToString(),
                     options.Contains('i', StringComparison.Ordinal),

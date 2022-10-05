@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace LocalAdmin.V2.IO.ExitHandlers;
@@ -24,12 +25,9 @@ internal sealed class WindowsHandler : IExitHandler
     private static bool OnNativeSignal(CtrlTypes ctrl)
     {
         if (Core.LocalAdmin.Singleton == null)
-            return true;
-            
-        Core.LocalAdmin.Singleton.DisableExitActionSignals = true;
-        Core.LocalAdmin.Singleton.ExitAction = Core.LocalAdmin.ShutdownAction.SilentShutdown;
-        Core.LocalAdmin.Singleton.Exit(0);
-
+            Environment.Exit(0); 
+        else Core.LocalAdmin.HandleExitSignal();
+        
         return true;
     }
 

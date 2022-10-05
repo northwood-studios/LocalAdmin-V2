@@ -51,7 +51,7 @@ internal struct PluginAlias
     [JsonProperty("Repository")]
     public string Repository;
     
-    [JsonProperty("DependenciesDownloadUrl")]
+    [JsonProperty("Flags")]
     public PluginAliasFlags Flags;
 }
 

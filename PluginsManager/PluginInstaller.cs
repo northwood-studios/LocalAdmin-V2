@@ -38,7 +38,7 @@ internal static class PluginInstaller
         {
             using var response = await HttpClient.GetAsync(url);
             
-            if (response.StatusCode != HttpStatusCode.Unauthorized)
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to query {url}! Is the GitHub Personal Access Token set correctly? (Status code: {response.StatusCode})", ConsoleColor.Red);
                 return new();
@@ -467,7 +467,7 @@ internal static class PluginInstaller
         {
             using var response = await HttpClient.GetAsync(url);
             
-            if (response.StatusCode != HttpStatusCode.Unauthorized)
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to query {url}! Is the GitHub Personal Access Token set correctly? (Status code: {response.StatusCode})", ConsoleColor.Red);
                 return false;
