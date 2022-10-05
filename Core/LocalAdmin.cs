@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LocalAdmin.V2.Commands.PluginManager;
 using LocalAdmin.V2.IO.Logging;
+using LocalAdmin.V2.PluginsManager;
 
 namespace LocalAdmin.V2.Core;
 /*
@@ -34,6 +35,7 @@ public sealed class LocalAdmin : IDisposable
     internal static LocalAdmin? Singleton;
     internal static ushort GamePort;
     internal static string? ConfigPath, LaLogsPath, GameLogsPath;
+    private static string? _previousPat;
     private static bool _firstRun = true;
 
     private readonly CommandService _commandService = new();
@@ -533,12 +535,12 @@ public sealed class LocalAdmin : IDisposable
     {
         ConsoleUtil.Clear();
         ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine(string.Empty);
+        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2022", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine(string.Empty);
+        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine(string.Empty);
+        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
     }
 
     private static void SetupExitHandlers()
@@ -637,7 +639,8 @@ public sealed class LocalAdmin : IDisposable
                     continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(input)) continue;
+                if (string.IsNullOrWhiteSpace(input))
+                    continue;
 
                 var currentLineCursor = NoSetCursor ? 0 : Console.CursorTop;
 
@@ -681,17 +684,25 @@ public sealed class LocalAdmin : IDisposable
                     if (!command.SendToGame) continue;
                 }
 
+                var exit = false;
+
                 if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("exit ", StringComparison.OrdinalIgnoreCase) || input.Equals("quit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("quit ", StringComparison.OrdinalIgnoreCase) || input.Equals("stop", StringComparison.OrdinalIgnoreCase) || input.StartsWith("stop ", StringComparison.OrdinalIgnoreCase))
                 {
                     DisableExitActionSignals = true;
                     ExitAction = ShutdownAction.SilentShutdown;
-                    _exit = true;
+                    exit = true;
                 }
 
                 if (Server.Connected)
                     Server.WriteLine(input);
                 else
                     ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
+
+                if (!exit)
+                    continue;
+
+                await Task.Delay(100);
+                _exit = true;
             }
         }
 
@@ -921,6 +932,14 @@ public sealed class LocalAdmin : IDisposable
 
             if (DataJson!.PluginVersionCache == null)
                 DataJson.PluginVersionCache = new Dictionary<string, PluginVersionCache>();
+            
+            DataJson.PluginAliases ??= new Dictionary<string, PluginAlias>();
+
+            if (_previousPat != DataJson.GitHubPersonalAccessToken)
+            {
+                _previousPat = DataJson.GitHubPersonalAccessToken;
+                PluginInstaller.RefreshPat();
+            }
         }
         catch (Exception e)
         {
@@ -942,6 +961,12 @@ public sealed class LocalAdmin : IDisposable
         DisableExitActionSignals = true;
         ExitAction = ShutdownAction.SilentShutdown;
         Exit(1);
+    }
+
+    internal static void HandleExitSignal()
+    {
+        Console.WriteLine("exit");
+        InputQueue.Enqueue("exit");
     }
 
     ~LocalAdmin()

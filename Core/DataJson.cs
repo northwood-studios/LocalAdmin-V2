@@ -6,14 +6,23 @@ namespace LocalAdmin.V2.Core;
 
 internal class DataJson
 {
+    [JsonProperty("GitHubPersonalAccessToken")]
+    public string? GitHubPersonalAccessToken;
+    
     [JsonProperty("EulaAccepted")]
     public DateTime? EulaAccepted;
 
     [JsonProperty("PluginManagerWarningDismissed")]
     public bool PluginManagerWarningDismissed;
 
+    [JsonProperty("LastPluginAliasesRefresh")]
+    public DateTime? LastPluginAliasesRefresh;
+
     [JsonProperty("PluginVersionCache")]
     public Dictionary<string, PluginVersionCache>? PluginVersionCache = new();
+    
+    [JsonProperty("PluginAliases")]
+    public Dictionary<string, PluginAlias>? PluginAliases = new();
 }
 
 internal struct PluginVersionCache
@@ -35,4 +44,22 @@ internal struct PluginVersionCache
     
     [JsonProperty("DependenciesDownloadUrl")]
     public string? DependenciesDownloadUrl;
+}
+
+internal struct PluginAlias
+{
+    [JsonProperty("Repository")]
+    public string Repository;
+    
+    [JsonProperty("Flags")]
+    public PluginAliasFlags Flags;
+}
+
+[Flags]
+internal enum PluginAliasFlags : byte
+{
+    None = 0,
+    Listed = 1,
+    CanInstall = 1 << 1,
+    All = Listed | CanInstall
 }

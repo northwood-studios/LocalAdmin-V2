@@ -1,6 +1,7 @@
 ﻿#if LINUX_SIGNALS
 using Mono.Unix;
 using Mono.Unix.Native;
+using System;
 using System.Threading;
 
 namespace LocalAdmin.V2.IO.ExitHandlers
@@ -26,9 +27,9 @@ namespace LocalAdmin.V2.IO.ExitHandlers
             {
                 // Blocking operation with infinite expectation of any signal
                 UnixSignal.WaitAny(Signals, -1);
-                if (Core.LocalAdmin.Singleton == null) return;
-                Core.LocalAdmin.Singleton!.ExitAction = Core.LocalAdmin.ShutdownAction.SilentShutdown;
-                Core.LocalAdmin.Singleton!.Exit(0);
+                if (Core.LocalAdmin.Singleton == null)
+                    Environment.Exit(0);
+                else Core.LocalAdmin.HandleExitSignal();
             }).Start();
         }
     }

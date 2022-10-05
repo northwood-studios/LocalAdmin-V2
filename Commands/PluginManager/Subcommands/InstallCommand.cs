@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.PluginsManager;
 
@@ -10,10 +12,30 @@ internal static class InstallCommand
     {
         PluginInstaller.QueryResult res;
         string version;
+        
+        var performUpdate = OfficialPluginsList.IsRefreshNeeded();
+
+        if (options.Contains('s', StringComparison.Ordinal))
+            performUpdate = false;
+        
+        if (performUpdate)
+        {
+            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Refreshing plugins list...", ConsoleColor.Yellow);
+            await OfficialPluginsList.RefreshOfficialPluginsList();
+        }
+
+        args[0] = OfficialPluginsList.ResolvePluginAlias(args[0], PluginAliasFlags.CanInstall);
+
+        if (args[0].Count(x => x == '/') != 1)
+        {
+            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugin name is invalid!", ConsoleColor.Red);
+            return;
+        }
 
         if (args.Length == 1 || args.Length == 2 && args[1].Equals("latest", StringComparison.OrdinalIgnoreCase))
         {
-            await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+            if (!performUpdate)
+                await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
             
             res = await PluginInstaller.TryCachePlugin(args[0], true);
             if (!res.Success)
