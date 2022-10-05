@@ -535,12 +535,12 @@ public sealed class LocalAdmin : IDisposable
     {
         ConsoleUtil.Clear();
         ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine(string.Empty);
+        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2022", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine(string.Empty);
+        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine(string.Empty);
+        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
     }
 
     private static void SetupExitHandlers()
