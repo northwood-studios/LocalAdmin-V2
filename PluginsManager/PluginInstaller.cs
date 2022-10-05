@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -497,8 +498,27 @@ internal static class PluginInstaller
         }
     }
 
-    internal static async Task<bool> TryUninstallPlugin(string name, string port, bool ignoreLocks)
+    internal static async Task<bool> TryUninstallPlugin(string name, string port, bool ignoreLocks, bool skipUpdate)
     {
+        var performUpdate = OfficialPluginsList.IsRefreshNeeded();
+
+        if (skipUpdate)
+            performUpdate = false;
+        
+        if (performUpdate)
+        {
+            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Refreshing plugins list...", ConsoleColor.Yellow);
+            await OfficialPluginsList.RefreshOfficialPluginsList();
+        }
+        
+        name = OfficialPluginsList.ResolvePluginAlias(name, PluginAliasFlags.All);
+
+        if (name.Count(x => x == '/') != 1)
+        {
+            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugin name is invalid!", ConsoleColor.Red);
+            return false;
+        }
+        
         ServerPluginsConfig? metadata = null;
         var pluginsPath = PluginsPath(port);
         

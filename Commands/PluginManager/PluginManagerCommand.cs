@@ -58,7 +58,7 @@ internal class PluginManagerCommand : CommandBase
             ConsoleUtil.WriteLine("p list [-igls] - lists all installed plugins.");
             ConsoleUtil.WriteLine("p maintenance [-igl] - runs a plugins maintenance.");
             ConsoleUtil.WriteLine("p refresh - refreshes list of plugin aliases.");
-            ConsoleUtil.WriteLine("p remove [-ig] <plugin name> - uninstalls a plugin.");
+            ConsoleUtil.WriteLine("p remove [-igs] <plugin name> - uninstalls a plugin.");
             ConsoleUtil.WriteLine("p token [GitHub PAT] - sets, clears or provides more info about GitHub Personal Authentication Token.");
             ConsoleUtil.WriteLine("p update [-iglos] - updates all installed plugins.");
             ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
@@ -72,6 +72,7 @@ internal class PluginManagerCommand : CommandBase
             
             if (string.IsNullOrEmpty(Core.LocalAdmin.DataJson!.GitHubPersonalAccessToken))
             {
+                ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
                 ConsoleUtil.WriteLine("GitHub Personal Access Token is not set in LocalAdmin.", ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine("You may exceed GitHub rate limits if you use Plugin Manager extensively.", ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine("Run \"p token\" command to get more details.", ConsoleColor.Yellow);
@@ -105,14 +106,14 @@ internal class PluginManagerCommand : CommandBase
                 break;
             
             //Install
-            case "i" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
-            case "install" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
+            case "i" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
+            case "install" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
                 
             //Remove
-            case "remove" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
-            case "r" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
-            case "rm" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
-            case "uninstall" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') != 1:
+            case "remove" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
+            case "r" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
+            case "rm" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
+            case "uninstall" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
                 
             //token
             case "token" when args is { Length: > 1 }:
@@ -151,7 +152,8 @@ internal class PluginManagerCommand : CommandBase
             case "uninstall":
                 _ = PluginInstaller.TryUninstallPlugin(args[0],
                     options.Contains('g', StringComparison.Ordinal) ? "global" : Core.LocalAdmin.GamePort.ToString(),
-                    options.Contains('i', StringComparison.Ordinal));
+                    options.Contains('i', StringComparison.Ordinal),
+                    options.Contains('s', StringComparison.Ordinal));
                 break;
             
             case "token":

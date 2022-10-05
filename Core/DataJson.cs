@@ -60,5 +60,6 @@ internal enum PluginAliasFlags : byte
 {
     None = 0,
     Listed = 1,
-    CanInstall = 1 << 1
+    CanInstall = 1 << 1,
+    All = Listed | CanInstall
 }

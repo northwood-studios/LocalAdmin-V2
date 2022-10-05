@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.PluginsManager;
@@ -24,6 +25,12 @@ internal static class InstallCommand
         }
 
         args[0] = OfficialPluginsList.ResolvePluginAlias(args[0], PluginAliasFlags.CanInstall);
+
+        if (args[0].Count(x => x == '/') != 1)
+        {
+            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugin name is invalid!", ConsoleColor.Red);
+            return;
+        }
 
         if (args.Length == 1 || args.Length == 2 && args[1].Equals("latest", StringComparison.OrdinalIgnoreCase))
         {
