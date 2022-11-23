@@ -107,13 +107,13 @@ public sealed class LocalAdmin : IDisposable
         Singleton = this;
         Console.Title = BaseWindowTitle;
         
-        if (!PathManager.IsLinuxCorrectPath && !args.Contains("--skip-home-check"))
+        if (!PathManager.IsLinuxCorrectPath && !args.Contains("--skipHomeCheck", StringComparer.Ordinal))
         {
             ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Red);
             ConsoleUtil.WriteLine("Can't obtain a valid user home directory path!", ConsoleColor.Red);
             ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
             ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
-            ConsoleUtil.WriteLine("To skip this check, use --skip-home-check argument.", ConsoleColor.Red);
+            ConsoleUtil.WriteLine("To skip this check, use --skipHomeCheck argument.", ConsoleColor.Red);
             
             Terminate();
             return;
