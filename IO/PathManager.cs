@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace LocalAdmin.V2.IO;
 
@@ -24,6 +25,11 @@ internal static class PathManager
 
         InternalJsonDataPath = ConfigPath + "localadmin_internal_data.json";
     }
+
+    internal static bool IsLinuxCorrectPath => !RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
+                                               !string.IsNullOrWhiteSpace(
+                                                   Environment.GetFolderPath(Environment.SpecialFolder
+                                                       .ApplicationData));
 
     private static void ProcessHostPolicy()
     {
