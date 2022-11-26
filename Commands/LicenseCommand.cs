@@ -17,6 +17,6 @@ internal class LicenseCommand : CommandBase
         ConsoleUtil.WriteLine("\r\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\r\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\r\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\r\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\r\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\r\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\r\nSOFTWARE.", ConsoleColor.Gray);
             
         ConsoleUtil.WriteLine("", ConsoleColor.Gray);
-        ConsoleUtil.WriteLine("LocalAdmin includes Json.NET developed by James Newton-King licensed under The MIT License.", ConsoleColor.Gray);
+        ConsoleUtil.WriteLine("LocalAdmin includes Utf8Json developed by Yoshifumi Kawai licensed under The MIT License.", ConsoleColor.Gray);
     }
 }

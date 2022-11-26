@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+using Utf8Json;
 
 namespace LocalAdmin.V2.IO;
 
@@ -13,7 +13,7 @@ internal static class JsonFile
         try
         {
             bool lockGranted = await LockFile(path, timeout);
-            var result = await Task.FromResult(JsonConvert.DeserializeObject<T>(await File.ReadAllTextAsync(path, Encoding.UTF8)));
+            var result = await Task.FromResult(JsonSerializer.Deserialize<T>(await File.ReadAllTextAsync(path, Encoding.UTF8)));
             
             if (lockGranted && !keepLock)
                 UnlockFile(path);
@@ -23,6 +23,14 @@ internal static class JsonFile
         catch (Exception e)
         {
             ConsoleUtil.WriteLine($"Failed to load file {path}. Exception: {e.Message}", ConsoleColor.Red);
+            ConsoleUtil.WriteLine($"Stack trace: {e.StackTrace}");
+
+            if (e.InnerException != null)
+            {
+                ConsoleUtil.WriteLine($"Inner exception: {e.InnerException.Message}");
+                ConsoleUtil.WriteLine($"Inner exception: {e.InnerException.StackTrace}");
+            }
+
             return default;
         }
     }
@@ -32,7 +40,7 @@ internal static class JsonFile
         try
         {
             bool lockGranted = await LockFile(path, timeout);
-            await File.WriteAllTextAsync(path, JsonConvert.SerializeObject(obj, Formatting.Indented), Encoding.UTF8);
+            await File.WriteAllTextAsync(path, JsonSerializer.ToJsonString(obj), Encoding.UTF8);
             
             if (lockGranted || forceUnlock)
                 UnlockFile(path);
