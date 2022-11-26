@@ -4,7 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO;
-using Newtonsoft.Json;
+using Utf8Json;
 
 namespace LocalAdmin.V2.PluginsManager;
 
@@ -51,7 +51,7 @@ internal static class OfficialPluginsList
                 return;
             }
 
-            var data = JsonConvert.DeserializeObject<Dictionary<string, PluginAlias>>(await response.Content.ReadAsStringAsync());
+            var data = JsonSerializer.Deserialize<Dictionary<string, PluginAlias>>(await response.Content.ReadAsStringAsync());
 
             if (data == null)
             {
@@ -84,7 +84,7 @@ internal static class OfficialPluginsList
         
         var pluginAlias = Core.LocalAdmin.DataJson.PluginAliases[alias];
 
-        if ((pluginAlias.Flags & requiredFlags) == 0)
+        if (((PluginAliasFlags)pluginAlias.Flags & requiredFlags) == 0)
             return alias;
 
         ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin name {alias} has been resolved to {pluginAlias.Repository}!", ConsoleColor.Gray);

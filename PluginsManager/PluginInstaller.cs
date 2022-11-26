@@ -9,7 +9,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO;
-using Newtonsoft.Json;
+using Utf8Json;
 
 namespace LocalAdmin.V2.PluginsManager;
 
@@ -50,9 +50,9 @@ internal static class PluginInstaller
                 return new();
             }
             
-            var data = JsonConvert.DeserializeObject<GitHubRelease>(await response.Content.ReadAsStringAsync());
+            var data = JsonSerializer.Deserialize<GitHubRelease>(await response.Content.ReadAsStringAsync());
 
-            if (data == null)
+            if (data.tag_name == null)
             {
                 if (interactive)
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name} - response is null.", ConsoleColor.Red);
@@ -60,9 +60,9 @@ internal static class PluginInstaller
                 return new();
             }
             
-            if (data.Message != null)
+            if (data.message != null)
             {
-                if (response.StatusCode == HttpStatusCode.NotFound || data.Message.Equals("Not Found", StringComparison.Ordinal))
+                if (response.StatusCode == HttpStatusCode.NotFound || data.message.Equals("Not Found", StringComparison.Ordinal))
                 {
                     if (interactive)
                         ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name} - plugin release not found or no public release/specified version found.", ConsoleColor.Red);
@@ -70,11 +70,11 @@ internal static class PluginInstaller
                 }
             
                 if (interactive)
-                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name}. Exception: {data.Message}", ConsoleColor.Red);
+                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name}. Exception: {data.message}", ConsoleColor.Red);
                 return new();
             }
             
-            if (data.Assets == null || data.Assets.Count == 0)
+            if (data.assets == null || data.assets.Count == 0)
             {
                 if (interactive)
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name} - no assets found.", ConsoleColor.Red);
@@ -84,9 +84,9 @@ internal static class PluginInstaller
             string? pluginUrl = null;
             string? dependenciesUrl = null;
         
-            foreach (var asset in data.Assets)
+            foreach (var asset in data.assets)
             {
-                if (asset.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                if (asset.name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
                 {
                     if (pluginUrl != null)
                     {
@@ -95,10 +95,10 @@ internal static class PluginInstaller
                         return new();
                     }
                     
-                    pluginUrl = asset.DownloadUrl;
+                    pluginUrl = asset.browser_download_url;
                 }
-                else if (asset.Name.Equals("dependencies.zip", StringComparison.OrdinalIgnoreCase))
-                    dependenciesUrl = asset.DownloadUrl;
+                else if (asset.name.Equals("dependencies.zip", StringComparison.OrdinalIgnoreCase))
+                    dependenciesUrl = asset.browser_download_url;
             }
         
             if (pluginUrl == null)
@@ -110,12 +110,12 @@ internal static class PluginInstaller
             
             return new(new PluginVersionCache
             {
-                Version = data.TagName!,
-                ReleaseId = data.Id,
+                Version = data.tag_name!,
+                ReleaseId = data.id,
                 DependenciesDownloadUrl = dependenciesUrl,
                 DllDownloadUrl = pluginUrl,
                 LastRefreshed = DateTime.UtcNow,
-                PublishmentTime = data.PublishmentTime
+                PublishmentTime = data.published_at
             });
         }
         catch (Exception e)
@@ -202,6 +202,8 @@ internal static class PluginInstaller
             if (!Directory.Exists(tempPath))
                 Directory.CreateDirectory(tempPath);
 
+            List<string> currentDependencies = new();
+
             if (plugin.DependenciesDownloadUrl != null)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Downloading dependencies for plugin {name}...",
@@ -242,7 +244,8 @@ internal static class PluginInstaller
                     {
                         var fn = Path.GetFileName(dep);
                         ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Processing dependency {fn}...", ConsoleColor.Blue);
-
+                        
+                        currentDependencies.Add(fn);
                         var installed = File.Exists(depPath + fn);
                         var newHash = Sha.Sha256File(dep);
 
@@ -344,7 +347,7 @@ internal static class PluginInstaller
                                     ConsoleColor.Blue);
                             }
                             else
-                                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependency {fn} is already installed",
+                                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependency {fn} is already installed.",
                                     ConsoleColor.Blue);
                         }
                     }
@@ -375,6 +378,7 @@ internal static class PluginInstaller
             }
             
             ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Downloading plugin {name}...", ConsoleColor.Blue);
+            var runMaintenance = false;
 
             try
             {
@@ -413,6 +417,28 @@ internal static class PluginInstaller
                         CurrentVersion = plugin.Version,
                         TargetVersion = targetVersion
                     });
+
+                foreach (var dependency in metadata.Dependencies)
+                {
+                    if (dependency.Value.InstalledByPlugins.Contains(name) &&
+                        !currentDependencies.Contains(dependency.Key))
+                    {
+                        metadata.Dependencies[dependency.Key].InstalledByPlugins.Remove(name);
+                        ConsoleUtil.WriteLine(
+                            $"[PLUGIN MANAGER] Dependency {dependency.Key} is no longer needed by plugin {name}.",
+                            ConsoleColor.Blue);
+
+                        if (!dependency.Value.ManuallyInstalled &&
+                            metadata.Dependencies[dependency.Key].InstalledByPlugins.Count == 0)
+                        {
+                            runMaintenance = true;
+                            
+                            ConsoleUtil.WriteLine(
+                                $"[PLUGIN MANAGER] Dependency {dependency.Key} is no longer needed by any plugin. Maintenance will be performed.",
+                                ConsoleColor.Blue);
+                        }
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -437,6 +463,13 @@ internal static class PluginInstaller
                 return false;
 
             ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {name} has been successfully installed!", ConsoleColor.DarkGreen);
+
+            if (runMaintenance)
+            {
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Performing automatic maintenance...", ConsoleColor.Blue);
+                await PluginsMaintenance(port, false);
+            }
+
             return true;
         }
         catch (Exception e)

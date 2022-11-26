@@ -106,7 +106,7 @@ public sealed class LocalAdmin : IDisposable
     {
         Singleton = this;
         Console.Title = BaseWindowTitle;
-        
+
         if (!PathManager.IsLinuxCorrectPath && !args.Contains("--skipHomeCheck", StringComparer.Ordinal))
         {
             ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Red);
@@ -934,6 +934,7 @@ public sealed class LocalAdmin : IDisposable
             else
             {
                 DataJson = await JsonFile.Load<DataJson>(PathManager.InternalJsonDataPath);
+                JsonFile.UnlockFile(PathManager.InternalJsonDataPath);
 
                 if (DataJson == null)
                 {
