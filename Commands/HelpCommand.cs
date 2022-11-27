@@ -4,7 +4,7 @@ using System;
 
 namespace LocalAdmin.V2.Commands;
 
-internal class HelpCommand : CommandBase
+internal sealed class HelpCommand : CommandBase
 {
     public HelpCommand() : base("Help", true) { }
 
@@ -14,6 +14,8 @@ internal class HelpCommand : CommandBase
         ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
         ConsoleUtil.WriteLine("EXIT - stops the server.");
         ConsoleUtil.WriteLine("FORCERESTART - kills the server and restarts it.");
+        ConsoleUtil.WriteLine("HBC - cancels heartbeat restart countdown.");
+        ConsoleUtil.WriteLine("HBCTRL - controls heartbeat.");
         ConsoleUtil.WriteLine("HELP - prints this help.");
         ConsoleUtil.WriteLine("LICENSE - prints LocalAdmin license details.");
         ConsoleUtil.WriteLine("P - Plugin Manager.");

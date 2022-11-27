@@ -8,7 +8,7 @@ using LocalAdmin.V2.PluginsManager;
 
 namespace LocalAdmin.V2.Commands.PluginManager;
 
-internal class PluginManagerCommand : CommandBase
+internal sealed class PluginManagerCommand : CommandBase
 {
     public PluginManagerCommand() : base("p") { }
     

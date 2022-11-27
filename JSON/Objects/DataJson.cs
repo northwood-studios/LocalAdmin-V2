@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Utf8Json;
 // ReSharper disable ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+// ReSharper disable NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
 
 namespace LocalAdmin.V2.Core;
 
