@@ -4,7 +4,7 @@ using System;
 
 namespace LocalAdmin.V2.Commands;
 
-internal class LicenseCommand : CommandBase
+internal sealed class LicenseCommand : CommandBase
 {
     public LicenseCommand() : base("License") { }
 

@@ -4,7 +4,6 @@ using LocalAdmin.V2.IO;
 using LocalAdmin.V2.IO.ExitHandlers;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -41,7 +40,7 @@ public sealed class LocalAdmin : IDisposable
     private readonly CommandService _commandService = new();
     private Process? _gameProcess;
     internal TcpServer? Server { get; private set; }
-    private Task? _readerTask;
+    private Task? _readerTask, _heartbeatMonitoringTask;
     private readonly string _scpslExecutable;
     private static string _gameArguments = string.Empty;
     internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
@@ -60,11 +59,15 @@ public sealed class LocalAdmin : IDisposable
     internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000; 
 
     internal static Config? Configuration;
+    internal static DataJson? DataJson;
 
     internal ShutdownAction ExitAction = ShutdownAction.Crash;
     internal bool DisableExitActionSignals;
-
-    internal static DataJson? DataJson;
+    internal HeartbeatStatus CurrentHeartbeatStatus = HeartbeatStatus.Disabled;
+    internal byte HeartbeatWarningStage;
+    internal static readonly Stopwatch HeartbeatStopwatch = new();
+    
+    internal bool EnableGameHeartbeat { get; private set; }
 
     internal enum ShutdownAction : byte
     {
@@ -87,6 +90,13 @@ public sealed class LocalAdmin : IDisposable
         LogEntriesLimit
     }
 
+    internal enum HeartbeatStatus : byte
+    {
+        Disabled,
+        AwaitingFirstHeartbeat,
+        Active
+    }
+
     internal LocalAdmin()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -106,6 +116,8 @@ public sealed class LocalAdmin : IDisposable
     {
         Singleton = this;
         Console.Title = BaseWindowTitle;
+        
+        HeartbeatStopwatch.Reset();
 
         if (!PathManager.IsLinuxCorrectPath && !args.Contains("--skipHomeCheck", StringComparer.Ordinal))
         {
@@ -452,7 +464,15 @@ public sealed class LocalAdmin : IDisposable
             NoSetCursor |= Configuration!.LaNoSetCursor;
             AutoFlush &= Configuration.LaLogAutoFlush;
             EnableLogging &= Configuration.EnableLaLogs;
-                
+
+            if (Configuration.EnableHeartbeat)
+            {
+                EnableGameHeartbeat = true;
+                CurrentHeartbeatStatus = HeartbeatStatus.AwaitingFirstHeartbeat;
+                HeartbeatStopwatch.Start();
+                StartHeartbeatMonitoring();
+            }
+
             InputQueue.Clear();
 
             if (_firstRun)
@@ -475,7 +495,7 @@ public sealed class LocalAdmin : IDisposable
                 _firstRun = false;
                 SetupKeyboardInput();
             }
-                
+            
             RegisterCommands();
             SetupReader();
 
@@ -731,8 +751,12 @@ public sealed class LocalAdmin : IDisposable
                 Configuration.LaLogStdoutStderr || printStd;
 
             var extraArgs = string.Empty;
+            
             if (_noTrueColor || !Configuration.EnableTrueColor)
                 extraArgs = " -disableAnsiColors";
+            
+            if (EnableGameHeartbeat)
+                extraArgs += " -heartbeat";
 
             var startInfo = new ProcessStartInfo
             {
@@ -833,6 +857,8 @@ public sealed class LocalAdmin : IDisposable
 
     private void RegisterCommands()
     {
+        _commandService.RegisterCommand(new HeartbeatCancelCommand());
+        _commandService.RegisterCommand(new HeartbeatControlCommand());
         _commandService.RegisterCommand(new RestartCommand());
         _commandService.RegisterCommand(new ForceRestartCommand());
         _commandService.RegisterCommand(new HelpCommand());
@@ -885,6 +911,16 @@ public sealed class LocalAdmin : IDisposable
             {
                 if (_readerTask is { IsCompleted: true })
                     _readerTask?.Dispose();
+            }
+            catch
+            {
+                //Ignore
+            }
+            
+            try
+            {
+                if (_heartbeatMonitoringTask is { IsCompleted: true })
+                    _heartbeatMonitoringTask?.Dispose();
             }
             catch
             {
@@ -943,12 +979,7 @@ public sealed class LocalAdmin : IDisposable
                 }
             }
 
-            if (DataJson!.PluginVersionCache == null)
-                DataJson.PluginVersionCache = new Dictionary<string, PluginVersionCache>();
-            
-            DataJson.PluginAliases ??= new Dictionary<string, PluginAlias>();
-
-            if (_previousPat != DataJson.GitHubPersonalAccessToken)
+            if (_previousPat != DataJson!.GitHubPersonalAccessToken)
             {
                 _previousPat = DataJson.GitHubPersonalAccessToken;
                 PluginInstaller.RefreshPat();
@@ -980,6 +1011,109 @@ public sealed class LocalAdmin : IDisposable
     {
         Console.WriteLine("exit");
         InputQueue.Enqueue("exit");
+    }
+
+    internal void HandleHeartbeat()
+    {
+        switch (CurrentHeartbeatStatus)
+        {
+            case HeartbeatStatus.Disabled when EnableGameHeartbeat:
+                return;
+            
+            case HeartbeatStatus.Disabled:
+                ConsoleUtil.WriteLine("Received a heartbeat signal, but the heartbeat is disabled.", ConsoleColor.Yellow);
+                return;
+            
+            case HeartbeatStatus.AwaitingFirstHeartbeat:
+                ConsoleUtil.WriteLine("Received first heartbeat. Silent crash detection is now active.", ConsoleColor.DarkGreen);
+                HeartbeatStopwatch.Restart();
+                CurrentHeartbeatStatus = HeartbeatStatus.Active;
+                break;
+            
+            default:
+                HeartbeatStopwatch.Restart();
+                break;
+        }
+    }
+
+    private void StartHeartbeatMonitoring()
+    {
+        async void HeartbeatMonitoringMethod()
+        {
+            {
+                ushort i = 0;
+
+                while (CurrentHeartbeatStatus == HeartbeatStatus.AwaitingFirstHeartbeat)
+                {
+                    if (_exit)
+                        return;
+
+                    switch (i)
+                    {
+                        case 320: //80 seconds
+                            ConsoleUtil.WriteLine(
+                                "No heartbeat was received so far. Silent crash detection is NOT active.",
+                                ConsoleColor.Yellow);
+                            await Task.Delay(1000);
+                            break;
+
+                        case < 320:
+                            i++;
+                            await Task.Delay(250);
+                            break;
+
+                        default:
+                            await Task.Delay(1000);
+                            break;
+                    }
+                }
+            }
+
+            const byte maxWarnings = 11;
+
+            while (!_exit)
+            {
+                switch (CurrentHeartbeatStatus)
+                { 
+                    case HeartbeatStatus.AwaitingFirstHeartbeat:
+                    case HeartbeatStatus.Disabled:
+                        await Task.Delay(1000);
+                        continue;
+                    
+                    case HeartbeatStatus.Active:
+                        if (HeartbeatStopwatch.ElapsedMilliseconds <= 15000)
+                        {
+                            if (HeartbeatWarningStage != 0)
+                                ConsoleUtil.WriteLine("Heartbeat has been received. Restart procedure aborted.", ConsoleColor.DarkGreen);
+                    
+                            HeartbeatWarningStage = 0;
+                            await Task.Delay(1800);
+                            continue;
+                        }
+
+                        HeartbeatWarningStage++;
+
+                        if (HeartbeatWarningStage >= maxWarnings)
+                        {
+                            ConsoleUtil.WriteLine("Game server has probably crashed. Restarting the server...", ConsoleColor.Red);
+                            HeartbeatStopwatch.Reset();
+
+                            DisableExitActionSignals = true;
+                            ExitAction = ShutdownAction.Crash;
+
+                            _exit = true;
+                            return;
+                        }
+                
+                        ConsoleUtil.WriteLine($"Game server has not sent a heartbeat in {HeartbeatStopwatch.ElapsedMilliseconds / 1000} seconds. Restarting the server in {maxWarnings - HeartbeatWarningStage} seconds! Type \"hbc\" command to abort!", ConsoleColor.Red);
+                        await Task.Delay(1000);
+                        break;
+                }
+            }
+        }
+
+        _heartbeatMonitoringTask = new Task(HeartbeatMonitoringMethod);
+        _heartbeatMonitoringTask.Start();
     }
 
     ~LocalAdmin()

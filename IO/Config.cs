@@ -9,6 +9,7 @@ public class Config
     private static readonly string[] SplitArray = {": "};
 
     public bool RestartOnCrash = true;
+    public bool EnableHeartbeat = true;
     public bool LaLiveViewUseUtc;
 
     public string LaLiveViewTimeFormat
@@ -48,6 +49,9 @@ public class Config
             
         sb.Append("restart_on_crash: ");
         sb.AppendLine(RestartOnCrash.ToString().ToLowerInvariant());
+        
+        sb.Append("enable_heartbeat: ");
+        sb.AppendLine(EnableHeartbeat.ToString().ToLowerInvariant());
             
         sb.Append("la_live_view_use_utc: ");
         sb.AppendLine(LaLiveViewUseUtc.ToString().ToLowerInvariant());
@@ -114,6 +118,10 @@ public class Config
             {
                 case "restart_on_crash" when bool.TryParse(sp[1], out var b):
                     cfg.RestartOnCrash = b;
+                    break;
+                
+                case "enable_heartbeat" when bool.TryParse(sp[1], out var b):
+                    cfg.EnableHeartbeat = b;
                     break;
                     
                 case "la_live_view_use_utc" when bool.TryParse(sp[1], out var b):
@@ -198,6 +206,7 @@ public class Config
         var sb = new StringBuilder();
         
         sb.AppendLine(RestartOnCrash ? "- Server will be automatically restarted after a crash." : "- Server will NOT be automatically restarted after a crash.");
+        sb.AppendLine(EnableHeartbeat ? "- LocalAdmin will attempt to detect silent server crashes (heartbeat enabled)." : "- LocalAdmin will NOT attempt to detect silent server crashes (heartbeat DISABLED).");
         sb.AppendLine(LaLiveViewUseUtc ? "- LocalAdmin live view will use UTC timezone." : "- LocalAdmin live view will use local timezone.");
         sb.AppendLine($"- LocalAdmin live will use the following timestamp format: {LaLiveViewTimeFormat}");
         sb.AppendLine(LaShowStdoutStderr ? "- Standard outputs (that contain a lot of debug information) will be displayed." : "- Standard outputs (that contain a lot of debug information) will NOT be displayed.");

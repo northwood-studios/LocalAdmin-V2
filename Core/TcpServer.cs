@@ -21,7 +21,8 @@ public class TcpServer
         ExitActionReset = 0x13,
         ExitActionShutdown = 0x14,
         ExitActionSilentShutdown = 0x15,
-        ExitActionRestart = 0x16
+        ExitActionRestart = 0x16,
+        Heartbeat = 0x17
     }
         
     public event EventHandler<string>? Received;
@@ -64,11 +65,11 @@ public class TcpServer
                     var codeBuffer = new byte[1];
                     var lengthBuffer = new byte[offset];
                     var restartReceived = false;
-                        
+
                     while (true)
                     {
                         await Task.Delay(10);
-                            
+
                         lock (_lck)
                         {
                             if (_exit)
@@ -77,9 +78,9 @@ public class TcpServer
 
                         if (_networkStream?.DataAvailable != true)
                             continue;
-                            
+
                         int readAmount = await _networkStream.ReadAsync(codeBuffer.AsMemory(0, 1));
-                            
+
                         if (readAmount == 0)
                             continue;
 
@@ -89,22 +90,24 @@ public class TcpServer
 
                             if (readAmount < 4)
                             {
-                                Received?.Invoke(this, "4[LocalAdmin] Received **INVALID** data message length. Length: " + readAmount);
+                                Received?.Invoke(this,
+                                    "4[LocalAdmin] Received **INVALID** data message length. Length: " + readAmount);
                                 continue;
                             }
-                                
+
                             var length = (lengthBuffer[0] << 24) | (lengthBuffer[1] << 16) |
                                          (lengthBuffer[2] << 8) | lengthBuffer[3];
 
                             var buffer = ArrayPool<byte>.Shared.Rent(length);
                             readAmount = await _networkStream.ReadAsync(buffer.AsMemory(0, length));
-                                
+
                             if (readAmount != length)
                             {
-                                Received?.Invoke(this, $"4[LocalAdmin] Received **INVALID** data message. Length received: {readAmount}. Length expected: {length}.");
+                                Received?.Invoke(this,
+                                    $"4[LocalAdmin] Received **INVALID** data message. Length received: {readAmount}. Length expected: {length}.");
                                 continue;
                             }
-                                
+
                             var message = $"{codeBuffer[0]:X}{_encoding.GetString(buffer, 0, length)}";
                             ArrayPool<byte>.Shared.Return(buffer);
 
@@ -115,7 +118,7 @@ public class TcpServer
                             if (LocalAdmin.PrintControlMessages)
                                 Received?.Invoke(this, "7[LocalAdmin] Received control message: " + codeBuffer[0]);
 
-                            switch ((OutputCodes) codeBuffer[0])
+                            switch ((OutputCodes)codeBuffer[0])
                             {
                                 case OutputCodes.RoundRestart:
                                     if (restartReceived)
@@ -135,24 +138,29 @@ public class TcpServer
                                     if (!LocalAdmin.Singleton!.DisableExitActionSignals)
                                         LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Crash;
                                     break;
-                                        
+
                                 case OutputCodes.ExitActionShutdown:
                                     if (!LocalAdmin.Singleton!.DisableExitActionSignals)
                                         LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Shutdown;
                                     break;
-                                        
+
                                 case OutputCodes.ExitActionSilentShutdown:
                                     if (!LocalAdmin.Singleton!.DisableExitActionSignals)
                                         LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.SilentShutdown;
                                     break;
-                                        
+
                                 case OutputCodes.ExitActionRestart:
                                     if (!LocalAdmin.Singleton!.DisableExitActionSignals)
                                         LocalAdmin.Singleton.ExitAction = LocalAdmin.ShutdownAction.Restart;
                                     break;
-                                        
+
+                                case OutputCodes.Heartbeat:
+                                    LocalAdmin.Singleton!.HandleHeartbeat();
+                                    break;
+
                                 default:
-                                    Received?.Invoke(this, "4[LocalAdmin] Received **INVALID** control message: " + codeBuffer[0]);
+                                    Received?.Invoke(this,
+                                        "4[LocalAdmin] Received **INVALID** control message: " + codeBuffer[0]);
                                     break;
                             }
                         }
