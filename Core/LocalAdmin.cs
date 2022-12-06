@@ -1054,6 +1054,7 @@ public sealed class LocalAdmin : IDisposable
                             ConsoleUtil.WriteLine(
                                 "No heartbeat was received so far. Silent crash detection is NOT active.",
                                 ConsoleColor.Yellow);
+                            i++;
                             await Task.Delay(1000);
                             break;
 
