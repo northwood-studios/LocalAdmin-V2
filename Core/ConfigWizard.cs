@@ -48,6 +48,8 @@ public static class ConfigWizard
 
         LocalAdmin.Configuration.RestartOnCrash = BoolInput("Should the server be automatically restarted after a crash?");
         LocalAdmin.Configuration.LaLiveViewUseUtc = !BoolInput("Should timestamps in the LocalAdmin live view use server timezone (otherwise UTC time will be use)?");
+        
+        string? withoutTimezone = null;
 
         if (BoolInput("Do you want to customize time format of timestamps in the LocalAdmin live view?"))
         {
@@ -73,11 +75,13 @@ public static class ConfigWizard
                 var inputx = Console.ReadLine();
                 
                 if (inputx == null || !ushort.TryParse(inputx, out var c)) continue;
+                withoutTimezone = null;
                     
                 switch (c)
                 {
                     case 1:
                         LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
+                        withoutTimezone = "yyyy-MM-dd HH:mm:ss.fff";
                         tzPassed = true;
                         break;
                         
@@ -88,11 +92,13 @@ public static class ConfigWizard
                         
                     case 3:
                         LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss zzz";
+                        withoutTimezone = "yyyy-MM-dd HH:mm:ss";
                         tzPassed = true;
                         break;
                         
                     case 4:
                         LocalAdmin.Configuration.LaLiveViewTimeFormat = "HH:mm:ss.fff zzz";
+                        withoutTimezone = "HH:mm:ss.fff";
                         tzPassed = true;
                         break;
                         
@@ -103,6 +109,7 @@ public static class ConfigWizard
                         
                     case 6:
                         LocalAdmin.Configuration.LaLiveViewTimeFormat = "HH:mm:ss zzz";
+                        withoutTimezone = "HH:mm:ss";
                         tzPassed = true;
                         break;
                         
@@ -113,6 +120,7 @@ public static class ConfigWizard
                         
                     case 8:
                         LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss zzz";
+                        withoutTimezone = "yyyy-MM-dd HH:mm:ss";
                         tzPassed = true;
                         break;
                         
@@ -136,6 +144,16 @@ public static class ConfigWizard
                 }
             }
         }
+        else
+        {
+            LocalAdmin.Configuration.LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
+            withoutTimezone = "yyyy-MM-dd HH:mm:ss.fff";
+        }
+        
+        LocalAdmin.Configuration.LaLogsUseZForUtc = BoolInput("Should UTC timezone should be displayed as \"Z\" instead of \"+00:00\"?");
+        if (LocalAdmin.Configuration is { LaLogsUseZForUtc: true, LaLiveViewUseUtc: true } &&
+            withoutTimezone != null)
+            LocalAdmin.Configuration.LaLiveViewTimeFormat = withoutTimezone + "Z";
             
         LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin live view?");
         LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console, may cause issues especially on linux)?");
@@ -152,7 +170,7 @@ public static class ConfigWizard
             if (LocalAdmin.Configuration.LaDeleteOldLogs)
                 LocalAdmin.Configuration.LaLogsExpirationDays = UshortInput("How many days LocalAdmin logs should be kept?");
         }
-            
+        
         LocalAdmin.Configuration.DeleteOldRoundLogs = BoolInput("Do you want to automatically delete old round logs (older than a specified amount of days)?");
         if (LocalAdmin.Configuration.DeleteOldRoundLogs)
             LocalAdmin.Configuration.RoundLogsExpirationDays = UshortInput("How many days round logs should be kept?");

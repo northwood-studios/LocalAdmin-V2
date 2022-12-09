@@ -27,23 +27,25 @@ public static class ConsoleUtil
             }
         }
     }
-        
+    
     private static string GetLogsLocalTimestamp() => $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}]";
-        
-    private static string GetLogsUtcTimestamp() => $"[{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}Z]";
-        
-    public static string GetLogsTimestamp() => Core.LocalAdmin.Configuration != null && Core.LocalAdmin.Configuration.LaLogsUseUtc
+
+    private static string GetLogsUtcTimestamp() => Core.LocalAdmin.Configuration is { LaLogsUseZForUtc: true }
+        ? $"[{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)}Z]"
+        : $"[{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}]";
+    
+    public static string GetLogsTimestamp() => Core.LocalAdmin.Configuration is { LaLogsUseUtc: true }
         ? GetLogsUtcTimestamp()
         : GetLogsLocalTimestamp();
-        
+    
     private static string GetLiveViewLocalTimestamp() => $"[{DateTime.Now.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeFormat, CultureInfo.InvariantCulture)}]";
-        
-    private static string GetLiveViewUtcTimestamp() => $"[{DateTime.UtcNow.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeUtcFormat, CultureInfo.InvariantCulture)}Z]";
-
+    
+    private static string GetLiveViewUtcTimestamp() => $"[{DateTime.UtcNow.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeFormat, CultureInfo.InvariantCulture)}]";
+    
     private static string GetLiveViewTimestamp() => Core.LocalAdmin.Configuration == null ? GetLogsLocalTimestamp() : Core.LocalAdmin.Configuration.LaLiveViewUseUtc
         ? GetLiveViewUtcTimestamp()
         : GetLiveViewLocalTimestamp();
-        
+    
     private static string GetLiveViewPadding()
     {
         if (_liveTimestampPadding == null)
