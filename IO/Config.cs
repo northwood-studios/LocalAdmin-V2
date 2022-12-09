@@ -12,24 +12,12 @@ public class Config
     public bool EnableHeartbeat = true;
     public bool LaLiveViewUseUtc;
 
-    public string LaLiveViewTimeFormat
-    {
-        get => _laLiveViewTimeFormat;
-            
-        set
-        {
-            _laLiveViewTimeFormat = value;
-            _laLiveViewTimeFormatTimezone = value.Contains("z", StringComparison.OrdinalIgnoreCase);
-            LaLiveViewTimeUtcFormat = _laLiveViewTimeFormatTimezone
-                ? LaLiveViewTimeFormat.Replace(" z", string.Empty).Replace("z", string.Empty) : LaLiveViewTimeFormat;
-        }
-    }
-
     public bool LaShowStdoutStderr;
     public bool LaNoSetCursor = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
     public bool EnableTrueColor = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
     public bool EnableLaLogs = true;
     public bool LaLogsUseUtc;
+    public bool LaLogsUseZForUtc;
     public bool LaLogAutoFlush = true;
     public bool LaLogStdoutStderr = true;
     public bool LaDeleteOldLogs = true;
@@ -39,9 +27,7 @@ public class Config
     public bool CompressOldRoundLogs;
     public ushort RoundLogsCompressionThresholdDays = 14;
 
-    private string _laLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
-    public string LaLiveViewTimeUtcFormat = "yyyy-MM-dd HH:mm:ss.fff";
-    private bool _laLiveViewTimeFormatTimezone = true;
+    public string LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
 
     public string SerializeConfig()
     {
@@ -73,6 +59,9 @@ public class Config
             
         sb.Append("la_logs_use_utc: ");
         sb.AppendLine(LaLogsUseUtc.ToString().ToLowerInvariant());
+
+        sb.Append("la_logs_use_Z_for_utc: ");
+        sb.AppendLine(LaLogsUseZForUtc.ToString().ToLowerInvariant());
             
         sb.Append("la_log_auto_flush: ");
         sb.AppendLine(LaLogAutoFlush.ToString().ToLowerInvariant());
@@ -151,6 +140,10 @@ public class Config
                 case "la_logs_use_utc" when bool.TryParse(sp[1], out var b):
                     cfg.LaLogsUseUtc = b;
                     break;
+                
+                case "la_logs_use_Z_for_utc" when bool.TryParse(sp[1], out var b):
+                    cfg.LaLogsUseZForUtc = b;
+                    break;
                     
                 case "la_log_auto_flush" when bool.TryParse(sp[1], out var b):
                     cfg.LaLogAutoFlush = b;
@@ -209,6 +202,7 @@ public class Config
         sb.AppendLine(EnableHeartbeat ? "- LocalAdmin will attempt to detect silent server crashes (heartbeat enabled)." : "- LocalAdmin will NOT attempt to detect silent server crashes (heartbeat DISABLED).");
         sb.AppendLine(LaLiveViewUseUtc ? "- LocalAdmin live view will use UTC timezone." : "- LocalAdmin live view will use local timezone.");
         sb.AppendLine($"- LocalAdmin live will use the following timestamp format: {LaLiveViewTimeFormat}");
+        sb.AppendLine($"- UTC timezone will be displayed as \"{(LaLogsUseZForUtc ? "Z" : "+00:00")}\".");
         sb.AppendLine(LaShowStdoutStderr ? "- Standard outputs (that contain a lot of debug information) will be displayed." : "- Standard outputs (that contain a lot of debug information) will NOT be displayed.");
         sb.AppendLine(LaNoSetCursor ? "- Cursor position management is DISABLED." : "- Cursor position management is ENABLED.");
         sb.AppendLine(EnableTrueColor ? "- True Color output is ENABLED." : "- True Color output is DISABLED.");
