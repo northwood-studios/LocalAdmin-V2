@@ -30,7 +30,7 @@ namespace LocalAdmin.V2.Core;
 
 public sealed class LocalAdmin : IDisposable
 {
-    public const string VersionString = "2.5.5";
+    public const string VersionString = "2.5.6";
     internal static LocalAdmin? Singleton;
     internal static ushort GamePort;
     internal static string? ConfigPath, LaLogsPath, GameLogsPath;
@@ -165,7 +165,7 @@ public sealed class LocalAdmin : IDisposable
                 ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
-                ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Cyan);
+                ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
 
                 ReadInput((input) =>
                     {
@@ -195,7 +195,7 @@ public sealed class LocalAdmin : IDisposable
                     }, () => { },
                     () =>
                     {
-                        ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Red);
+                        ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Red);
                     });
                     
                 if (!_exit)
