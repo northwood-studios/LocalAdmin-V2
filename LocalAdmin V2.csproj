@@ -33,22 +33,22 @@
         <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
         <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     </PropertyGroup>
-	
-     <!-- Linux only exit handling -->
+
+    <!-- Linux only exit handling -->
     <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('linux', StringComparison.OrdinalIgnoreCase))">
         <DefineConstants>LINUX_SIGNALS</DefineConstants>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <PlatformTarget>x64</PlatformTarget>
+        <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <PlatformTarget>x64</PlatformTarget>
-      <DebugType>none</DebugType>
+        <PlatformTarget>x64</PlatformTarget>
+        <DebugType>none</DebugType>
     </PropertyGroup>
     <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('linux', StringComparison.OrdinalIgnoreCase))">
-        <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
+        <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0"/>
     </ItemGroup>
-	
+
     <PropertyGroup>
         <PublishAot>true</PublishAot>
     </PropertyGroup>
@@ -62,16 +62,16 @@
         <Content Include="NOTICE-LocalAdmin">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        
-        <None Remove=".editorconfig" />
-        <None Remove=".gitignore" />
-        <None Remove="LocalAdmin V2.sln.DotSettings" />
-        <None Remove="nuget.config" />
-        <None Remove="Properties\launchSettings.json" />
-        <None Remove="README.md" />
+
+        <None Remove=".editorconfig"/>
+        <None Remove=".gitignore"/>
+        <None Remove="LocalAdmin V2.sln.DotSettings"/>
+        <None Remove="nuget.config"/>
+        <None Remove="Properties\launchSettings.json"/>
+        <None Remove="README.md"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
-        <PackageReference Include="Utf8Json" Version="1.3.7" />
+        <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0"/>
+        <PackageReference Include="Utf8Json" Version="1.3.7"/>
     </ItemGroup>
 </Project>

@@ -7,9 +7,9 @@ namespace LocalAdmin.V2.PluginsManager;
 public class ServerPluginsConfig
 {
     public Dictionary<string, InstalledPlugin> InstalledPlugins;
-    
+
     public Dictionary<string, Dependency> Dependencies;
-    
+
     public DateTime? LastUpdateCheck;
 
     internal ServerPluginsConfig()
@@ -17,7 +17,7 @@ public class ServerPluginsConfig
         InstalledPlugins = new();
         Dependencies = new();
     }
-    
+
     [SerializationConstructor]
     public ServerPluginsConfig(Dictionary<string, InstalledPlugin> installedPlugins, Dictionary<string, Dependency> dependencies, DateTime? lastUpdateCheck)
     {
@@ -30,20 +30,17 @@ public class ServerPluginsConfig
 public class InstalledPlugin
 {
     public string? TargetVersion;
-    
+
     public string? CurrentVersion;
-    
+
     public string? FileHash;
-    
+
     public DateTime InstallationDate;
-    
+
     public DateTime UpdateDate;
 
-    internal InstalledPlugin()
-    {
-        
-    }
-    
+    internal InstalledPlugin() { }
+
     [SerializationConstructor]
     public InstalledPlugin(string? targetVersion, string? currentVersion, string? fileHash, DateTime installationDate, DateTime updateDate)
     {
@@ -58,20 +55,20 @@ public class InstalledPlugin
 public class Dependency
 {
     public string? FileHash;
-    
+
     public DateTime InstallationDate;
-    
+
     public DateTime UpdateDate;
-    
+
     public bool ManuallyInstalled;
-    
+
     public List<string> InstalledByPlugins;
 
     internal Dependency()
     {
         InstalledByPlugins = new();
     }
-    
+
     [SerializationConstructor]
     public Dependency(string? fileHash, DateTime installationDate, DateTime updateDate, bool manuallyInstalled, List<string> installedByPlugins)
     {

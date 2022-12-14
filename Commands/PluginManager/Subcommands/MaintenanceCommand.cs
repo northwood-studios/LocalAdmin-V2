@@ -13,29 +13,29 @@ internal static class MaintenanceCommand
             lSet = options.Contains('l', StringComparison.Ordinal);
 
         bool local = false, global = false;
-        
+
         switch (gSet)
         {
             case false when !lSet:
             case true when lSet:
                 local = global = true;
                 break;
-            
+
             case true:
                 global = true;
                 break;
-            
+
             default:
                 local = true;
                 break;
         }
-        
+
         if (local)
             await PluginInstaller.PluginsMaintenance(Core.LocalAdmin.GamePort.ToString(), iSet);
 
         if (global)
             await PluginInstaller.PluginsMaintenance("global", iSet);
-        
+
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins maintenance complete.", ConsoleColor.DarkGreen);
     }
 }

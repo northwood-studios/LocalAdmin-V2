@@ -23,7 +23,7 @@ internal sealed class AppDomainHandler : IExitHandler
     {
         if (Core.LocalAdmin.Singleton == null)
             return;
-            
+
         Core.LocalAdmin.Singleton.DisableExitActionSignals = true;
         Core.LocalAdmin.Singleton.ExitAction = Core.LocalAdmin.ShutdownAction.SilentShutdown;
         Core.LocalAdmin.Singleton.Exit(0);
@@ -33,18 +33,18 @@ internal sealed class AppDomainHandler : IExitHandler
     {
         if (!e.IsTerminating)
             return;
-            
+
         if (e.ExceptionObject is Exception ex)
         {
             ConsoleUtil.WriteLine($"Unhandled Exception: {ex}", ConsoleColor.Red);
-                    
+
             if (Core.LocalAdmin.Singleton != null)
                 Core.LocalAdmin.Singleton.Exit(ex.HResult);
         }
         else
         {
             ConsoleUtil.WriteLine("Unhandled Exception!", ConsoleColor.Red);
-                    
+
             if (Core.LocalAdmin.Singleton != null)
                 Core.LocalAdmin.Singleton.Exit(1);
         }

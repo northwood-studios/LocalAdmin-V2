@@ -10,7 +10,7 @@ namespace LocalAdmin.V2.PluginsManager;
 
 internal static class OfficialPluginsList
 {
-    private static readonly HttpClient HttpClient = new ()
+    private static readonly HttpClient HttpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(45),
         DefaultRequestHeaders = { { "User-Agent", "LocalAdmin v. " + Core.LocalAdmin.VersionString } }
@@ -58,16 +58,16 @@ internal static class OfficialPluginsList
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to refresh plugins list! (deserialization error)", ConsoleColor.Red);
                 return;
             }
-        
+
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading LocalAdmin config file...", ConsoleColor.Blue);
             await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
-            
+
             Core.LocalAdmin.DataJson!.PluginAliases = data;
             Core.LocalAdmin.DataJson.LastPluginAliasesRefresh = DateTime.UtcNow;
-            
+
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing LocalAdmin config file...", ConsoleColor.Blue);
             await Core.LocalAdmin.Singleton.SaveJsonOrTerminate();
-            
+
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins list has been refreshed!", ConsoleColor.DarkGreen);
         }
         catch (Exception e)
@@ -81,14 +81,14 @@ internal static class OfficialPluginsList
         if (Core.LocalAdmin.DataJson == null || Core.LocalAdmin.DataJson.PluginAliases == null ||
             !Core.LocalAdmin.DataJson.PluginAliases.ContainsKey(alias))
             return alias;
-        
+
         var pluginAlias = Core.LocalAdmin.DataJson.PluginAliases[alias];
 
         if (((PluginAliasFlags)pluginAlias.Flags & requiredFlags) == 0)
             return alias;
 
         ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin name {alias} has been resolved to {pluginAlias.Repository}!", ConsoleColor.Gray);
-        
+
         return pluginAlias.Repository;
     }
 }

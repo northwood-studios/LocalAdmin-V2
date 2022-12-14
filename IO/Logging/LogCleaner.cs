@@ -24,7 +24,7 @@ public static class LogCleaner
             Priority = ThreadPriority.Lowest,
             IsBackground = true
         };
-            
+
         _cleanupThread.Start();
     }
 
@@ -42,7 +42,7 @@ public static class LogCleaner
             if (_lastCleanup == null)
             {
                 _lastCleanup = DateTime.UtcNow;
-                    
+
                 for (uint i = 0; i < 15 && !_abort; i++)
                     Thread.Sleep(1000);
             }
@@ -68,7 +68,7 @@ public static class LogCleaner
                     foreach (var file in Directory.GetFiles(root, "Round *", SearchOption.TopDirectoryOnly))
                     {
                         string stage = string.Empty;
-                            
+
                         try
                         {
                             if (_abort)
@@ -95,7 +95,7 @@ public static class LogCleaner
                                 File.Delete(file);
                                 continue;
                             }
-                                
+
                             if (Core.LocalAdmin.Configuration.CompressOldRoundLogs && diff.TotalDays >
                                 Core.LocalAdmin.Configuration.RoundLogsCompressionThresholdDays)
                             {
@@ -103,7 +103,7 @@ public static class LogCleaner
                                 var p2 = root + "LA-ToCompress-" + d + Path.DirectorySeparatorChar;
                                 if (!Directory.Exists(p2))
                                     Directory.CreateDirectory(p2);
-                                    
+
                                 stage = "Compression - moving";
                                 File.Move(file, p2 + name);
                             }
@@ -115,11 +115,11 @@ public static class LogCleaner
                             ConsoleUtil.WriteLine($"[Log Maintenance] Failed to process old round log {file}. Processing stage: {stage}. Exception: {e.Message}", ConsoleColor.Red);
                         }
                     }
-                        
+
                     foreach (var file in Directory.GetFiles(root, "Round Logs Archive *", SearchOption.TopDirectoryOnly))
                     {
                         string stage = string.Empty;
-                            
+
                         try
                         {
                             if (_abort)
@@ -163,12 +163,12 @@ public static class LogCleaner
                         {
                             if (_abort)
                                 return;
-                                
+
                             stage = "Processing directory name";
                             var name = new DirectoryInfo(dir).Name;
                             if (name.Length != 24 || !name.StartsWith("LA-ToCompress-", StringComparison.Ordinal))
                                 continue;
-                                
+
                             var d = root + "Round Logs Archive " + name.Substring(14);
 
                             if (Directory.Exists(d))
@@ -182,7 +182,7 @@ public static class LogCleaner
                                 ConsoleUtil.WriteLine($"[Log Maintenance] Failed to compress old round log directory. Target ZIP file already exists.", ConsoleColor.Red);
                                 continue;
                             }
-                                
+
                             stage = "Renaming directory";
                             Directory.Move(dir, d);
 
@@ -210,7 +210,7 @@ public static class LogCleaner
                     foreach (var file in Directory.GetFiles(root, "LocalAdmin Log *", SearchOption.TopDirectoryOnly))
                     {
                         string stage = string.Empty;
-                            
+
                         try
                         {
                             if (_abort)
@@ -236,7 +236,7 @@ public static class LogCleaner
                                 File.Delete(file);
                                 continue;
                             }
-                                
+
                             stage = "End";
                         }
                         catch (Exception e)

@@ -13,25 +13,25 @@ internal static class ListCommand
             gSet = options.Contains('g', StringComparison.Ordinal),
             lSet = options.Contains('l', StringComparison.Ordinal),
             sSet = options.Contains('s', StringComparison.Ordinal);
-        
+
         bool local = false, global = false;
-        
+
         switch (gSet)
         {
             case false when !lSet:
             case true when lSet:
                 local = global = true;
                 break;
-            
+
             case true:
                 global = true;
                 break;
-            
+
             default:
                 local = true;
                 break;
         }
-        
+
         List<PluginStorage.PluginListEntry>? localPlugins = null, globalPlugins = null;
 
         if (local)
@@ -41,14 +41,14 @@ internal static class ListCommand
             globalPlugins = await PluginStorage.ListPlugins("global", iSet, sSet);
 
         ConsoleUtil.WriteLine(null, ConsoleColor.Gray);
-        
+
         if (local)
             PrintPlugins(Core.LocalAdmin.GamePort.ToString(), localPlugins);
-        
+
         if (global)
             PrintPlugins("global", globalPlugins);
     }
-    
+
     private static void PrintPlugins(string port, List<PluginStorage.PluginListEntry>? plugins)
     {
         ConsoleUtil.WriteLine($"------ PLUGINS FOR PORT {port.ToUpperInvariant()} ------", ConsoleColor.DarkGreen);
@@ -58,7 +58,7 @@ internal static class ListCommand
         else
         {
             var i = 0;
-            
+
             foreach (var plugin in plugins)
             {
                 ConsoleColor color;
@@ -69,18 +69,18 @@ internal static class ListCommand
                 else if (upToDate)
                     color = ConsoleColor.Gray;
                 else color = ConsoleColor.Yellow;
-                
+
                 if (i != 0)
                     ConsoleUtil.WriteLine(null, ConsoleColor.Gray);
-                
+
                 ConsoleUtil.WriteLine($"{++i}. {plugin.Name} ({plugin.InstalledVersionValidated})", color);
                 ConsoleUtil.WriteLine($"Latest version: {plugin.LatestVersion}" + (upToDate ? "" : " >>> UPDATE AVAILABLE <<<"), color);
                 ConsoleUtil.WriteLine($"Target version: {plugin.TargetVersion}", color);
-                ConsoleUtil.WriteLine($"Plugin integrity check: {(plugin.IntegrityCheckPassed ? "PASSED": "FAILED - PLUGIN MANUALLY MODIFIED")}", color);
+                ConsoleUtil.WriteLine($"Plugin integrity check: {(plugin.IntegrityCheckPassed ? "PASSED" : "FAILED - PLUGIN MANUALLY MODIFIED")}", color);
                 ConsoleUtil.WriteLine($"Dependencies: {(plugin.Dependencies == null ? "(none)" : string.Join(", ", plugin.Dependencies))}", color);
             }
         }
-        
+
         ConsoleUtil.WriteLine("------------", ConsoleColor.DarkGreen);
         ConsoleUtil.WriteLine(null, ConsoleColor.Gray);
     }
