@@ -7,7 +7,7 @@ namespace LocalAdmin.V2.Commands;
 internal sealed class HeartbeatCancelCommand : CommandBase
 {
     public HeartbeatCancelCommand() : base("hbc") { }
-    
+
     internal override void Execute(string[] arguments)
     {
         if (Core.LocalAdmin.Singleton!.CurrentHeartbeatStatus != Core.LocalAdmin.HeartbeatStatus.Active)
@@ -15,7 +15,7 @@ internal sealed class HeartbeatCancelCommand : CommandBase
             ConsoleUtil.WriteLine("Heartbeat is not active!", ConsoleColor.Yellow);
             return;
         }
-        
+
         if (Core.LocalAdmin.Singleton.HeartbeatWarningStage == 0)
         {
             ConsoleUtil.WriteLine("Heartbeat restart countdown has not started!", ConsoleColor.Yellow);
@@ -23,7 +23,7 @@ internal sealed class HeartbeatCancelCommand : CommandBase
         }
 
         Core.LocalAdmin.Singleton.CurrentHeartbeatStatus = Core.LocalAdmin.HeartbeatStatus.AwaitingFirstHeartbeat;
-        
+
         ConsoleUtil.WriteLine("Heartbeat restart countdown has been cancelled.", ConsoleColor.DarkGreen);
         ConsoleUtil.WriteLine("Crash detection will be resumed after receiving any heartbeat. If you want to disable heartbeat completely for this LocalAdmin session (until server is restarted) run \"hbctrl 0\" command.", ConsoleColor.DarkGreen);
     }

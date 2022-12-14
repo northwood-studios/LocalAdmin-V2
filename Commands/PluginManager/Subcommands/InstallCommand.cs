@@ -12,12 +12,12 @@ internal static class InstallCommand
     {
         PluginInstaller.QueryResult res;
         string version;
-        
+
         var performUpdate = OfficialPluginsList.IsRefreshNeeded();
 
         if (options.Contains('s', StringComparison.Ordinal))
             performUpdate = false;
-        
+
         if (performUpdate)
         {
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Refreshing plugins list...", ConsoleColor.Yellow);
@@ -36,14 +36,14 @@ internal static class InstallCommand
         {
             if (!performUpdate)
                 await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
-            
+
             res = await PluginInstaller.TryCachePlugin(args[0], true);
             if (!res.Success)
                 return;
 
             if (!await Core.LocalAdmin.DataJson!.TrySave(PathManager.InternalJsonDataPath))
                 return;
-            
+
             version = "latest";
         }
         else
@@ -53,7 +53,7 @@ internal static class InstallCommand
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Invalid plugin version!", ConsoleColor.Red);
                 return;
             }
-            
+
             res = await PluginInstaller.TryGetVersionDetails(args[0], args[1]);
             if (!res.Success)
                 return;

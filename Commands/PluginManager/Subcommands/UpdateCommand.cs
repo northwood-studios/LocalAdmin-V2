@@ -15,29 +15,29 @@ internal static class UpdateCommand
             sSet = options.Contains('s', StringComparison.Ordinal);
 
         bool local = false, global = false;
-        
+
         switch (gSet)
         {
             case false when !lSet:
             case true when lSet:
                 local = global = true;
                 break;
-            
+
             case true:
                 global = true;
                 break;
-            
+
             default:
                 local = true;
                 break;
         }
-        
+
         if (local)
             await PluginUpdater.UpdatePlugins(Core.LocalAdmin.GamePort.ToString(), iSet, oSet, sSet);
 
         if (global)
             await PluginUpdater.UpdatePlugins("global", iSet, oSet, sSet);
-        
+
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Updating plugins update complete.", ConsoleColor.DarkGreen);
     }
 }

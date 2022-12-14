@@ -8,16 +8,16 @@ internal static class FileUtils
     {
         if (!File.Exists(path))
             return false;
-        
+
         File.Delete(path);
         return true;
     }
-    
+
     internal static bool DeleteDirectoryIfExists(string path)
     {
         if (!Directory.Exists(path))
             return false;
-        
+
         Directory.Delete(path, true);
         return true;
     }

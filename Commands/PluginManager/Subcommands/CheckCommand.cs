@@ -11,20 +11,20 @@ internal static class CheckCommand
         bool iSet = options.Contains('i', StringComparison.Ordinal),
             gSet = options.Contains('g', StringComparison.Ordinal),
             lSet = options.Contains('l', StringComparison.Ordinal);
-        
+
         bool local = false, global = false;
-        
+
         switch (gSet)
         {
             case false when !lSet:
             case true when lSet:
                 local = global = true;
                 break;
-            
+
             case true:
                 global = true;
                 break;
-            
+
             default:
                 local = true;
                 break;
@@ -35,7 +35,7 @@ internal static class CheckCommand
 
         if (global)
             await PluginUpdater.CheckForUpdates("global", iSet);
-        
+
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Checking for plugins update complete.", ConsoleColor.DarkGreen);
     }
 }

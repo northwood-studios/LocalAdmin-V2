@@ -14,10 +14,10 @@ internal static class JsonFile
         {
             bool lockGranted = await LockFile(path, timeout);
             var result = await Task.FromResult(JsonSerializer.Deserialize<T>(await File.ReadAllTextAsync(path, Encoding.UTF8)));
-            
+
             if (lockGranted && !keepLock)
                 UnlockFile(path);
-            
+
             return result;
         }
         catch (Exception e)
@@ -41,7 +41,7 @@ internal static class JsonFile
         {
             bool lockGranted = await LockFile(path, timeout);
             await File.WriteAllTextAsync(path, JsonSerializer.ToJsonString(obj), Encoding.UTF8);
-            
+
             if (lockGranted || forceUnlock)
                 UnlockFile(path);
 
@@ -60,16 +60,16 @@ internal static class JsonFile
         {
             path += ".lock";
             timeout /= 10;
-        
+
             if (timeout < 1)
                 timeout = 1;
-        
+
             for (var i = 0; i < timeout && File.Exists(path); i++)
                 await Task.Delay(10);
 
             if (File.Exists(path))
                 return false;
-            
+
             var fs = File.Create(path);
             fs.Close();
             return true;
@@ -80,7 +80,7 @@ internal static class JsonFile
             return false;
         }
     }
-    
+
     internal static void UnlockFile(string path)
     {
         try
