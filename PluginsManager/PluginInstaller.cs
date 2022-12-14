@@ -84,20 +84,36 @@ internal static class PluginInstaller
             string? pluginUrl = null;
             string? dependenciesUrl = null;
 
+            var designatedForNwApi = false;
+            var nonNwApiFound = 0;
+
             foreach (var asset in data.assets)
             {
                 if (asset.name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (pluginUrl != null)
+                    var thisNw = asset.name.EndsWith("-nw.dll", StringComparison.OrdinalIgnoreCase);
+
+                    if (designatedForNwApi)
                     {
+                        if (!thisNw)
+                            continue;
+
                         if (interactive)
-                            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name} - multiple plugin DLLs found.", ConsoleColor.Red);
+                            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name} - multiple plugin DLLs marked for NW API usage found.", ConsoleColor.Red);
                         return new();
                     }
 
+                    if (thisNw)
+                        nonNwApiFound = 0;
+                    else
+                        nonNwApiFound++;
+
                     pluginUrl = asset.browser_download_url;
+                    designatedForNwApi = thisNw;
                 }
-                else if (asset.name.Equals("dependencies.zip", StringComparison.OrdinalIgnoreCase))
+                else if (asset.name.Equals("dependencies-nw.zip", StringComparison.OrdinalIgnoreCase))
+                    dependenciesUrl = asset.browser_download_url;
+                else if (dependenciesUrl == null && asset.name.Equals("dependencies.zip", StringComparison.OrdinalIgnoreCase))
                     dependenciesUrl = asset.browser_download_url;
             }
 
@@ -105,6 +121,13 @@ internal static class PluginInstaller
             {
                 if (interactive)
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name} - no plugin DLL found.", ConsoleColor.Red);
+                return new();
+            }
+
+            if (nonNwApiFound > 1)
+            {
+                if (interactive)
+                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to process plugin {name} - multiple matching plugin DLLs found, none is explicitly designated for NW API usage.", ConsoleColor.Red);
                 return new();
             }
 
