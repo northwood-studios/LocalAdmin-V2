@@ -1,4 +1,4 @@
-﻿using LocalAdmin.V2.Commands;
+using LocalAdmin.V2.Commands;
 using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.IO.ExitHandlers;
@@ -31,43 +31,43 @@ namespace LocalAdmin.V2.Core;
 public sealed class LocalAdmin : IDisposable
 {
     public const string VersionString = "2.5.7";
+
+    private static readonly ConcurrentQueue<string> InputQueue = new();
+    private static readonly Stopwatch RestartsStopwatch = new();
+    private static string? _previousPat;
+    private static bool _firstRun = true;
+    private static string _gameArguments = string.Empty;
+    private static bool _exit, _processRefreshFail;
+    private static bool _noTrueColor;
+    private static bool _stdPrint;
+    private static bool _ignoreNextRestart;
+    private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
+
+    private readonly CommandService _commandService = new();
+    private readonly string _scpslExecutable;
+    private volatile bool _processClosing;
+    private Process? _gameProcess;
+    private Task? _readerTask, _heartbeatMonitoringTask;
+
+    internal static readonly Stopwatch HeartbeatStopwatch = new();
     internal static LocalAdmin? Singleton;
     internal static ushort GamePort;
     internal static string? ConfigPath, LaLogsPath, GameLogsPath;
-    private static string? _previousPat;
-    private static bool _firstRun = true;
-
-    private readonly CommandService _commandService = new();
-    private Process? _gameProcess;
-    internal TcpServer? Server { get; private set; }
-    private Task? _readerTask, _heartbeatMonitoringTask;
-    private readonly string _scpslExecutable;
-    private static string _gameArguments = string.Empty;
-    internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
-
-    private static bool _exit, _processRefreshFail;
-    private static readonly ConcurrentQueue<string> InputQueue = new();
-    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
-    private static bool _noTrueColor;
-    private static bool _stdPrint;
-    private volatile bool _processClosing;
-
-    private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
-    private static bool _ignoreNextRestart;
-    private static readonly Stopwatch RestartsStopwatch = new();
-
     internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000;
-
     internal static Config? Configuration;
     internal static DataJson? DataJson;
+    internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
+    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
 
     internal ShutdownAction ExitAction = ShutdownAction.Crash;
     internal bool DisableExitActionSignals;
     internal HeartbeatStatus CurrentHeartbeatStatus = HeartbeatStatus.Disabled;
-    internal byte HeartbeatWarningStage;
-    internal static readonly Stopwatch HeartbeatStopwatch = new();
+    internal uint HeartbeatWarningStage;
 
+    internal TcpServer? Server { get; private set; }
     internal bool EnableGameHeartbeat { get; private set; }
+    internal uint HeartbeatSpanMaxThreshold { get; private set; }
+    internal uint HeartbeatRestartInSeconds { get; private set; }
 
     internal enum ShutdownAction : byte
     {
@@ -468,6 +468,8 @@ public sealed class LocalAdmin : IDisposable
             if (Configuration.EnableHeartbeat)
             {
                 EnableGameHeartbeat = true;
+                HeartbeatSpanMaxThreshold = Configuration.HeartbeatSpanMaxThreshold;
+                HeartbeatRestartInSeconds = Configuration.HeartbeatRestartInSeconds;
                 CurrentHeartbeatStatus = HeartbeatStatus.AwaitingFirstHeartbeat;
                 HeartbeatStopwatch.Start();
                 StartHeartbeatMonitoring();
@@ -563,7 +565,7 @@ public sealed class LocalAdmin : IDisposable
         RunScpsl();
     }
 
-    private void Menu()
+    private static void Menu()
     {
         ConsoleUtil.Clear();
         ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
@@ -1070,8 +1072,6 @@ public sealed class LocalAdmin : IDisposable
                 }
             }
 
-            const byte maxWarnings = 11;
-
             while (!_exit)
             {
                 switch (CurrentHeartbeatStatus)
@@ -1082,7 +1082,7 @@ public sealed class LocalAdmin : IDisposable
                         continue;
 
                     case HeartbeatStatus.Active:
-                        if (HeartbeatStopwatch.ElapsedMilliseconds <= 15000)
+                        if (HeartbeatStopwatch.ElapsedMilliseconds <= (HeartbeatSpanMaxThreshold * 1000))
                         {
                             if (HeartbeatWarningStage != 0)
                                 ConsoleUtil.WriteLine("Heartbeat has been received. Restart procedure aborted.", ConsoleColor.DarkGreen);
@@ -1094,7 +1094,7 @@ public sealed class LocalAdmin : IDisposable
 
                         HeartbeatWarningStage++;
 
-                        if (HeartbeatWarningStage >= maxWarnings)
+                        if (HeartbeatWarningStage >= HeartbeatRestartInSeconds)
                         {
                             ConsoleUtil.WriteLine("Game server has probably crashed. Restarting the server...", ConsoleColor.Red);
                             HeartbeatStopwatch.Reset();
@@ -1106,7 +1106,7 @@ public sealed class LocalAdmin : IDisposable
                             return;
                         }
 
-                        ConsoleUtil.WriteLine($"Game server has not sent a heartbeat in {HeartbeatStopwatch.ElapsedMilliseconds / 1000} seconds. Restarting the server in {maxWarnings - HeartbeatWarningStage} seconds! Type \"hbc\" command to abort!", ConsoleColor.Red);
+                        ConsoleUtil.WriteLine($"Game server has not sent a heartbeat in {HeartbeatStopwatch.ElapsedMilliseconds / 1000} seconds. Restarting the server in {HeartbeatRestartInSeconds - HeartbeatWarningStage} seconds! Type \"hbc\" command to abort!", ConsoleColor.Red);
                         await Task.Delay(1000);
                         break;
                 }

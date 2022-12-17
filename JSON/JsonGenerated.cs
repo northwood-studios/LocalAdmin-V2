@@ -1,7 +1,4 @@
-﻿#pragma warning disable 618
-#pragma warning disable 612
-#pragma warning disable 414
-#pragma warning disable 168
+#pragma warning disable
 
 namespace Utf8Json.Resolvers
 {
