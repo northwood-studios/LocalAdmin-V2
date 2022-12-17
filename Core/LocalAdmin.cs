@@ -30,7 +30,7 @@ namespace LocalAdmin.V2.Core;
 
 public sealed class LocalAdmin : IDisposable
 {
-    public const string VersionString = "2.5.7";
+    public const string VersionString = "2.5.8";
 
     private static readonly ConcurrentQueue<string> InputQueue = new();
     private static readonly Stopwatch RestartsStopwatch = new();

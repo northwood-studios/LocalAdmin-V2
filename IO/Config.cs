@@ -26,7 +26,7 @@ public class Config
     public ushort RoundLogsExpirationDays = 180;
     public bool CompressOldRoundLogs;
     public ushort RoundLogsCompressionThresholdDays = 14;
-    public uint HeartbeatSpanMaxThreshold = 15;
+    public uint HeartbeatSpanMaxThreshold = 30;
     public uint HeartbeatRestartInSeconds = 11;
 
     public string LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
@@ -185,7 +185,7 @@ public class Config
                     cfg.RoundLogsCompressionThresholdDays = b;
                     break;
 
-                case "heartbeart_restart_in_seconds" when ushort.TryParse(sp[1], out var b):
+                case "heartbeat_restart_in_seconds" when ushort.TryParse(sp[1], out var b):
                     cfg.HeartbeatRestartInSeconds = b;
                     break;
 
