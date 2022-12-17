@@ -1082,7 +1082,7 @@ public sealed class LocalAdmin : IDisposable
                         continue;
 
                     case HeartbeatStatus.Active:
-                        if (HeartbeatStopwatch.ElapsedMilliseconds <= HeartbeatSpanMaxThreshold)
+                        if (HeartbeatStopwatch.ElapsedMilliseconds <= (HeartbeatSpanMaxThreshold * 1000))
                         {
                             if (HeartbeatWarningStage != 0)
                                 ConsoleUtil.WriteLine("Heartbeat has been received. Restart procedure aborted.", ConsoleColor.DarkGreen);
