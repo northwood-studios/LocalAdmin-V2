@@ -34,12 +34,12 @@ public readonly struct GitHubReleaseAsset
 {
     public readonly string name;
 
-    public readonly string browser_download_url;
+    public readonly string url;
 
     [SerializationConstructor]
-    public GitHubReleaseAsset(string name, string browser_download_url)
+    public GitHubReleaseAsset(string name, string url)
     {
         this.name = name;
-        this.browser_download_url = browser_download_url;
+        this.url = url;
     }
 }

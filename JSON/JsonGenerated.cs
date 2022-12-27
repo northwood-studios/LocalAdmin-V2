@@ -126,7 +126,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("FileHash"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("InstallationDate"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("UpdateDate"),
-                
+
             };
         }
 
@@ -137,7 +137,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 writer.WriteNull();
                 return;
             }
-            
+
 
             writer.WriteRaw(this.____stringByteKeys[0]);
             formatterResolver.GetFormatterWithVerify<string?>().Serialize(ref writer, value.TargetVersion, formatterResolver);
@@ -149,7 +149,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.InstallationDate, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[4]);
             formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.UpdateDate, formatterResolver);
-            
+
             writer.WriteEndObject();
         }
 
@@ -159,7 +159,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             {
                 return null;
             }
-            
+
 
             var __TargetVersion__ = default(string?);
             var __TargetVersion__b__ = false;
@@ -250,7 +250,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("UpdateDate"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("ManuallyInstalled"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("InstalledByPlugins"),
-                
+
             };
         }
 
@@ -261,7 +261,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 writer.WriteNull();
                 return;
             }
-            
+
 
             writer.WriteRaw(this.____stringByteKeys[0]);
             formatterResolver.GetFormatterWithVerify<string?>().Serialize(ref writer, value.FileHash, formatterResolver);
@@ -273,7 +273,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             writer.WriteBoolean(value.ManuallyInstalled);
             writer.WriteRaw(this.____stringByteKeys[4]);
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<string>>().Serialize(ref writer, value.InstalledByPlugins, formatterResolver);
-            
+
             writer.WriteEndObject();
         }
 
@@ -283,7 +283,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             {
                 return null;
             }
-            
+
 
             var __FileHash__ = default(string?);
             var __FileHash__b__ = false;
@@ -370,7 +370,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 JsonWriter.GetEncodedPropertyNameWithBeginObject("InstalledPlugins"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("Dependencies"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("LastUpdateCheck"),
-                
+
             };
         }
 
@@ -381,7 +381,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 writer.WriteNull();
                 return;
             }
-            
+
 
             writer.WriteRaw(this.____stringByteKeys[0]);
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.Dictionary<string, global::LocalAdmin.V2.PluginsManager.InstalledPlugin>>().Serialize(ref writer, value.InstalledPlugins, formatterResolver);
@@ -389,7 +389,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.Dictionary<string, global::LocalAdmin.V2.PluginsManager.Dependency>>().Serialize(ref writer, value.Dependencies, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[2]);
             formatterResolver.GetFormatterWithVerify<global::System.DateTime?>().Serialize(ref writer, value.LastUpdateCheck, formatterResolver);
-            
+
             writer.WriteEndObject();
         }
 
@@ -399,7 +399,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             {
                 return null;
             }
-            
+
 
             var __InstalledPlugins__ = default(global::System.Collections.Generic.Dictionary<string, global::LocalAdmin.V2.PluginsManager.InstalledPlugin>);
             var __InstalledPlugins__b__ = false;
@@ -463,26 +463,26 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             this.____keyMapping = new global::Utf8Json.Internal.AutomataDictionary()
             {
                 { JsonWriter.GetEncodedPropertyNameWithoutQuotation("name"), 0},
-                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("browser_download_url"), 1},
+                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("url"), 1},
             };
 
             this.____stringByteKeys = new byte[][]
             {
                 JsonWriter.GetEncodedPropertyNameWithBeginObject("name"),
-                JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("browser_download_url"),
-                
+                JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("url"),
+
             };
         }
 
         public void Serialize(ref JsonWriter writer, global::LocalAdmin.V2.PluginsManager.GitHubReleaseAsset value, global::Utf8Json.IJsonFormatterResolver formatterResolver)
         {
-            
+
 
             writer.WriteRaw(this.____stringByteKeys[0]);
             writer.WriteString(value.name);
             writer.WriteRaw(this.____stringByteKeys[1]);
-            writer.WriteString(value.browser_download_url);
-            
+            writer.WriteString(value.url);
+
             writer.WriteEndObject();
         }
 
@@ -492,12 +492,12 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             {
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
-            
+
 
             var __name__ = default(string);
             var __name__b__ = false;
-            var __browser_download_url__ = default(string);
-            var __browser_download_url__b__ = false;
+            var __url__ = default(string);
+            var __url__b__ = false;
 
             var ____count = 0;
             reader.ReadIsBeginObjectWithVerify();
@@ -518,8 +518,8 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                         __name__b__ = true;
                         break;
                     case 1:
-                        __browser_download_url__ = reader.ReadString();
-                        __browser_download_url__b__ = true;
+                        __url__ = reader.ReadString();
+                        __url__b__ = true;
                         break;
                     default:
                         reader.ReadNextBlock();
@@ -530,7 +530,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 continue;
             }
 
-            var ____result = new global::LocalAdmin.V2.PluginsManager.GitHubReleaseAsset(__name__, __browser_download_url__);
+            var ____result = new global::LocalAdmin.V2.PluginsManager.GitHubReleaseAsset(__name__, __url__);
 
             return ____result;
         }
@@ -560,13 +560,12 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("tag_name"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("published_at"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("assets"),
-                
             };
         }
 
         public void Serialize(ref JsonWriter writer, global::LocalAdmin.V2.PluginsManager.GitHubRelease value, global::Utf8Json.IJsonFormatterResolver formatterResolver)
         {
-            
+
 
             writer.WriteRaw(this.____stringByteKeys[0]);
             formatterResolver.GetFormatterWithVerify<string?>().Serialize(ref writer, value.message, formatterResolver);
@@ -578,7 +577,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.published_at, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[4]);
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::LocalAdmin.V2.PluginsManager.GitHubReleaseAsset>>().Serialize(ref writer, value.assets, formatterResolver);
-            
+
             writer.WriteEndObject();
         }
 
@@ -588,7 +587,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             {
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
-            
+
 
             var __message__ = default(string?);
             var __message__b__ = false;
@@ -694,13 +693,13 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.Core
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("LastRefreshed"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("DllDownloadUrl"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("DependenciesDownloadUrl"),
-                
+
             };
         }
 
         public void Serialize(ref JsonWriter writer, global::LocalAdmin.V2.Core.PluginVersionCache value, global::Utf8Json.IJsonFormatterResolver formatterResolver)
         {
-            
+
 
             writer.WriteRaw(this.____stringByteKeys[0]);
             writer.WriteString(value.Version);
@@ -714,7 +713,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.Core
             writer.WriteString(value.DllDownloadUrl);
             writer.WriteRaw(this.____stringByteKeys[5]);
             formatterResolver.GetFormatterWithVerify<string?>().Serialize(ref writer, value.DependenciesDownloadUrl, formatterResolver);
-            
+
             writer.WriteEndObject();
         }
 
@@ -724,7 +723,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.Core
             {
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
-            
+
 
             var __Version__ = default(string);
             var __Version__b__ = false;
@@ -816,19 +815,19 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.Core
             {
                 JsonWriter.GetEncodedPropertyNameWithBeginObject("Repository"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("Flags"),
-                
+
             };
         }
 
         public void Serialize(ref JsonWriter writer, global::LocalAdmin.V2.Core.PluginAlias value, global::Utf8Json.IJsonFormatterResolver formatterResolver)
         {
-            
+
 
             writer.WriteRaw(this.____stringByteKeys[0]);
             writer.WriteString(value.Repository);
             writer.WriteRaw(this.____stringByteKeys[1]);
             writer.WriteByte(value.Flags);
-            
+
             writer.WriteEndObject();
         }
 
@@ -838,7 +837,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.Core
             {
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
-            
+
 
             var __Repository__ = default(string);
             var __Repository__b__ = false;
@@ -908,7 +907,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.Core
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("LastPluginAliasesRefresh"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("PluginVersionCache"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("PluginAliases"),
-                
+
             };
         }
 
@@ -919,7 +918,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.Core
                 writer.WriteNull();
                 return;
             }
-            
+
 
             writer.WriteRaw(this.____stringByteKeys[0]);
             formatterResolver.GetFormatterWithVerify<string?>().Serialize(ref writer, value.GitHubPersonalAccessToken, formatterResolver);
@@ -933,7 +932,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.Core
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.Dictionary<string, global::LocalAdmin.V2.Core.PluginVersionCache>>().Serialize(ref writer, value.PluginVersionCache, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[5]);
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.Dictionary<string, global::LocalAdmin.V2.Core.PluginAlias>>().Serialize(ref writer, value.PluginAliases, formatterResolver);
-            
+
             writer.WriteEndObject();
         }
 
@@ -943,7 +942,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.Core
             {
                 return null;
             }
-            
+
 
             var __GitHubPersonalAccessToken__ = default(string?);
             var __GitHubPersonalAccessToken__b__ = false;
