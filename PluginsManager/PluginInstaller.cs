@@ -108,13 +108,13 @@ internal static class PluginInstaller
                     else
                         nonNwApiFound++;
 
-                    pluginUrl = asset.browser_download_url;
+                    pluginUrl = asset.url;
                     designatedForNwApi = thisNw;
                 }
                 else if (asset.name.Equals("dependencies-nw.zip", StringComparison.OrdinalIgnoreCase))
-                    dependenciesUrl = asset.browser_download_url;
+                    dependenciesUrl = asset.url;
                 else if (dependenciesUrl == null && asset.name.Equals("dependencies.zip", StringComparison.OrdinalIgnoreCase))
-                    dependenciesUrl = asset.browser_download_url;
+                    dependenciesUrl = asset.url;
             }
 
             if (pluginUrl == null)
@@ -517,7 +517,9 @@ internal static class PluginInstaller
     private static async Task<bool> Download(string name, string url, string targetPath)
     {
         var success = false;
+        var octetStreamHeader = new MediaTypeWithQualityHeaderValue("application/octet-stream");
         await using var fs = File.OpenWrite(targetPath);
+        HttpClient.DefaultRequestHeaders.Accept.Add(octetStreamHeader);
 
         try
         {
@@ -548,6 +550,8 @@ internal static class PluginInstaller
         {
             await fs.FlushAsync();
             fs.Close();
+
+            HttpClient.DefaultRequestHeaders.Accept.Remove(octetStreamHeader);
 
             if (!success)
                 File.Delete(targetPath);
