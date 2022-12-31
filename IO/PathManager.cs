@@ -12,24 +12,62 @@ internal static class PathManager
     internal static readonly string ConfigPath;
     internal static readonly string InternalJsonDataPath;
 
+    internal static bool CorrectPathFound { get; private set; }
+
     static PathManager()
     {
         ProcessHostPolicy();
 
         GameUserDataRoot = _configDirOverride
             ? "AppData" + Path.DirectorySeparatorChar
-            : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar +
-              "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
+            : GetSpecialFolderPath() + "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
 
         ConfigPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}";
 
         InternalJsonDataPath = ConfigPath + "localadmin_internal_data.json";
     }
 
-    internal static bool IsLinuxCorrectPath => !RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
-                                               !string.IsNullOrWhiteSpace(
-                                                   Environment.GetFolderPath(Environment.SpecialFolder
-                                                       .ApplicationData));
+    private static string GetSpecialFolderPath()
+    {
+        try
+        {
+            var path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                CorrectPathFound = true;
+                return path + Path.DirectorySeparatorChar;
+            }
+
+            path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                CorrectPathFound = true;
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    return path + Path.DirectorySeparatorChar + ".config" + Path.DirectorySeparatorChar;
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    return path + Path.DirectorySeparatorChar + "AppData" + Path.DirectorySeparatorChar + "Roaming" + Path.DirectorySeparatorChar;
+
+                ConsoleUtil.WriteLine("Failed to get special folder path - unsupported platform!", ConsoleColor.Red);
+                throw new PlatformNotSupportedException();
+            }
+
+            CorrectPathFound = false;
+            ConsoleUtil.WriteLine($"Failed to get special folder path - it's always null or empty!", ConsoleColor.Red);
+
+            return string.Empty;
+        }
+        catch (Exception e)
+        {
+            CorrectPathFound = false;
+            ConsoleUtil.WriteLine($"Failed to get special folder path! Exception: {e.Message}", ConsoleColor.Red);
+
+            throw;
+        }
+    }
 
     private static void ProcessHostPolicy()
     {
