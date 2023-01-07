@@ -13,8 +13,8 @@ public class Config
     public bool LaLiveViewUseUtc;
 
     public bool LaShowStdoutStderr;
-    public bool LaNoSetCursor = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-    public bool EnableTrueColor = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+    public bool LaNoSetCursor = OperatingSystem.IsLinux();
+    public bool EnableTrueColor = OperatingSystem.IsLinux();
     public bool EnableLaLogs = true;
     public bool LaLogsUseUtc;
     public bool LaLogsUseZForUtc;

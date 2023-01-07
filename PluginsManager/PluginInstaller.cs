@@ -13,6 +13,12 @@ using Utf8Json;
 
 namespace LocalAdmin.V2.PluginsManager;
 
+using System.Diagnostics;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
+using LocalAdmin = Core.LocalAdmin;
+
 internal static class PluginInstaller
 {
     private static readonly HttpClient HttpClient = new ()
@@ -31,6 +37,7 @@ internal static class PluginInstaller
     private static string TempPath(ushort port) => $"{PathManager.GameUserDataRoot}internal{Path.DirectorySeparatorChar}LA Temp{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
 
     internal const uint DefaultLockTime = 30000;
+    internal const bool RequireInstallScript = false;
     
     private static async Task<QueryResult> QueryRelease(string name, string url, bool interactive)
     {
@@ -461,6 +468,135 @@ internal static class PluginInstaller
 
             if (abort)
                 return false;
+
+            byte[] installScriptBytes = null;
+            string installScriptFileName = OperatingSystem.IsWindows() ? "install.bat" : "install.sh";
+            try
+            {
+                using (var fs = File.OpenRead(pluginPath))
+                {
+                    PEReader per = new PEReader(fs);
+                    MetadataReader mr = per.GetMetadataReader();
+                    foreach (var resHandle in mr.ManifestResources)
+                    {
+                        var res = mr.GetManifestResource(resHandle);
+                        if (!mr.GetString(res.Name).EndsWith(installScriptFileName))
+                            continue;
+                        PEMemoryBlock resourceDirectory =
+                            per.GetSectionData(per.PEHeaders.CorHeader.ResourcesDirectory.RelativeVirtualAddress);
+                        var reader = resourceDirectory.GetReader((int)res.Offset,
+                            resourceDirectory.Length - (int)res.Offset);
+                        uint size = reader.ReadUInt32();
+                        installScriptBytes = reader.ReadBytes((int)size);
+                        break;
+                    }
+                }
+                
+                if (installScriptBytes != null)
+                {
+                    await File.WriteAllBytesAsync(installScriptFileName, installScriptBytes);
+                    var content = await File.ReadAllLinesAsync(installScriptFileName);
+                    List<string> toWrite = new List<string>();
+                    if(content.Length == 0)
+                        toWrite.Add("echo \"Install script empty.\"");
+                    toWrite.AddRange(content);
+                    toWrite.Insert(0, "@echo off");
+                    File.WriteAllLines(installScriptFileName, toWrite);
+                    Process proc = null;
+                    if (OperatingSystem.IsWindows())
+                    {
+                        proc = new Process
+                        {
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = installScriptFileName,
+                                Arguments = string.Empty,
+                                UseShellExecute = false,
+                                RedirectStandardInput = true,
+                                RedirectStandardOutput = true,
+                                RedirectStandardError = true,
+                                CreateNoWindow = true
+                            }
+                        };
+                    }
+                    else if (OperatingSystem.IsLinux())
+                    {
+                        proc = new Process
+                        {
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = installScriptFileName,
+                                Arguments = string.Empty,
+                                UseShellExecute = false,
+                                RedirectStandardInput = true,
+                                RedirectStandardOutput = true,
+                                RedirectStandardError = true,
+                                CreateNoWindow = true
+                            }
+                        };
+                    }
+
+                    if (proc == null)
+                        throw new Exception("Unsupported OS");
+                    
+                    ConsoleUtil.WriteLine("[PLUGIN MANAGER] Running install script...", ConsoleColor.Blue);
+                    proc.ErrorDataReceived += (sender, eventArgs) =>
+                    {
+                        if(!string.IsNullOrWhiteSpace(eventArgs.Data))
+                            ConsoleUtil.WriteLine(
+                            $"[PLUGIN MANAGER] Install script error: {eventArgs.Data}",
+                            ConsoleColor.Red);
+                    };
+                    proc.OutputDataReceived += (sender, eventArgs) =>
+                    {
+                        if(!string.IsNullOrWhiteSpace(eventArgs.Data))
+                            ConsoleUtil.WriteLine(
+                            $"[PLUGIN MANAGER] Install script: {eventArgs.Data}",
+                            ConsoleColor.Blue);
+                    };
+                    
+                    proc.Start();
+                    proc.BeginErrorReadLine();
+                    proc.BeginOutputReadLine();
+
+                    void InputEnteredDelegate(ref string? input)
+                    {
+                        if (input?.ToLower().Trim() == "cancel")
+                        {
+                            proc.Kill();
+                            input = null;
+                            throw new Exception("User interrupted install script.");
+                        }
+
+                        proc.StandardInput.WriteLine(input);
+                        input = null;
+                    }
+
+                    LocalAdmin.InputEntered += InputEnteredDelegate;
+                    await proc.WaitForExitAsync();
+                    LocalAdmin.InputEntered -= InputEnteredDelegate;
+                }
+            }
+            catch (IOException e)
+            {
+                ConsoleUtil.WriteLine(
+                    $"[PLUGIN MANAGER] Failed to read plugin {name}! Exception: {e.Message}, skipping post install",
+                    ConsoleColor.Red);
+            }
+            catch (Exception e)
+            {
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to complete install process for plugin {name}! Exception: {e.Message}" 
+                                      + (RequireInstallScript ? "" : ", skipping post install"),
+                    ConsoleColor.Red);
+                //LocalAdmin.InputEntered = delegate { }; (clear subscribers to avoid mem leaks)
+                if (RequireInstallScript)
+                    throw new Exception("Could not finish install!");
+            }
+            finally
+            {
+                if(File.Exists(installScriptFileName))
+                    File.Delete(installScriptFileName);
+            }
 
             ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {name} has been successfully installed!", ConsoleColor.DarkGreen);
 

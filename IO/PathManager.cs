@@ -26,7 +26,7 @@ internal static class PathManager
         InternalJsonDataPath = ConfigPath + "localadmin_internal_data.json";
     }
 
-    internal static bool IsLinuxCorrectPath => !RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
+    internal static bool IsLinuxCorrectPath => !OperatingSystem.IsLinux() ||
                                                !string.IsNullOrWhiteSpace(
                                                    Environment.GetFolderPath(Environment.SpecialFolder
                                                        .ApplicationData));

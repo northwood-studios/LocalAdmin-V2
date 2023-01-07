@@ -66,7 +66,10 @@ public sealed class LocalAdmin : IDisposable
     internal HeartbeatStatus CurrentHeartbeatStatus = HeartbeatStatus.Disabled;
     internal byte HeartbeatWarningStage;
     internal static readonly Stopwatch HeartbeatStopwatch = new();
-    
+
+    internal delegate void ActionRef<T>(ref T item);
+    internal static ActionRef<string?> InputEntered = delegate {  };
+
     internal bool EnableGameHeartbeat { get; private set; }
 
     internal enum ShutdownAction : byte
@@ -99,9 +102,9 @@ public sealed class LocalAdmin : IDisposable
 
     internal LocalAdmin()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (OperatingSystem.IsWindows())
             _scpslExecutable = "SCPSL.exe";
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        else if (OperatingSystem.IsLinux())
             _scpslExecutable = "SCPSL.x86_64";
         else
         {
@@ -580,11 +583,11 @@ public sealed class LocalAdmin : IDisposable
         ProcessHandler.Handler.Setup();
         AppDomainHandler.Handler.Setup();
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (OperatingSystem.IsWindows())
         {
             WindowsHandler.Handler.Setup();
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        else if (OperatingSystem.IsLinux())
         {
 #if LINUX_SIGNALS
                 try
@@ -649,6 +652,7 @@ public sealed class LocalAdmin : IDisposable
             {
                 var input = Console.ReadLine();
 
+                InputEntered(ref input);
                 if (string.IsNullOrWhiteSpace(input))
                     continue;
 
@@ -846,9 +850,9 @@ public sealed class LocalAdmin : IDisposable
             DisableExitActionSignals = true;
             ExitAction = ShutdownAction.Shutdown;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (OperatingSystem.IsWindows())
                 Exit((int)WindowsErrorCode.ERROR_FILE_NOT_FOUND, true);
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            else if (OperatingSystem.IsLinux())
                 Exit((int)UnixErrorCode.ERROR_FILE_NOT_FOUND, true);
             else
                 Exit(1);

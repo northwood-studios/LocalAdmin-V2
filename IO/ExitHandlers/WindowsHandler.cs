@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace LocalAdmin.V2.IO.ExitHandlers;
 
 /// <summary>
-///     Native signal processing on Windows NT systems.
+/// Native signal processing on Windows NT systems.
 /// </summary>
 internal sealed class WindowsHandler : IExitHandler
 {
