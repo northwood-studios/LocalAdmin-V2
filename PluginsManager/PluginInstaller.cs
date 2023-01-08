@@ -496,15 +496,15 @@ internal static class PluginInstaller
                 {
                     await File.WriteAllBytesAsync(installScriptFileName, installScriptBytes);
                     var content = await File.ReadAllLinesAsync(installScriptFileName);
-                    List<string> toWrite = new List<string>();
+                    List<string> toWrite = content.ToList();
                     if(content.Length == 0)
                         toWrite.Add("echo \"Install script empty.\"");
-                    toWrite.AddRange(content);
-                    toWrite.Insert(0, "@echo off");
-                    File.WriteAllLines(installScriptFileName, toWrite);
                     Process proc = null;
                     if (OperatingSystem.IsWindows())
                     {
+                        toWrite.AddRange(content);
+                        toWrite.Insert(0, "@echo off");
+                        await File.WriteAllLinesAsync(installScriptFileName, toWrite);
                         proc = new Process
                         {
                             StartInfo = new ProcessStartInfo
@@ -521,12 +521,30 @@ internal static class PluginInstaller
                     }
                     else if (OperatingSystem.IsLinux())
                     {
+                        // unneeded since where running it directly via bash {filname}.sh instead of ./{filename}.sh
+                        // if(!toWrite.ElementAt(0).StartsWith("#!/"))
+                        //     toWrite.Insert(0, "#!/bin/bash");
+                        await File.WriteAllLinesAsync(installScriptFileName, toWrite.Select(x => x.ReplaceLineEndings()));
+                        var chmodCommand = "chmod +x " + installScriptFileName;
+                        var chmodProcess = new Process
+                        {
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = "/bin/bash",
+                                Arguments = $"-c \"{chmodCommand}\"",
+                                RedirectStandardOutput = false,
+                                UseShellExecute = false,
+                                CreateNoWindow = true,
+                            }
+                        };
+                        chmodProcess.Start();
+                        await chmodProcess.WaitForExitAsync();
                         proc = new Process
                         {
                             StartInfo = new ProcessStartInfo
                             {
-                                FileName = installScriptFileName,
-                                Arguments = string.Empty,
+                                FileName = "/bin/bash",
+                                Arguments = $"-c \"bash {installScriptFileName}\"",
                                 UseShellExecute = false,
                                 RedirectStandardInput = true,
                                 RedirectStandardOutput = true,
