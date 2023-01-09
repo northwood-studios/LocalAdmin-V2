@@ -6,7 +6,7 @@ namespace LocalAdmin.V2.IO;
 
 public class Config
 {
-    private static readonly string[] SplitArray = {": "};
+    private static readonly string[] SplitArray = { ": " };
 
     public bool RestartOnCrash = true;
     public bool EnableHeartbeat = true;
@@ -26,74 +26,82 @@ public class Config
     public ushort RoundLogsExpirationDays = 180;
     public bool CompressOldRoundLogs;
     public ushort RoundLogsCompressionThresholdDays = 14;
+    public uint HeartbeatSpanMaxThreshold = 30;
+    public uint HeartbeatRestartInSeconds = 11;
 
     public string LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
 
     public string SerializeConfig()
     {
         var sb = new StringBuilder();
-            
+
         sb.Append("restart_on_crash: ");
         sb.AppendLine(RestartOnCrash.ToString().ToLowerInvariant());
-        
+
         sb.Append("enable_heartbeat: ");
         sb.AppendLine(EnableHeartbeat.ToString().ToLowerInvariant());
-            
+
         sb.Append("la_live_view_use_utc: ");
         sb.AppendLine(LaLiveViewUseUtc.ToString().ToLowerInvariant());
-            
+
         sb.Append("la_live_view_time_format: ");
         sb.AppendLine(LaLiveViewTimeFormat);
 
         sb.Append("la_show_stdout_and_stderr: ");
         sb.AppendLine(LaShowStdoutStderr.ToString().ToLowerInvariant());
-            
+
         sb.Append("la_no_set_cursor: ");
         sb.AppendLine(LaNoSetCursor.ToString().ToLowerInvariant());
-        
+
         sb.Append("enable_true_color: ");
         sb.AppendLine(EnableTrueColor.ToString().ToLowerInvariant());
-            
+
         sb.Append("enable_la_logs: ");
         sb.AppendLine(EnableLaLogs.ToString().ToLowerInvariant());
-            
+
         sb.Append("la_logs_use_utc: ");
         sb.AppendLine(LaLogsUseUtc.ToString().ToLowerInvariant());
 
         sb.Append("la_logs_use_Z_for_utc: ");
         sb.AppendLine(LaLogsUseZForUtc.ToString().ToLowerInvariant());
-            
+
         sb.Append("la_log_auto_flush: ");
         sb.AppendLine(LaLogAutoFlush.ToString().ToLowerInvariant());
-            
+
         sb.Append("la_log_stdout_and_stderr: ");
         sb.AppendLine(LaLogStdoutStderr.ToString().ToLowerInvariant());
-            
+
         sb.Append("la_delete_old_logs: ");
         sb.AppendLine(LaDeleteOldLogs.ToString().ToLowerInvariant());
-            
+
         sb.Append("la_logs_expiration_days: ");
         sb.AppendLine(LaLogsExpirationDays.ToString());
-            
+
         sb.Append("delete_old_round_logs: ");
         sb.AppendLine(DeleteOldRoundLogs.ToString().ToLowerInvariant());
-            
+
         sb.Append("round_logs_expiration_days: ");
         sb.AppendLine(RoundLogsExpirationDays.ToString());
-            
+
         sb.Append("compress_old_round_logs: ");
         sb.AppendLine(CompressOldRoundLogs.ToString().ToLowerInvariant());
-            
+
         sb.Append("round_logs_compression_threshold_days: ");
         sb.AppendLine(RoundLogsCompressionThresholdDays.ToString());
 
+        sb.Append("heartbeat_span_max_threshold: ");
+        sb.AppendLine(HeartbeatSpanMaxThreshold.ToString());
+
+        sb.Append("heartbeat_restart_in_seconds: ");
+        sb.AppendLine(HeartbeatRestartInSeconds.ToString());
+
         return sb.ToString();
     }
-        
+
     public static Config DeserializeConfig(string[] lines)
     {
         var cfg = new Config();
-            
+
         foreach (var line in lines)
         {
             if (!line.Contains(": ", StringComparison.Ordinal))
@@ -108,59 +116,59 @@ public class Config
                 case "restart_on_crash" when bool.TryParse(sp[1], out var b):
                     cfg.RestartOnCrash = b;
                     break;
-                
+
                 case "enable_heartbeat" when bool.TryParse(sp[1], out var b):
                     cfg.EnableHeartbeat = b;
                     break;
-                    
+
                 case "la_live_view_use_utc" when bool.TryParse(sp[1], out var b):
                     cfg.LaLiveViewUseUtc = b;
                     break;
-                    
+
                 case "la_live_view_time_format":
                     cfg.LaLiveViewTimeFormat = sp[1];
                     break;
-                    
+
                 case "la_show_stdout_and_stderr" when bool.TryParse(sp[1], out var b):
                     cfg.LaShowStdoutStderr = b;
                     break;
-                    
+
                 case "la_no_set_cursor" when bool.TryParse(sp[1], out var b):
                     cfg.LaNoSetCursor = b;
                     break;
-                
+
                 case "enable_true_color" when bool.TryParse(sp[1], out var b):
                     cfg.EnableTrueColor = b;
                     break;
-                    
+
                 case "enable_la_logs" when bool.TryParse(sp[1], out var b):
                     cfg.EnableLaLogs = b;
                     break;
-                    
+
                 case "la_logs_use_utc" when bool.TryParse(sp[1], out var b):
                     cfg.LaLogsUseUtc = b;
                     break;
-                
+
                 case "la_logs_use_Z_for_utc" when bool.TryParse(sp[1], out var b):
                     cfg.LaLogsUseZForUtc = b;
                     break;
-                    
+
                 case "la_log_auto_flush" when bool.TryParse(sp[1], out var b):
                     cfg.LaLogAutoFlush = b;
                     break;
-                    
+
                 case "la_log_stdout_and_stderr" when bool.TryParse(sp[1], out var b):
                     cfg.LaLogStdoutStderr = b;
                     break;
-                    
+
                 case "la_delete_old_logs" when bool.TryParse(sp[1], out var b):
                     cfg.LaDeleteOldLogs = b;
                     break;
-                    
+
                 case "la_logs_expiration_days" when ushort.TryParse(sp[1], out var b):
                     cfg.LaLogsExpirationDays = b;
                     break;
-                    
+
                 case "delete_old_round_logs" when bool.TryParse(sp[1], out var b):
                     cfg.DeleteOldRoundLogs = b;
                     break;
@@ -168,36 +176,44 @@ public class Config
                 case "round_logs_expiration_days" when ushort.TryParse(sp[1], out var b):
                     cfg.RoundLogsExpirationDays = b;
                     break;
-                    
+
                 case "compress_old_round_logs" when bool.TryParse(sp[1], out var b):
                     cfg.CompressOldRoundLogs = b;
                     break;
-                    
+
                 case "round_logs_compression_threshold_days" when ushort.TryParse(sp[1], out var b):
                     cfg.RoundLogsCompressionThresholdDays = b;
+                    break;
+
+                case "heartbeat_restart_in_seconds" when ushort.TryParse(sp[1], out var b):
+                    cfg.HeartbeatRestartInSeconds = b;
+                    break;
+
+                case "heartbeat_span_max_threshold" when ushort.TryParse(sp[1], out var b):
+                    cfg.HeartbeatSpanMaxThreshold = b;
                     break;
             }
 
             if (!cfg.EnableLaLogs || cfg.LaLogsExpirationDays == 0)
                 cfg.LaDeleteOldLogs = false;
-                
+
             if (cfg.RoundLogsExpirationDays == 0)
                 cfg.DeleteOldRoundLogs = false;
-                
+
             if (cfg.RoundLogsCompressionThresholdDays == 0)
                 cfg.CompressOldRoundLogs = false;
 
             if (cfg.DeleteOldRoundLogs && cfg.RoundLogsExpirationDays <= cfg.RoundLogsCompressionThresholdDays)
                 cfg.CompressOldRoundLogs = false;
         }
-            
+
         return cfg;
     }
 
     public override string ToString()
     {
         var sb = new StringBuilder();
-        
+
         sb.AppendLine(RestartOnCrash ? "- Server will be automatically restarted after a crash." : "- Server will NOT be automatically restarted after a crash.");
         sb.AppendLine(EnableHeartbeat ? "- LocalAdmin will attempt to detect silent server crashes (heartbeat enabled)." : "- LocalAdmin will NOT attempt to detect silent server crashes (heartbeat DISABLED).");
         sb.AppendLine(LaLiveViewUseUtc ? "- LocalAdmin live view will use UTC timezone." : "- LocalAdmin live view will use local timezone.");
@@ -230,7 +246,7 @@ public class Config
             sb.AppendLine(" days");
         }
         else sb.AppendLine("- Do not delete old round logs.");
-            
+
         if (CompressOldRoundLogs)
         {
             sb.Append("- Compress round logs older than ");

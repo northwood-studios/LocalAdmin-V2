@@ -1,4 +1,4 @@
-﻿using LocalAdmin.V2.Commands;
+using LocalAdmin.V2.Commands;
 using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.IO.ExitHandlers;
@@ -30,47 +30,47 @@ namespace LocalAdmin.V2.Core;
 
 public sealed class LocalAdmin : IDisposable
 {
-    public const string VersionString = "2.5.5";
+    public const string VersionString = "2.5.10";
+
+    private static readonly ConcurrentQueue<string> InputQueue = new();
+    private static readonly Stopwatch RestartsStopwatch = new();
+    private static string? _previousPat;
+    private static bool _firstRun = true;
+    private static string _gameArguments = string.Empty;
+    private static bool _exit, _processRefreshFail;
+    private static bool _noTrueColor;
+    private static bool _stdPrint;
+    private static bool _ignoreNextRestart;
+    private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
+
+    private readonly CommandService _commandService = new();
+    private readonly string _scpslExecutable;
+    private volatile bool _processClosing;
+    private Process? _gameProcess;
+    private Task? _readerTask, _heartbeatMonitoringTask;
+
+    internal static readonly Stopwatch HeartbeatStopwatch = new();
     internal static LocalAdmin? Singleton;
     internal static ushort GamePort;
     internal static string? ConfigPath, LaLogsPath, GameLogsPath;
-    private static string? _previousPat;
-    private static bool _firstRun = true;
-
-    private readonly CommandService _commandService = new();
-    private Process? _gameProcess;
-    internal TcpServer? Server { get; private set; }
-    private Task? _readerTask, _heartbeatMonitoringTask;
-    private readonly string _scpslExecutable;
-    private static string _gameArguments = string.Empty;
-    internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
-    
-    private static bool _exit, _processRefreshFail;
-    private static readonly ConcurrentQueue<string> InputQueue = new ();
-    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
-    private static bool _noTrueColor;
-    private static bool _stdPrint;
-    private volatile bool _processClosing;
-
-    private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
-    private static bool _ignoreNextRestart;
-    private static readonly Stopwatch RestartsStopwatch = new();
-
-    internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000; 
-
+    internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000;
     internal static Config? Configuration;
     internal static DataJson? DataJson;
+    internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
+    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
 
     internal ShutdownAction ExitAction = ShutdownAction.Crash;
     internal bool DisableExitActionSignals;
     internal HeartbeatStatus CurrentHeartbeatStatus = HeartbeatStatus.Disabled;
-    internal byte HeartbeatWarningStage;
-    internal static readonly Stopwatch HeartbeatStopwatch = new();
+    internal uint HeartbeatWarningStage;
+
+    internal TcpServer? Server { get; private set; }
+    internal bool EnableGameHeartbeat { get; private set; }
+    internal uint HeartbeatSpanMaxThreshold { get; private set; }
+    internal uint HeartbeatRestartInSeconds { get; private set; }
 
     internal delegate void ActionRef<T>(ref T item);
     internal static ActionRef<string?> InputEntered = delegate {  };
-
-    internal bool EnableGameHeartbeat { get; private set; }
 
     internal enum ShutdownAction : byte
     {
@@ -119,17 +119,32 @@ public sealed class LocalAdmin : IDisposable
     {
         Singleton = this;
         Console.Title = BaseWindowTitle;
-        
+
         HeartbeatStopwatch.Reset();
 
-        if (!PathManager.IsLinuxCorrectPath && !args.Contains("--skipHomeCheck", StringComparer.Ordinal))
+        if (!PathManager.CorrectPathFound && !args.Contains("--skipHomeCheck", StringComparer.Ordinal))
         {
             ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Red);
             ConsoleUtil.WriteLine("Can't obtain a valid user home directory path!", ConsoleColor.Red);
-            ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
-            ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
+
+            if (OperatingSystem.IsLinux())
+            {
+                ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
+            }
+            else if (OperatingSystem.IsWindows())
+            {
+                ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
+            }
+            else
+            {
+                ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform!", ConsoleColor.Red);
+                throw new PlatformNotSupportedException();
+            }
+
             ConsoleUtil.WriteLine("To skip this check, use --skipHomeCheck argument.", ConsoleColor.Red);
-            
+
             Terminate();
             return;
         }
@@ -168,13 +183,13 @@ public sealed class LocalAdmin : IDisposable
                 ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
-                ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Cyan);
+                ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
 
                 ReadInput((input) =>
                     {
                         if (input == null)
                             return false;
-                            
+
                         switch (input.ToLowerInvariant())
                         {
                             case "y":
@@ -182,7 +197,7 @@ public sealed class LocalAdmin : IDisposable
                             case "1":
                                 DataJson.EulaAccepted = DateTime.UtcNow;
                                 return true;
-                                
+
                             case "n":
                             case "no":
                             case "nope":
@@ -190,7 +205,7 @@ public sealed class LocalAdmin : IDisposable
                                 ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red);
                                 Terminate();
                                 return true;
-                                
+
                             default:
                                 return false;
                         }
@@ -198,16 +213,16 @@ public sealed class LocalAdmin : IDisposable
                     }, () => { },
                     () =>
                     {
-                        ConsoleUtil.Write("Do you accept the EULA? (yes/no) ", ConsoleColor.Red);
+                        ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Red);
                     });
-                    
+
                 if (!_exit)
                     await SaveJsonOrTerminate();
             }
 
             var reconfigure = false;
             var useDefault = false;
-                
+
             if (_firstRun)
             {
                 if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
@@ -273,7 +288,7 @@ public sealed class LocalAdmin : IDisposable
                                         case 'd':
                                             useDefault = true;
                                             break;
-                                            
+
                                         case 'a':
                                             NoPadding = true;
                                             break;
@@ -310,15 +325,15 @@ public sealed class LocalAdmin : IDisposable
                                     case "--useDefault":
                                         useDefault = true;
                                         break;
-                                        
+
                                     case "--noAlign":
                                         NoPadding = true;
                                         break;
-                                    
+
                                     case "--disableTrueColor":
                                         _noTrueColor = true;
                                         break;
-                                    
+
                                     case "--dismissPluginManagerSecurityWarning":
                                         ConsoleUtil.WriteLine("Plugin manager has been enabled. USE AT YOUR OWN RISK.", ConsoleColor.Yellow);
                                         DismissPluginsSecurityWarning = true;
@@ -327,27 +342,27 @@ public sealed class LocalAdmin : IDisposable
                                     case "--config":
                                         capture = CaptureArgs.ConfigPath;
                                         break;
-                                        
+
                                     case "--logs":
                                         capture = CaptureArgs.LaLogsPath;
                                         break;
-                                        
+
                                     case "--gameLogs":
                                         capture = CaptureArgs.GameLogsPath;
                                         break;
-                                        
+
                                     case "--restartsLimit":
                                         capture = CaptureArgs.RestartsLimit;
                                         break;
-                                        
+
                                     case "--restartsTimeWindow":
                                         capture = CaptureArgs.RestartsTimeWindow;
                                         break;
-                                        
+
                                     case "--logLengthLimit":
                                         capture = CaptureArgs.LogLengthLimit;
                                         break;
-                                        
+
                                     case "--logEntriesLimit":
                                         capture = CaptureArgs.LogEntriesLimit;
                                         break;
@@ -376,7 +391,7 @@ public sealed class LocalAdmin : IDisposable
                             GameLogsPath = arg + Path.DirectorySeparatorChar;
                             capture = CaptureArgs.None;
                             break;
-                            
+
                         case CaptureArgs.RestartsLimit:
                             if (!int.TryParse(arg, out _restartsLimit) || _restartsLimit < -1)
                             {
@@ -385,7 +400,7 @@ public sealed class LocalAdmin : IDisposable
                             }
                             capture = CaptureArgs.None;
                             break;
-                            
+
                         case CaptureArgs.RestartsTimeWindow:
                             if (!int.TryParse(arg, out _restartsTimeWindow) || _restartsLimit < 0)
                             {
@@ -471,6 +486,8 @@ public sealed class LocalAdmin : IDisposable
             if (Configuration.EnableHeartbeat)
             {
                 EnableGameHeartbeat = true;
+                HeartbeatSpanMaxThreshold = Configuration.HeartbeatSpanMaxThreshold;
+                HeartbeatRestartInSeconds = Configuration.HeartbeatRestartInSeconds;
                 CurrentHeartbeatStatus = HeartbeatStatus.AwaitingFirstHeartbeat;
                 HeartbeatStopwatch.Start();
                 StartHeartbeatMonitoring();
@@ -498,28 +515,28 @@ public sealed class LocalAdmin : IDisposable
                 _firstRun = false;
                 SetupKeyboardInput();
             }
-            
+
             RegisterCommands();
             SetupReader();
 
             StartSession();
 
             _readerTask!.Start();
-                
+
             if (!EnableLogging)
                 ConsoleUtil.WriteLine("Logging has been disabled.", ConsoleColor.Red);
             else if (!AutoFlush)
                 ConsoleUtil.WriteLine("Logs auto flush has been disabled.", ConsoleColor.Yellow);
-                
+
             if (PrintControlMessages)
                 ConsoleUtil.WriteLine("Printing control messages been enabled using startup argument.", ConsoleColor.Gray);
-                
+
             if (NoSetCursor)
                 ConsoleUtil.WriteLine("Cursor management been disabled.", ConsoleColor.Gray);
-                
+
             if (Configuration.LaDeleteOldLogs || Configuration.DeleteOldRoundLogs || Configuration.CompressOldRoundLogs)
                 LogCleaner.Initialize();
-                
+
             while (!_exit)
                 Thread.Sleep(250);
 
@@ -529,7 +546,7 @@ public sealed class LocalAdmin : IDisposable
         catch (Exception ex)
         {
             await File.WriteAllTextAsync($"LocalAdmin Crash {DateTime.UtcNow:yyyy-MM-ddTHH-mm-ssZ}.txt", ex.ToString());
-                
+
             Logger.Log("|===| Exception |===|");
             Logger.Log(ex);
             Logger.Log("|===================|");
@@ -552,7 +569,7 @@ public sealed class LocalAdmin : IDisposable
 
         BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {GamePort}";
         Console.Title = BaseWindowTitle;
-            
+
         Logger.Initialize();
 
         ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen);
@@ -562,11 +579,11 @@ public sealed class LocalAdmin : IDisposable
 
         while (Server!.ConsolePort == 0)
             Thread.Sleep(200);
-            
+
         RunScpsl();
     }
 
-    private void Menu()
+    private static void Menu()
     {
         ConsoleUtil.Clear();
         ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
@@ -755,10 +772,10 @@ public sealed class LocalAdmin : IDisposable
                 Configuration.LaLogStdoutStderr || printStd;
 
             var extraArgs = string.Empty;
-            
+
             if (_noTrueColor || !Configuration.EnableTrueColor)
                 extraArgs = " -disableAnsiColors";
-            
+
             if (EnableGameHeartbeat)
                 extraArgs += " -heartbeat";
 
@@ -813,7 +830,7 @@ public sealed class LocalAdmin : IDisposable
                 {
                     ConsoleUtil.WriteLine($"Game process exited and has been killed, can't kill it: {e.Message}.", ConsoleColor.Gray);
                 }
-                    
+
                 if (_processClosing)
                     return;
 
@@ -823,19 +840,19 @@ public sealed class LocalAdmin : IDisposable
                         ConsoleUtil.WriteLine("The game process has been terminated...", ConsoleColor.Red);
                         Exit(0, true);
                         break;
-                        
+
                     case ShutdownAction.Shutdown:
                         Exit(0, true);
                         break;
-                        
+
                     case ShutdownAction.SilentShutdown:
                         Exit(0);
                         break;
-                        
+
                     case ShutdownAction.Restart:
                         Exit(0, false, true);
                         break;
-                        
+
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -846,7 +863,7 @@ public sealed class LocalAdmin : IDisposable
         else
         {
             ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
-                
+
             DisableExitActionSignals = true;
             ExitAction = ShutdownAction.Shutdown;
 
@@ -910,7 +927,7 @@ public sealed class LocalAdmin : IDisposable
             Logger.EndLogging();
             TerminateGame(); // Forcefully terminating the process
             _gameProcess?.Dispose();
-                
+
             try
             {
                 if (_readerTask is { IsCompleted: true })
@@ -920,7 +937,7 @@ public sealed class LocalAdmin : IDisposable
             {
                 //Ignore
             }
-            
+
             try
             {
                 if (_heartbeatMonitoringTask is { IsCompleted: true })
@@ -939,13 +956,13 @@ public sealed class LocalAdmin : IDisposable
 
             if (ExitAction == ShutdownAction.Crash && Configuration is { RestartOnCrash: true })
                 return;
-                
+
             if (waitForKey && ExitAction != ShutdownAction.SilentShutdown)
             {
                 ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
                 Console.ReadKey(true);
             }
-            
+
             Environment.Exit(code);
         }
     }
@@ -965,7 +982,7 @@ public sealed class LocalAdmin : IDisposable
         {
             if (!Directory.Exists(PathManager.ConfigPath))
                 Directory.CreateDirectory(PathManager.ConfigPath);
-            
+
             if (!File.Exists(PathManager.InternalJsonDataPath))
             {
                 DataJson = new DataJson();
@@ -1023,17 +1040,17 @@ public sealed class LocalAdmin : IDisposable
         {
             case HeartbeatStatus.Disabled when EnableGameHeartbeat:
                 return;
-            
+
             case HeartbeatStatus.Disabled:
                 ConsoleUtil.WriteLine("Received a heartbeat signal, but the heartbeat is disabled.", ConsoleColor.Yellow);
                 return;
-            
+
             case HeartbeatStatus.AwaitingFirstHeartbeat:
                 ConsoleUtil.WriteLine("Received first heartbeat. Silent crash detection is now active.", ConsoleColor.DarkGreen);
                 HeartbeatStopwatch.Restart();
                 CurrentHeartbeatStatus = HeartbeatStatus.Active;
                 break;
-            
+
             default:
                 HeartbeatStopwatch.Restart();
                 break;
@@ -1074,23 +1091,21 @@ public sealed class LocalAdmin : IDisposable
                 }
             }
 
-            const byte maxWarnings = 11;
-
             while (!_exit)
             {
                 switch (CurrentHeartbeatStatus)
-                { 
+                {
                     case HeartbeatStatus.AwaitingFirstHeartbeat:
                     case HeartbeatStatus.Disabled:
                         await Task.Delay(1000);
                         continue;
-                    
+
                     case HeartbeatStatus.Active:
-                        if (HeartbeatStopwatch.ElapsedMilliseconds <= 15000)
+                        if (HeartbeatStopwatch.ElapsedMilliseconds <= (HeartbeatSpanMaxThreshold * 1000))
                         {
                             if (HeartbeatWarningStage != 0)
                                 ConsoleUtil.WriteLine("Heartbeat has been received. Restart procedure aborted.", ConsoleColor.DarkGreen);
-                    
+
                             HeartbeatWarningStage = 0;
                             await Task.Delay(1800);
                             continue;
@@ -1098,7 +1113,7 @@ public sealed class LocalAdmin : IDisposable
 
                         HeartbeatWarningStage++;
 
-                        if (HeartbeatWarningStage >= maxWarnings)
+                        if (HeartbeatWarningStage >= HeartbeatRestartInSeconds)
                         {
                             ConsoleUtil.WriteLine("Game server has probably crashed. Restarting the server...", ConsoleColor.Red);
                             HeartbeatStopwatch.Reset();
@@ -1109,8 +1124,8 @@ public sealed class LocalAdmin : IDisposable
                             _exit = true;
                             return;
                         }
-                
-                        ConsoleUtil.WriteLine($"Game server has not sent a heartbeat in {HeartbeatStopwatch.ElapsedMilliseconds / 1000} seconds. Restarting the server in {maxWarnings - HeartbeatWarningStage} seconds! Type \"hbc\" command to abort!", ConsoleColor.Red);
+
+                        ConsoleUtil.WriteLine($"Game server has not sent a heartbeat in {HeartbeatStopwatch.ElapsedMilliseconds / 1000} seconds. Restarting the server in {HeartbeatRestartInSeconds - HeartbeatWarningStage} seconds! Type \"hbc\" command to abort!", ConsoleColor.Red);
                         await Task.Delay(1000);
                         break;
                 }

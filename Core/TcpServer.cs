@@ -14,7 +14,7 @@ public class TcpServer
     private enum OutputCodes : byte
     {
         //0x00 - 0x0F - reserved for colors
-	
+
         RoundRestart = 0x10,
         IdleEnter = 0x11,
         IdleExit = 0x12,
@@ -24,7 +24,7 @@ public class TcpServer
         ExitActionRestart = 0x16,
         Heartbeat = 0x17
     }
-        
+
     public event EventHandler<string>? Received;
 
     private readonly TcpListener _listener;
@@ -34,7 +34,7 @@ public class TcpServer
     internal ushort ConsolePort;
     internal bool Connected;
     private bool _exit = true;
-    private readonly object _lck = new ();
+    private readonly object _lck = new();
     private readonly UTF8Encoding _encoding = new(false, true);
 
     public TcpServer() => _listener = new TcpListener(IPAddress.Loopback, 0);
@@ -174,7 +174,7 @@ public class TcpServer
     {
         lock (_lck)
         {
-            if (_exit) 
+            if (_exit)
                 return;
             _exit = true;
 

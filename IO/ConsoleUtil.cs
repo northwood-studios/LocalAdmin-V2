@@ -10,7 +10,7 @@ public static class ConsoleUtil
     private static readonly char[] ToTrim = { '\n', '\r' };
 
     private static readonly object Lck = new object();
-        
+
     private static string? _liveTimestampPadding, _logsTimestampPadding;
 
     public static void Clear()
@@ -27,25 +27,25 @@ public static class ConsoleUtil
             }
         }
     }
-    
+
     private static string GetLogsLocalTimestamp() => $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}]";
 
     private static string GetLogsUtcTimestamp() => Core.LocalAdmin.Configuration is { LaLogsUseZForUtc: true }
         ? $"[{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)}Z]"
         : $"[{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}]";
-    
+
     public static string GetLogsTimestamp() => Core.LocalAdmin.Configuration is { LaLogsUseUtc: true }
         ? GetLogsUtcTimestamp()
         : GetLogsLocalTimestamp();
-    
+
     private static string GetLiveViewLocalTimestamp() => $"[{DateTime.Now.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeFormat, CultureInfo.InvariantCulture)}]";
-    
+
     private static string GetLiveViewUtcTimestamp() => $"[{DateTime.UtcNow.ToString(Core.LocalAdmin.Configuration!.LaLiveViewTimeFormat, CultureInfo.InvariantCulture)}]";
-    
+
     private static string GetLiveViewTimestamp() => Core.LocalAdmin.Configuration == null ? GetLogsLocalTimestamp() : Core.LocalAdmin.Configuration.LaLiveViewUseUtc
         ? GetLiveViewUtcTimestamp()
         : GetLiveViewLocalTimestamp();
-    
+
     private static string GetLiveViewPadding()
     {
         if (_liveTimestampPadding == null)
@@ -55,10 +55,10 @@ public static class ConsoleUtil
             for (int i = 0; i < l; i++)
                 _liveTimestampPadding += " ";
         }
-               
+
         return _liveTimestampPadding;
     }
-        
+
     private static string GetLogsPadding()
     {
         if (_logsTimestampPadding == null)
@@ -68,7 +68,7 @@ public static class ConsoleUtil
             for (int i = 0; i < l; i++)
                 _logsTimestampPadding += " ";
         }
-               
+
         return _logsTimestampPadding;
     }
 
@@ -92,7 +92,7 @@ public static class ConsoleUtil
 
                 if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                     Console.CursorTop += height;
-                    
+
                 Console.Write($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
                 Console.ForegroundColor = ConsoleColor.White;

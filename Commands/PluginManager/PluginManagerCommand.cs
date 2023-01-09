@@ -11,7 +11,7 @@ namespace LocalAdmin.V2.Commands.PluginManager;
 internal sealed class PluginManagerCommand : CommandBase
 {
     public PluginManagerCommand() : base("p") { }
-    
+
     private static Stopwatch? _securityWarningStopwatch;
 
     internal override async void Execute(string[] arguments)
@@ -22,7 +22,7 @@ internal sealed class PluginManagerCommand : CommandBase
             {
                 _securityWarningStopwatch = new Stopwatch();
                 _securityWarningStopwatch.Start();
-                
+
                 ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine("===== SECURITY WARNING =====", ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine("Plugin Manager is a tool designed to installing 3rd party modifications.", ConsoleColor.Yellow);
@@ -35,7 +35,7 @@ internal sealed class PluginManagerCommand : CommandBase
                 ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Yellow);
                 return;
             }
-            
+
             if (_securityWarningStopwatch.ElapsedMilliseconds < 2000)
             {
                 ConsoleUtil.WriteLine("Please take at least 2 seconds to read the security warning.", ConsoleColor.Yellow);
@@ -48,7 +48,7 @@ internal sealed class PluginManagerCommand : CommandBase
             await Core.LocalAdmin.DataJson.TrySave(PathManager.InternalJsonDataPath);
             return;
         }
-        
+
         if (arguments.Length == 0)
         {
             ConsoleUtil.WriteLine(string.Empty);
@@ -69,7 +69,7 @@ internal sealed class PluginManagerCommand : CommandBase
             ConsoleUtil.WriteLine("If no version is specified then latest non-preview release is used.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If version is specified the plugin will be exempted from \"update\" command.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If both -g and -l arguments exist then by default (if unset) BOTH are used.", ConsoleColor.DarkGray);
-            
+
             if (string.IsNullOrEmpty(Core.LocalAdmin.DataJson!.GitHubPersonalAccessToken))
             {
                 ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
@@ -77,11 +77,11 @@ internal sealed class PluginManagerCommand : CommandBase
                 ConsoleUtil.WriteLine("You may exceed GitHub rate limits if you use Plugin Manager extensively.", ConsoleColor.Yellow);
                 ConsoleUtil.WriteLine("Run \"p token\" command to get more details.", ConsoleColor.Yellow);
             }
-            
+
             ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
             return;
         }
-        
+
         bool optionsSet = arguments.Length >= 2 && arguments[1].Length > 1 && arguments[1].StartsWith("-", StringComparison.Ordinal);
         string[]? args;
         var options = string.Empty;
@@ -95,7 +95,7 @@ internal sealed class PluginManagerCommand : CommandBase
         }
         else
             args = arguments[1..];
-        
+
         switch (arguments[0].ToLowerInvariant())
         {
             case "check":
@@ -104,49 +104,49 @@ internal sealed class PluginManagerCommand : CommandBase
             case "chk":
                 CheckCommand.Check(options);
                 break;
-            
+
             //Install
             case "i" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
             case "install" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
-                
+
             //Remove
             case "remove" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
             case "r" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
             case "rm" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
             case "uninstall" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
             case "un" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
-                
+
             //token
             case "token" when args is { Length: > 1 }:
             case "t" when args is { Length: > 1 }:
             case "pat" when args is { Length: > 1 }:
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Syntax error!", ConsoleColor.Red);
                 break;
-            
+
             case "install":
             case "i":
                 InstallCommand.Install(args, options);
                 break;
-            
+
             case "list":
             case "l":
             case "ls":
                 ListCommand.List(options);
                 break;
-            
+
             case "maintenance":
             case "m":
             case "mn":
             case "mnt":
                 MaintenanceCommand.Maintenance(options);
                 break;
-            
+
             case "refresh":
             case "ref":
             case "rf":
                 _ = OfficialPluginsList.RefreshOfficialPluginsList();
                 break;
-            
+
             case "remove":
             case "r":
             case "rm":
@@ -157,20 +157,20 @@ internal sealed class PluginManagerCommand : CommandBase
                     options.Contains('i', StringComparison.Ordinal),
                     options.Contains('s', StringComparison.Ordinal));
                 break;
-            
+
             case "token":
             case "t":
             case "pat":
                 TokenCommand.Token(args == null || args.Length == 0 ? null : args[0]);
                 break;
-            
+
             case "update":
             case "u":
             case "up":
             case "upd":
                 UpdateCommand.Update(options);
                 break;
-            
+
             default:
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Unknown command: p " + arguments[0].ToLowerInvariant(), ConsoleColor.Red);
                 break;

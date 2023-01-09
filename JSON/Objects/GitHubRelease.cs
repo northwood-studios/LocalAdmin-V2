@@ -8,15 +8,15 @@ namespace LocalAdmin.V2.PluginsManager;
 public readonly struct GitHubRelease
 {
     public readonly string? message;
-    
+
     public readonly uint id;
-    
+
     public readonly string? tag_name;
-    
+
     public readonly DateTime published_at;
-    
+
     public readonly List<GitHubReleaseAsset> assets;
-    
+
     [SerializationConstructor]
     public GitHubRelease(string? message, uint id, string? tag_name, DateTime published_at, List<GitHubReleaseAsset> assets)
     {
@@ -33,13 +33,13 @@ public readonly struct GitHubRelease
 public readonly struct GitHubReleaseAsset
 {
     public readonly string name;
-    
-    public readonly string browser_download_url;
-    
+
+    public readonly string url;
+
     [SerializationConstructor]
-    public GitHubReleaseAsset(string name, string browser_download_url)
+    public GitHubReleaseAsset(string name, string url)
     {
         this.name = name;
-        this.browser_download_url = browser_download_url;
+        this.url = url;
     }
 }

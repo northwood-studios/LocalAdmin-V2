@@ -10,15 +10,15 @@ namespace LocalAdmin.V2.Core;
 public class DataJson
 {
     public string? GitHubPersonalAccessToken;
-    
+
     public DateTime? EulaAccepted;
-    
+
     public bool PluginManagerWarningDismissed;
-    
+
     public DateTime? LastPluginAliasesRefresh;
-    
+
     public Dictionary<string, PluginVersionCache> PluginVersionCache;
-    
+
     public Dictionary<string, PluginAlias> PluginAliases;
 
     internal DataJson()
@@ -36,7 +36,7 @@ public class DataJson
         LastPluginAliasesRefresh = lastPluginAliasesRefresh;
         PluginVersionCache = pluginVersionCache;
         PluginAliases = pluginAliases;
-        
+
         PluginVersionCache ??= new();
         PluginAliases ??= new();
     }
@@ -45,17 +45,17 @@ public class DataJson
 public struct PluginVersionCache
 {
     public string Version;
-    
+
     public uint ReleaseId;
-    
+
     public DateTime PublishmentTime;
-    
+
     public DateTime LastRefreshed;
-    
+
     public string DllDownloadUrl;
-    
+
     public string? DependenciesDownloadUrl;
-    
+
     [SerializationConstructor]
     public PluginVersionCache(string version, uint releaseId, DateTime publishmentTime, DateTime lastRefreshed, string dllDownloadUrl, string? dependenciesDownloadUrl)
     {
@@ -71,9 +71,9 @@ public struct PluginVersionCache
 public readonly struct PluginAlias
 {
     public readonly string Repository;
-    
+
     public readonly byte Flags;
-    
+
     [SerializationConstructor]
     public PluginAlias(string repository, byte flags)
     {

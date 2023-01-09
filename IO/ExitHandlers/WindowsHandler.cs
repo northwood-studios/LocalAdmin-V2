@@ -25,13 +25,13 @@ internal sealed class WindowsHandler : IExitHandler
     private static bool OnNativeSignal(CtrlTypes ctrl)
     {
         if (Core.LocalAdmin.Singleton == null)
-            Environment.Exit(0); 
+            Environment.Exit(0);
         else Core.LocalAdmin.HandleExitSignal();
-        
+
         return true;
     }
 
-    #region Native
+#region Native
 
     [DllImport("Kernel32", SetLastError = true)]
     private static extern bool SetConsoleCtrlHandler(HandlerRoutine handler, bool add);
@@ -47,5 +47,5 @@ internal sealed class WindowsHandler : IExitHandler
         CTRL_SHUTDOWN_EVENT
     }
 
-    #endregion
+#endregion
 }

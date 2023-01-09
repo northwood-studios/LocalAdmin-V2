@@ -46,10 +46,10 @@ internal static class TokenCommand
 
             return;
         }
-        
+
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading LocalAdmin config file...", ConsoleColor.Blue);
         await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
-        
+
         Core.LocalAdmin.DataJson!.GitHubPersonalAccessToken = token.Equals("UNSET", StringComparison.OrdinalIgnoreCase) ? null : token;
 
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing LocalAdmin config file...", ConsoleColor.Blue);
@@ -57,7 +57,7 @@ internal static class TokenCommand
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] GitHub Personal Access Token has been updated.", ConsoleColor.DarkGreen);
         else
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Failed to save data.json.", ConsoleColor.Red);
-        
+
         PluginInstaller.RefreshPat();
     }
 }
