@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using LocalAdmin.V2.IO;
 using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.Core;
@@ -34,6 +35,7 @@ public class TcpServer
     internal ushort ConsolePort;
     internal bool Connected;
     private bool _exit = true;
+    private int _txBuffer;
     private readonly object _lck = new();
     private readonly UTF8Encoding _encoding = new(false, true);
 
@@ -56,6 +58,12 @@ public class TcpServer
                 }
 
                 _client = _listener.EndAcceptTcpClient(result);
+
+                _client.ReceiveBufferSize = LocalAdmin.Configuration!.SlToLaBufferSize;
+                _client.SendBufferSize = LocalAdmin.Configuration.LaToSlBufferSize;
+
+                _txBuffer = LocalAdmin.Configuration.LaToSlBufferSize;
+
                 _networkStream = _client.GetStream();
                 Connected = true;
 
@@ -190,9 +198,17 @@ public class TcpServer
             if (_exit) return;
             const int offset = sizeof(int);
 
-            var buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(input.Length) + offset);
+            var length = Encoding.UTF8.GetMaxByteCount(input.Length) + offset;
 
-            var length = _encoding.GetBytes(input, 0, input.Length, buffer, offset);
+            if (length > _txBuffer)
+            {
+                ConsoleUtil.WriteLine("Failed to send command - configured LA to SL buffer size is too small. Please increase it in the LocalAdmin config file to run this command!", ConsoleColor.Red);
+                return;
+            }
+
+            var buffer = ArrayPool<byte>.Shared.Rent(length);
+
+            length = _encoding.GetBytes(input, 0, input.Length, buffer, offset);
             MemoryMarshal.Cast<byte, int>(buffer)[0] = length;
 
             _networkStream!.Write(buffer, 0, length + offset);
