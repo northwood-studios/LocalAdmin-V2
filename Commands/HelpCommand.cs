@@ -17,6 +17,7 @@ internal sealed class HelpCommand : CommandBase
         ConsoleUtil.WriteLine("HBC - cancels heartbeat restart countdown.");
         ConsoleUtil.WriteLine("HBCTRL - controls heartbeat.");
         ConsoleUtil.WriteLine("HELP - prints this help.");
+        ConsoleUtil.WriteLine("LACFG - prints current LocalAdmin config file path.");
         ConsoleUtil.WriteLine("LICENSE - prints LocalAdmin license details.");
         ConsoleUtil.WriteLine("P - Plugin Manager.");
         ConsoleUtil.WriteLine("RESAVE - resaves the LocalAdmin config file.");

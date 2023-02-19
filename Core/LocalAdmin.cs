@@ -54,7 +54,7 @@ public sealed class LocalAdmin : IDisposable
     internal static readonly Stopwatch HeartbeatStopwatch = new();
     internal static LocalAdmin? Singleton;
     internal static ushort GamePort;
-    internal static string? ConfigPath, LaLogsPath, GameLogsPath;
+    internal static string? ConfigPath, CurrentConfigPath, LaLogsPath, GameLogsPath;
     internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000;
     internal static Config? Configuration;
     internal static DataJson? DataJson;
@@ -451,23 +451,25 @@ public sealed class LocalAdmin : IDisposable
 
             if (ConfigPath != null)
             {
+                CurrentConfigPath = ConfigPath;
+
                 if (File.Exists(ConfigPath))
                     Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(ConfigPath, Encoding.UTF8));
                 else reconfigure = true;
             }
             else
             {
-                var cfgPath =
+                CurrentConfigPath =
                     $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
 
-                if (File.Exists(cfgPath))
-                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
+                if (File.Exists(CurrentConfigPath))
+                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
                 else
                 {
-                    cfgPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
+                    CurrentConfigPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
 
-                    if (File.Exists(cfgPath))
-                        Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
+                    if (File.Exists(CurrentConfigPath))
+                        Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
                     else
                         reconfigure = true;
                 }
@@ -882,6 +884,7 @@ public sealed class LocalAdmin : IDisposable
         _commandService.RegisterCommand(new LicenseCommand());
         _commandService.RegisterCommand(new ResaveCommand());
         _commandService.RegisterCommand(new PluginManagerCommand());
+        _commandService.RegisterCommand(new LaCfgCommand());
     }
 
     private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)

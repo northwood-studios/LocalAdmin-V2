@@ -14,9 +14,9 @@ internal sealed class ResaveCommand : CommandBase
     {
         try
         {
-            if (Core.LocalAdmin.ConfigPath == null)
+            if (Core.LocalAdmin.CurrentConfigPath == null)
             {
-                ConsoleUtil.WriteLine("Failed to resave config - ConfigPath is null.", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine("Failed to resave config - CurrentConfigPath is null.", ConsoleColor.Yellow);
                 return;
             }
 
@@ -26,13 +26,13 @@ internal sealed class ResaveCommand : CommandBase
                 return;
             }
 
-            File.WriteAllText(Core.LocalAdmin.ConfigPath, Core.LocalAdmin.Configuration.SerializeConfig(), Encoding.UTF8);
+            File.WriteAllText(Core.LocalAdmin.CurrentConfigPath, Core.LocalAdmin.Configuration.SerializeConfig(), Encoding.UTF8);
             ConsoleUtil.WriteLine("LocalAdmin config has been resaved!", ConsoleColor.DarkGreen);
         }
         catch (Exception e)
         {
             ConsoleUtil.WriteLine("Failed to resave LocalAdmin config file!", ConsoleColor.Yellow);
-            ConsoleUtil.WriteLine("Path: " + Core.LocalAdmin.ConfigPath, ConsoleColor.Yellow);
+            ConsoleUtil.WriteLine("Path: " + Core.LocalAdmin.CurrentConfigPath, ConsoleColor.Yellow);
             ConsoleUtil.WriteLine("Exception: " + e.Message, ConsoleColor.Yellow);
         }
     }
