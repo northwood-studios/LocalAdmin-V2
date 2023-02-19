@@ -107,6 +107,10 @@ public class TcpServer
                                          (lengthBuffer[2] << 8) | lengthBuffer[3];
 
                             var buffer = ArrayPool<byte>.Shared.Rent(length);
+
+                            while (_client.Available < length)
+                                await Task.Delay(20);
+
                             readAmount = await _networkStream.ReadAsync(buffer.AsMemory(0, length));
 
                             if (readAmount != length)
