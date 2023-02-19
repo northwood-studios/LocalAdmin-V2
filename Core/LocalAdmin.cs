@@ -880,6 +880,7 @@ public sealed class LocalAdmin : IDisposable
         _commandService.RegisterCommand(new ForceRestartCommand());
         _commandService.RegisterCommand(new HelpCommand());
         _commandService.RegisterCommand(new LicenseCommand());
+        _commandService.RegisterCommand(new ResaveCommand());
         _commandService.RegisterCommand(new PluginManagerCommand());
     }
 
