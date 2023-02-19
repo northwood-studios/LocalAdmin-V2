@@ -198,17 +198,17 @@ public class TcpServer
             if (_exit) return;
             const int offset = sizeof(int);
 
-            var length = Encoding.UTF8.GetMaxByteCount(input.Length) + offset;
+            var buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(input.Length) + offset);
 
-            if (length > _txBuffer)
+            var length = _encoding.GetBytes(input, 0, input.Length, buffer, offset);
+
+            if (length + offset > _txBuffer)
             {
                 ConsoleUtil.WriteLine("Failed to send command - configured LA to SL buffer size is too small. Please increase it in the LocalAdmin config file to run this command!", ConsoleColor.Red);
+                ArrayPool<byte>.Shared.Return(buffer);
                 return;
             }
 
-            var buffer = ArrayPool<byte>.Shared.Rent(length);
-
-            length = _encoding.GetBytes(input, 0, input.Length, buffer, offset);
             MemoryMarshal.Cast<byte, int>(buffer)[0] = length;
 
             _networkStream!.Write(buffer, 0, length + offset);
