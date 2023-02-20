@@ -247,6 +247,7 @@ public static class ConfigWizard
 
         if (LocalAdmin.ConfigPath != null)
         {
+            LocalAdmin.CurrentConfigPath = LocalAdmin.ConfigPath;
             var parent = Directory.GetParent(LocalAdmin.ConfigPath);
 
             if (parent == null)
@@ -347,6 +348,7 @@ public static class ConfigWizard
 
             try
             {
+                LocalAdmin.CurrentConfigPath = cfgPath;
                 File.WriteAllText(cfgPath, LocalAdmin.Configuration!.SerializeConfig(), Encoding.UTF8);
             }
             catch (Exception e)
@@ -416,6 +418,7 @@ public static class ConfigWizard
 
         try
         {
+            LocalAdmin.CurrentConfigPath = cfgPath;
             File.WriteAllText(cfgPath, LocalAdmin.Configuration!.SerializeConfig(), Encoding.UTF8);
         }
         catch (Exception e)

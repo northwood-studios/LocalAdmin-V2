@@ -29,6 +29,9 @@ public class Config
     public uint HeartbeatSpanMaxThreshold = 30;
     public uint HeartbeatRestartInSeconds = 11;
 
+    public int LaToSlBufferSize = 25000;
+    public int SlToLaBufferSize = 200000;
+
     public string LaLiveViewTimeFormat = "yyyy-MM-dd HH:mm:ss.fff zzz";
 
     public string SerializeConfig()
@@ -94,6 +97,12 @@ public class Config
 
         sb.Append("heartbeat_restart_in_seconds: ");
         sb.AppendLine(HeartbeatRestartInSeconds.ToString());
+
+        sb.Append("la_to_sl_buffer_size: ");
+        sb.AppendLine(LaToSlBufferSize.ToString());
+
+        sb.Append("sl_to_la_buffer_size: ");
+        sb.AppendLine(SlToLaBufferSize.ToString());
 
         return sb.ToString();
     }
@@ -191,6 +200,18 @@ public class Config
 
                 case "heartbeat_span_max_threshold" when ushort.TryParse(sp[1], out var b):
                     cfg.HeartbeatSpanMaxThreshold = b;
+                    break;
+
+                case "la_to_sl_buffer_size" when int.TryParse(sp[1], out var b):
+                    if (b <= 100)
+                        b = 101;
+                    cfg.LaToSlBufferSize = b;
+                    break;
+
+                case "sl_to_la_buffer_size" when int.TryParse(sp[1], out var b):
+                    if (b <= 350)
+                        b = 351;
+                    cfg.SlToLaBufferSize = b;
                     break;
             }
 

@@ -46,13 +46,15 @@ public sealed class LocalAdmin : IDisposable
     private readonly CommandService _commandService = new();
     private readonly string _scpslExecutable;
     private volatile bool _processClosing;
+    private uint _heartbeatSpanMaxThreshold;
+    private uint _heartbeatRestartInSeconds;
     private Process? _gameProcess;
     private Task? _readerTask, _heartbeatMonitoringTask;
 
     internal static readonly Stopwatch HeartbeatStopwatch = new();
     internal static LocalAdmin? Singleton;
     internal static ushort GamePort;
-    internal static string? ConfigPath, LaLogsPath, GameLogsPath;
+    internal static string? ConfigPath, CurrentConfigPath, LaLogsPath, GameLogsPath;
     internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000;
     internal static Config? Configuration;
     internal static DataJson? DataJson;
@@ -66,8 +68,6 @@ public sealed class LocalAdmin : IDisposable
 
     internal TcpServer? Server { get; private set; }
     internal bool EnableGameHeartbeat { get; private set; }
-    internal uint HeartbeatSpanMaxThreshold { get; private set; }
-    internal uint HeartbeatRestartInSeconds { get; private set; }
 
     internal enum ShutdownAction : byte
     {
@@ -451,23 +451,25 @@ public sealed class LocalAdmin : IDisposable
 
             if (ConfigPath != null)
             {
+                CurrentConfigPath = ConfigPath;
+
                 if (File.Exists(ConfigPath))
                     Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(ConfigPath, Encoding.UTF8));
                 else reconfigure = true;
             }
             else
             {
-                var cfgPath =
+                CurrentConfigPath =
                     $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
 
-                if (File.Exists(cfgPath))
-                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
+                if (File.Exists(CurrentConfigPath))
+                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
                 else
                 {
-                    cfgPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
+                    CurrentConfigPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
 
-                    if (File.Exists(cfgPath))
-                        Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(cfgPath, Encoding.UTF8));
+                    if (File.Exists(CurrentConfigPath))
+                        Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
                     else
                         reconfigure = true;
                 }
@@ -483,8 +485,8 @@ public sealed class LocalAdmin : IDisposable
             if (Configuration.EnableHeartbeat)
             {
                 EnableGameHeartbeat = true;
-                HeartbeatSpanMaxThreshold = Configuration.HeartbeatSpanMaxThreshold;
-                HeartbeatRestartInSeconds = Configuration.HeartbeatRestartInSeconds;
+                _heartbeatSpanMaxThreshold = Configuration.HeartbeatSpanMaxThreshold;
+                _heartbeatRestartInSeconds = Configuration.HeartbeatRestartInSeconds;
                 CurrentHeartbeatStatus = HeartbeatStatus.AwaitingFirstHeartbeat;
                 HeartbeatStopwatch.Start();
                 StartHeartbeatMonitoring();
@@ -779,7 +781,7 @@ public sealed class LocalAdmin : IDisposable
             {
                 FileName = _scpslExecutable,
                 Arguments =
-                    $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId}{extraArgs} {_gameArguments}",
+                    $"-batchmode -nographics -nodedicateddelete -txbuffer {Configuration.SlToLaBufferSize} -rxbuffer {Configuration.LaToSlBufferSize} -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId}{extraArgs} {_gameArguments}",
                 CreateNoWindow = true,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -880,7 +882,9 @@ public sealed class LocalAdmin : IDisposable
         _commandService.RegisterCommand(new ForceRestartCommand());
         _commandService.RegisterCommand(new HelpCommand());
         _commandService.RegisterCommand(new LicenseCommand());
+        _commandService.RegisterCommand(new ResaveCommand());
         _commandService.RegisterCommand(new PluginManagerCommand());
+        _commandService.RegisterCommand(new LaCfgCommand());
     }
 
     private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)
@@ -1097,7 +1101,7 @@ public sealed class LocalAdmin : IDisposable
                         continue;
 
                     case HeartbeatStatus.Active:
-                        if (HeartbeatStopwatch.ElapsedMilliseconds <= (HeartbeatSpanMaxThreshold * 1000))
+                        if (HeartbeatStopwatch.ElapsedMilliseconds <= (_heartbeatSpanMaxThreshold * 1000))
                         {
                             if (HeartbeatWarningStage != 0)
                                 ConsoleUtil.WriteLine("Heartbeat has been received. Restart procedure aborted.", ConsoleColor.DarkGreen);
@@ -1109,7 +1113,7 @@ public sealed class LocalAdmin : IDisposable
 
                         HeartbeatWarningStage++;
 
-                        if (HeartbeatWarningStage >= HeartbeatRestartInSeconds)
+                        if (HeartbeatWarningStage >= _heartbeatRestartInSeconds)
                         {
                             ConsoleUtil.WriteLine("Game server has probably crashed. Restarting the server...", ConsoleColor.Red);
                             HeartbeatStopwatch.Reset();
@@ -1121,7 +1125,7 @@ public sealed class LocalAdmin : IDisposable
                             return;
                         }
 
-                        ConsoleUtil.WriteLine($"Game server has not sent a heartbeat in {HeartbeatStopwatch.ElapsedMilliseconds / 1000} seconds. Restarting the server in {HeartbeatRestartInSeconds - HeartbeatWarningStage} seconds! Type \"hbc\" command to abort!", ConsoleColor.Red);
+                        ConsoleUtil.WriteLine($"Game server has not sent a heartbeat in {HeartbeatStopwatch.ElapsedMilliseconds / 1000} seconds. Restarting the server in {_heartbeatRestartInSeconds - HeartbeatWarningStage} seconds! Type \"hbc\" command to abort!", ConsoleColor.Red);
                         await Task.Delay(1000);
                         break;
                 }
