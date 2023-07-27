@@ -105,7 +105,7 @@ public sealed class LocalAdmin : IDisposable
             _scpslExecutable = "SCPSL.x86_64";
         else
         {
-            ConsoleUtil.WriteLine("Failed - Unsupported platform!", ConsoleColor.Red);
+            ConsoleUtil.WriteLine("Failed - Unsupported platform! Please switch to the Windows, or Linux platform to continue.", ConsoleColor.Red);
             // shut up dotnet
             _scpslExecutable = string.Empty;
             Exit(1);
@@ -332,7 +332,7 @@ public sealed class LocalAdmin : IDisposable
                                         break;
 
                                     case "--dismissPluginManagerSecurityWarning":
-                                        ConsoleUtil.WriteLine("Plugin manager has been enabled. USE AT YOUR OWN RISK.", ConsoleColor.Yellow);
+                                        ConsoleUtil.WriteLine("Plugin manager has been enabled. USE AT YOUR OWN RISK!", ConsoleColor.Yellow);
                                         DismissPluginsSecurityWarning = true;
                                         break;
 
@@ -525,13 +525,13 @@ public sealed class LocalAdmin : IDisposable
             if (!EnableLogging)
                 ConsoleUtil.WriteLine("Logging has been disabled.", ConsoleColor.Red);
             else if (!AutoFlush)
-                ConsoleUtil.WriteLine("Logs auto flush has been disabled.", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine("Logs Auto-Flush has been disabled.", ConsoleColor.Yellow);
 
             if (PrintControlMessages)
                 ConsoleUtil.WriteLine("Printing control messages been enabled using startup argument.", ConsoleColor.Gray);
 
             if (NoSetCursor)
-                ConsoleUtil.WriteLine("Cursor management been disabled.", ConsoleColor.Gray);
+                ConsoleUtil.WriteLine("Cursor management has been disabled.", ConsoleColor.Gray);
 
             if (Configuration.LaDeleteOldLogs || Configuration.DeleteOldRoundLogs || Configuration.CompressOldRoundLogs)
                 LogCleaner.Initialize();
@@ -633,7 +633,7 @@ public sealed class LocalAdmin : IDisposable
                     }
                 }
 #else
-            ConsoleUtil.WriteLine("Invalid Linux build! Please download LocalAdmin from an official source!", ConsoleColor.Red);
+            ConsoleUtil.WriteLine("Invalid Linux build! Please download LocalAdmin from GitHub here: https://github.com/northwood-studios/LocalAdmin-V2/releases", ConsoleColor.Red);
 #endif
         }
     }
@@ -860,7 +860,7 @@ public sealed class LocalAdmin : IDisposable
         }
         else
         {
-            ConsoleUtil.WriteLine("Failed - Executable file not found!", ConsoleColor.Red);
+            ConsoleUtil.WriteLine("Failed - Server application could not be located!", ConsoleColor.Red);
 
             DisableExitActionSignals = true;
             ExitAction = ShutdownAction.Shutdown;
@@ -995,7 +995,7 @@ public sealed class LocalAdmin : IDisposable
 
                 if (DataJson == null)
                 {
-                    ConsoleUtil.WriteLine("Json file is corrupted! Terminating the LocalAdmin. If the issue persists, please delete the file and restart LocalAdmin.", ConsoleColor.Red);
+                    ConsoleUtil.WriteLine("Json file is corrupted! Terminating LocalAdmin. If the issue persists, please delete the file and restart LocalAdmin.", ConsoleColor.Red);
                     Terminate();
                 }
             }

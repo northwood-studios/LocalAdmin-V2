@@ -235,7 +235,7 @@ public class Config
     {
         var sb = new StringBuilder();
 
-        sb.AppendLine(RestartOnCrash ? "- Server will be automatically restarted after a crash." : "- Server will NOT be automatically restarted after a crash.");
+        sb.AppendLine(RestartOnCrash ? "- Server will automatically restart after a crash." : "- Server will NOT automatically restart after a crash.");
         sb.AppendLine(EnableHeartbeat ? "- LocalAdmin will attempt to detect silent server crashes (heartbeat enabled)." : "- LocalAdmin will NOT attempt to detect silent server crashes (heartbeat DISABLED).");
         sb.AppendLine(LaLiveViewUseUtc ? "- LocalAdmin live view will use UTC timezone." : "- LocalAdmin live view will use local timezone.");
         sb.AppendLine($"- LocalAdmin live will use the following timestamp format: {LaLiveViewTimeFormat}");
