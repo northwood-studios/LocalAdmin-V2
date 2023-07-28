@@ -99,7 +99,6 @@ public sealed class LocalAdmin : IDisposable
 
     internal LocalAdmin()
     {
-        //Initial Setup of Platform Information.
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)){
             _scpslExecutable = "SCPSL.exe";
         }
@@ -108,7 +107,6 @@ public sealed class LocalAdmin : IDisposable
         }
         else
         {
-            //This occurs if the platform is not a Linux or Windows Machine.
             ConsoleUtil.WriteLine("Failed - Unsupported platform! Please switch to the Windows, or Linux platform to continue.", ConsoleColor.Red);
             // shut up dotnet
             _scpslExecutable = string.Empty;
