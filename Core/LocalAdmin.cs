@@ -27,7 +27,6 @@ namespace LocalAdmin.V2.Core;
     * DarkGreen - success
     * Blue - normal SCPSL log
 */
-
 public sealed class LocalAdmin : IDisposable
 {
     public const string VersionString = "2.5.11";
