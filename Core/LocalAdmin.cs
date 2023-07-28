@@ -1137,7 +1137,6 @@ public sealed class LocalAdmin : IDisposable
                 }
             }
         }
-
         _heartbeatMonitoringTask = new Task(HeartbeatMonitoringMethod);
         _heartbeatMonitoringTask.Start();
     }
