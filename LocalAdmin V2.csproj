@@ -18,9 +18,11 @@
 
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <EnableAOTAnalyzer>true</EnableAOTAnalyzer>
-        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
         <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+
+        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
         <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+        <TrimmerSingleWarn>false</TrimmerSingleWarn>
 
         <IlcTrimMetadata>true</IlcTrimMetadata>
         <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
