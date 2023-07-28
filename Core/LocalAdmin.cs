@@ -127,7 +127,6 @@ public sealed class LocalAdmin : IDisposable
         {
             ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Red);
             ConsoleUtil.WriteLine("Can't obtain a valid user home directory path!", ConsoleColor.Red);
-            //If statements will expose future performace issues. switching "CurrentPlatform" (string) will reduce the startup time.
             if (OperatingSystem.IsWindows())
             {
                 ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
