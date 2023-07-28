@@ -32,7 +32,6 @@ public sealed class LocalAdmin : IDisposable
     public const string VersionString = "2.5.11";
 
     public static ushort DefaultPort = 7777;
-    private static string CurrentPlatform = string.Empty;
     private static readonly ConcurrentQueue<string> InputQueue = new();
     private static readonly Stopwatch RestartsStopwatch = new();
     private static string? _previousPat;
@@ -103,11 +102,9 @@ public sealed class LocalAdmin : IDisposable
         //Initial Setup of Platform Information.
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)){
             _scpslExecutable = "SCPSL.exe";
-            CurrentPlatform = "Windows";
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)){
             _scpslExecutable = "SCPSL.x86_64";
-            CurrentPlatform = "Linux";
         }
         else
         {
@@ -115,7 +112,6 @@ public sealed class LocalAdmin : IDisposable
             ConsoleUtil.WriteLine("Failed - Unsupported platform! Please switch to the Windows, or Linux platform to continue.", ConsoleColor.Red);
             // shut up dotnet
             _scpslExecutable = string.Empty;
-            CurrentPlatform = string.Empty;
             Exit(1);
         }
     }
@@ -132,20 +128,19 @@ public sealed class LocalAdmin : IDisposable
             ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Red);
             ConsoleUtil.WriteLine("Can't obtain a valid user home directory path!", ConsoleColor.Red);
             //If statements will expose future performace issues. switching "CurrentPlatform" (string) will reduce the startup time.
-            switch (CurrentPlatform)
+            if (OperatingSystem.IsWindows())
             {
-                case "Linux":
-                    ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
-                    ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
-                    break;
-                case "Windows":
-                    ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
-                    ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
-                    break;
-                default:
-                    ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform!", ConsoleColor.Red);
-                    throw new PlatformNotSupportedException();
-                
+                ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
+            }else if (OperatingSystem.IsLinux())
+            {
+                ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
+            }
+            else
+            {
+                ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform, please switch to Windows or Linux!", ConsoleColor.Red);
+                throw new PlatformNotSupportedException();
             }
             ConsoleUtil.WriteLine("To skip this check, use --skipHomeCheck argument.", ConsoleColor.Red);
             Terminate();
@@ -465,14 +460,12 @@ public sealed class LocalAdmin : IDisposable
             }
             else
             {
-                //CurrentConfigPath = $"{}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
                 CurrentConfigPath = Path.Combine(PathManager.GameUserDataRoot, "config", GamePort.ToString(), "config_localadmin.txt");
                 if (File.Exists(CurrentConfigPath))
                     Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
                 else
                 {
                     CurrentConfigPath = Path.Combine(PathManager.GameUserDataRoot, "config", GamePort.ToString(), "config_localadmin_global.txt");
-                    //CurrentConfigPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
                     if (File.Exists(CurrentConfigPath))
                         Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
                     else
