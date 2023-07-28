@@ -27,11 +27,11 @@ namespace LocalAdmin.V2.Core;
     * DarkGreen - success
     * Blue - normal SCPSL log
 */
-
 public sealed class LocalAdmin : IDisposable
 {
     public const string VersionString = "2.5.11";
 
+    private const ushort DefaultPort = 7777;
     private static readonly ConcurrentQueue<string> InputQueue = new();
     private static readonly Stopwatch RestartsStopwatch = new();
     private static string? _previousPat;
@@ -99,9 +99,9 @@ public sealed class LocalAdmin : IDisposable
 
     internal LocalAdmin()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (OperatingSystem.IsWindows())
             _scpslExecutable = "SCPSL.exe";
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        else if (OperatingSystem.IsLinux())
             _scpslExecutable = "SCPSL.x86_64";
         else
         {
@@ -123,25 +123,22 @@ public sealed class LocalAdmin : IDisposable
         {
             ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Red);
             ConsoleUtil.WriteLine("Can't obtain a valid user home directory path!", ConsoleColor.Red);
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
-                ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (OperatingSystem.IsWindows())
             {
                 ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
                 ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
             }
+            else if (OperatingSystem.IsLinux())
+            {
+                ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
+            }
             else
             {
-                ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform, please switch to Windows or Linux!", ConsoleColor.Red);
                 throw new PlatformNotSupportedException();
             }
-
             ConsoleUtil.WriteLine("To skip this check, use --skipHomeCheck argument.", ConsoleColor.Red);
-
             Terminate();
             return;
         }
@@ -227,13 +224,13 @@ public sealed class LocalAdmin : IDisposable
                     ConsoleUtil.WriteLine("You can pass port number as first startup argument.",
                         ConsoleColor.Green);
                     Console.WriteLine(string.Empty);
-                    ConsoleUtil.Write("Port number (default: 7777): ", ConsoleColor.Green);
+                    ConsoleUtil.Write($"Port number (default: {DefaultPort}): ", ConsoleColor.Green);
 
                     ReadInput((input) =>
                         {
                             if (!string.IsNullOrEmpty(input))
                                 return ushort.TryParse(input, out GamePort);
-                            GamePort = 7777;
+                            GamePort = DefaultPort;
                             return true;
 
                         }, () => { },
@@ -459,15 +456,12 @@ public sealed class LocalAdmin : IDisposable
             }
             else
             {
-                CurrentConfigPath =
-                    $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}{GamePort}{Path.DirectorySeparatorChar}config_localadmin.txt";
-
+                CurrentConfigPath = Path.Combine(PathManager.GameUserDataRoot, "config", GamePort.ToString(), "config_localadmin.txt");
                 if (File.Exists(CurrentConfigPath))
                     Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
                 else
                 {
-                    CurrentConfigPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}config_localadmin_global.txt";
-
+                    CurrentConfigPath = Path.Combine(PathManager.GameUserDataRoot, "config", "config_localadmin_global.txt");
                     if (File.Exists(CurrentConfigPath))
                         Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
                     else
@@ -503,7 +497,7 @@ public sealed class LocalAdmin : IDisposable
                 catch (Exception ex)
                 {
                     ConsoleUtil.WriteLine(
-                        $"Starting exit handlers threw {ex}. Game process will NOT be closed on console closing!",
+                        $"Starting exit handlers threw {ex}. SCPSL Server will NOT be terminated when LocalAdmin closes!",
                         ConsoleColor.Yellow);
                 }
             }
@@ -599,11 +593,11 @@ public sealed class LocalAdmin : IDisposable
         ProcessHandler.Handler.Setup();
         AppDomainHandler.Handler.Setup();
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (OperatingSystem.IsWindows())
         {
             WindowsHandler.Handler.Setup();
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        else if (OperatingSystem.IsLinux())
         {
 #if LINUX_SIGNALS
                 try
@@ -865,9 +859,9 @@ public sealed class LocalAdmin : IDisposable
             DisableExitActionSignals = true;
             ExitAction = ShutdownAction.Shutdown;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (OperatingSystem.IsWindows())
                 Exit((int)WindowsErrorCode.ERROR_FILE_NOT_FOUND, true);
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            else if (OperatingSystem.IsLinux())
                 Exit((int)UnixErrorCode.ERROR_FILE_NOT_FOUND, true);
             else
                 Exit(1);
@@ -1131,7 +1125,6 @@ public sealed class LocalAdmin : IDisposable
                 }
             }
         }
-
         _heartbeatMonitoringTask = new Task(HeartbeatMonitoringMethod);
         _heartbeatMonitoringTask.Start();
     }
