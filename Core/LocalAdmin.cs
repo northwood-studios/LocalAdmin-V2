@@ -31,7 +31,7 @@ public sealed class LocalAdmin : IDisposable
 {
     public const string VersionString = "2.5.11";
 
-    public static ushort DefaultPort = 7777;
+    private const ushort DefaultPort = 7777;
     private static readonly ConcurrentQueue<string> InputQueue = new();
     private static readonly Stopwatch RestartsStopwatch = new();
     private static string? _previousPat;
