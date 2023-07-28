@@ -99,12 +99,10 @@ public sealed class LocalAdmin : IDisposable
 
     internal LocalAdmin()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)){
+        if (OperatingSystem.IsWindows())
             _scpslExecutable = "SCPSL.exe";
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)){
+        else if (OperatingSystem.IsLinux())
             _scpslExecutable = "SCPSL.x86_64";
-        }
         else
         {
             ConsoleUtil.WriteLine("Failed - Unsupported platform! Please switch to the Windows, or Linux platform to continue.", ConsoleColor.Red);
@@ -595,11 +593,11 @@ public sealed class LocalAdmin : IDisposable
         ProcessHandler.Handler.Setup();
         AppDomainHandler.Handler.Setup();
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (OperatingSystem.IsWindows())
         {
             WindowsHandler.Handler.Setup();
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        else if (OperatingSystem.IsLinux())
         {
 #if LINUX_SIGNALS
                 try
@@ -861,9 +859,9 @@ public sealed class LocalAdmin : IDisposable
             DisableExitActionSignals = true;
             ExitAction = ShutdownAction.Shutdown;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (OperatingSystem.IsWindows())
                 Exit((int)WindowsErrorCode.ERROR_FILE_NOT_FOUND, true);
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            else if (OperatingSystem.IsLinux())
                 Exit((int)UnixErrorCode.ERROR_FILE_NOT_FOUND, true);
             else
                 Exit(1);
