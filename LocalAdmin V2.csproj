@@ -20,6 +20,7 @@
         <EnableAOTAnalyzer>true</EnableAOTAnalyzer>
         <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
         <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+        <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
 
         <IlcTrimMetadata>true</IlcTrimMetadata>
         <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
