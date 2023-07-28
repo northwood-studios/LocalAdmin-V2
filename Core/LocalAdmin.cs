@@ -131,7 +131,8 @@ public sealed class LocalAdmin : IDisposable
             {
                 ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
                 ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
-            }else if (OperatingSystem.IsLinux())
+            }
+            else if (OperatingSystem.IsLinux())
             {
                 ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
                 ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
