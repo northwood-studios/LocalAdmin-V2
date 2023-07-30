@@ -573,13 +573,16 @@ public sealed class LocalAdmin : IDisposable
 
         RunScpsl();
     }
-
-    private static void Menu()
+    private static void ShowTitleScreen()
     {
-        ConsoleUtil.Clear();
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine(".____                        .__      _____       .___      .__        \r\n|    |    ____   ____ _____  |  |    /  _  \\    __| _/_____ |__| ____  \r\n|    |   /  _ \\_/ ___\\\\__  \\ |  |   /  /_\\  \\  / __ |/     \\|  |/    \\ \r\n|    |__(  <_> )  \\___ / __ \\|  |__/    |    \\/ /_/ |  Y Y  \\  |   |  \\\r\n|_______ \\____/ \\___  >____  /____/\\____|__  /\\____ |__|_|  /__|___|  /\r\n        \\/          \\/     \\/              \\/      \\/     \\/        \\/ ");
         Console.ForegroundColor = ConsoleColor.Gray;
+    }
+    private static void Menu()
+    {
+        ConsoleUtil.Clear();
+        ShowTitleScreen();
         ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
