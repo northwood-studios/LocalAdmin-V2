@@ -234,8 +234,7 @@ public sealed class LocalAdmin : IDisposable
                         }, () => { },
                         () =>
                         {
-                            ConsoleUtil.WriteLine("Port number must be a unsigned short integer.",
-                                ConsoleColor.Red);
+                            ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red);
                         });
                 }
 
@@ -410,9 +409,7 @@ public sealed class LocalAdmin : IDisposable
                                 .Replace("T", "000000000000", StringComparison.Ordinal);
                             if (!ulong.TryParse(a, out LogLengthLimit))
                             {
-                                ConsoleUtil.WriteLine(
-                                    "logLengthLimit argument value must be an integer greater or equal to 0.",
-                                    ConsoleColor.Red);
+                                ConsoleUtil.WriteLine("logLengthLimit argument value must be an integer greater or equal to 0.", ConsoleColor.Red);
                                 LogLengthLimit = 25000000000;
                             }
 
@@ -428,12 +425,9 @@ public sealed class LocalAdmin : IDisposable
                                 .Replace("T", "000000000000", StringComparison.Ordinal);
                             if (!ulong.TryParse(a, out LogEntriesLimit))
                             {
-                                ConsoleUtil.WriteLine(
-                                    "logEntriesLimit argument value must be an integer greater or equal to 0.",
-                                    ConsoleColor.Red);
+                                ConsoleUtil.WriteLine("logEntriesLimit argument value must be an integer greater or equal to 0.", ConsoleColor.Red);
                                 LogEntriesLimit = 10000000000;
                             }
-
                             capture = CaptureArgs.None;
                         }
                             break;
