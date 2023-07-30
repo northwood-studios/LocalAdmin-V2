@@ -1,9 +1,8 @@
 using System;
-using System.Diagnostics;
 using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
 
-namespace LocalAdmin.V2.Commands.PluginManager;
+namespace LocalAdmin.V2.Commands;
 
 internal sealed class HeartbeatControlCommand : CommandBase
 {
