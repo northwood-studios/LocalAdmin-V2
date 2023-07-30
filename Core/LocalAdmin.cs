@@ -30,7 +30,6 @@ namespace LocalAdmin.V2.Core;
 public sealed class LocalAdmin : IDisposable
 {
     public const string VersionString = "2.5.11";
-
     private const ushort DefaultPort = 7777;
     private static readonly ConcurrentQueue<string> InputQueue = new();
     private static readonly Stopwatch RestartsStopwatch = new();
@@ -126,7 +125,7 @@ public sealed class LocalAdmin : IDisposable
             if (OperatingSystem.IsWindows())
             {
                 ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
-                ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("Please open an issue on the LocalAdmin GitHub repository: https://github.com/northwood-studios/LocalAdmin-V2/issues or contact our technical support!", ConsoleColor.Red);
             }
             else if (OperatingSystem.IsLinux())
             {
@@ -166,7 +165,6 @@ public sealed class LocalAdmin : IDisposable
                 Terminate();
             }
         }
-
         try
         {
             await LoadJsonOrTerminate();
@@ -579,6 +577,9 @@ public sealed class LocalAdmin : IDisposable
     private static void Menu()
     {
         ConsoleUtil.Clear();
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine(".____                        .__      _____       .___      .__        \r\n|    |    ____   ____ _____  |  |    /  _  \\    __| _/_____ |__| ____  \r\n|    |   /  _ \\_/ ___\\\\__  \\ |  |   /  /_\\  \\  / __ |/     \\|  |/    \\ \r\n|    |__(  <_> )  \\___ / __ \\|  |__/    |    \\/ /_/ |  Y Y  \\  |   |  \\\r\n|_______ \\____/ \\___  >____  /____/\\____|__  /\\____ |__|_|  /__|___|  /\r\n        \\/          \\/     \\/              \\/      \\/     \\/        \\/ ");
+        Console.ForegroundColor = ConsoleColor.Gray;
         ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);

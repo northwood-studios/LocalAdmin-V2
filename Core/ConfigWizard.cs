@@ -46,12 +46,12 @@ public static class ConfigWizard
             return;
         }
 
-        LocalAdmin.Configuration.RestartOnCrash = BoolInput("Should the server be automatically restarted after a crash?");
-        LocalAdmin.Configuration.LaLiveViewUseUtc = !BoolInput("Should timestamps in the LocalAdmin live view use server timezone (otherwise UTC time will be use)?");
+        LocalAdmin.Configuration.RestartOnCrash = BoolInput("Should the server automatically restart after a crash?");
+        LocalAdmin.Configuration.LaLiveViewUseUtc = !BoolInput("Should timestamps in the LocalAdmin live view use server timezone (otherwise UTC time will be used)?");
 
         string? withoutTimezone = null;
 
-        if (BoolInput("Do you want to customize time format of timestamps in the LocalAdmin live view?"))
+        if (BoolInput("Do you want to customize the time format of timestamps in the LocalAdmin live view?"))
         {
             var dt = DateTime.Now;
 
@@ -157,7 +157,7 @@ public static class ConfigWizard
 
         LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin live view?");
         LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console, may cause issues especially on linux)?");
-        LocalAdmin.Configuration.EnableTrueColor = BoolInput("Should True Color output be enabled (disable if you can see some weird characters in some output lines, recommended to DISABLE if running LocalAdmin on WINDOWS)?");
+        LocalAdmin.Configuration.EnableTrueColor = BoolInput("Should True Color output be enabled (disable if you can see some weird characters in some output lines, recommended to DISABLE if running LocalAdmin on Windows)?");
         LocalAdmin.Configuration.EnableLaLogs = BoolInput("Do you want to enable LocalAdmin logs?");
 
         if (LocalAdmin.Configuration.EnableLaLogs)
@@ -168,16 +168,16 @@ public static class ConfigWizard
             LocalAdmin.Configuration.LaDeleteOldLogs = BoolInput("Do you want to automatically delete old LocalAdmin logs (older than a specified amount of days)?");
 
             if (LocalAdmin.Configuration.LaDeleteOldLogs)
-                LocalAdmin.Configuration.LaLogsExpirationDays = UshortInput("How many days LocalAdmin logs should be kept?");
+                LocalAdmin.Configuration.LaLogsExpirationDays = UshortInput("How many days should LocalAdmin logs be kept?");
         }
 
         LocalAdmin.Configuration.DeleteOldRoundLogs = BoolInput("Do you want to automatically delete old round logs (older than a specified amount of days)?");
         if (LocalAdmin.Configuration.DeleteOldRoundLogs)
-            LocalAdmin.Configuration.RoundLogsExpirationDays = UshortInput("How many days round logs should be kept?");
+            LocalAdmin.Configuration.RoundLogsExpirationDays = UshortInput("How many days should round logs be kept for?");
 
         LocalAdmin.Configuration.CompressOldRoundLogs = BoolInput("Do you want to automatically compress old round logs (older than a specified amount of days)?");
         if (LocalAdmin.Configuration.CompressOldRoundLogs)
-            LocalAdmin.Configuration.RoundLogsCompressionThresholdDays = UshortInput("How many days round logs should be kept uncompressed?");
+            LocalAdmin.Configuration.RoundLogsCompressionThresholdDays = UshortInput("How many days until round logs should be uncompressed?");
 
         Console.WriteLine();
         Console.WriteLine();
