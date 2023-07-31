@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
+
 namespace LocalAdmin.V2.Core;
 
 internal static class Program
@@ -11,7 +12,15 @@ internal static class Program
             Utf8Json.Resolvers.GeneratedResolver.Instance,
             Utf8Json.Resolvers.BuiltinResolver.Instance
         );
-        
+
+        foreach (string arg in args)
+        {
+            if (arg == "$validate-steam")
+                SteamIntegrityCheck.RunAppValidation(true);
+            else if (arg == "$validate")
+                SteamIntegrityCheck.RunAppValidation(false);
+        }
+
         while (true)
         {
             using var la = new LocalAdmin();
