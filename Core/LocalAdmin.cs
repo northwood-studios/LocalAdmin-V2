@@ -595,9 +595,7 @@ public sealed class LocalAdmin : IDisposable
         AppDomainHandler.Handler.Setup();
 
         if (OperatingSystem.IsWindows())
-        {
             WindowsHandler.Handler.Setup();
-        }
         else if (OperatingSystem.IsLinux())
         {
 #if LINUX_SIGNALS
