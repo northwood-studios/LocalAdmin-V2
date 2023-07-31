@@ -45,10 +45,10 @@ internal static class PathManager
             {
                 CorrectPathFound = true;
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                if (OperatingSystem.IsLinux())
                     return path + Path.DirectorySeparatorChar + ".config" + Path.DirectorySeparatorChar;
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (OperatingSystem.IsWindows())
                     return path + Path.DirectorySeparatorChar + "AppData" + Path.DirectorySeparatorChar + "Roaming" + Path.DirectorySeparatorChar;
 
                 ConsoleUtil.WriteLine("Failed to get special folder path - unsupported platform!", ConsoleColor.Red);
