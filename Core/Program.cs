@@ -11,7 +11,7 @@ internal static class Program
             Utf8Json.Resolvers.GeneratedResolver.Instance,
             Utf8Json.Resolvers.BuiltinResolver.Instance
         );
-        ValidationManager.CheckIfUserWantsToValidateFilesUsingSteam();
+        RunSteamValidate("996560");
         while (true)
         {
             using var la = new LocalAdmin();
@@ -20,5 +20,8 @@ internal static class Program
         // ReSharper disable once FunctionNeverReturns
     }
 
-    
+    private static void RunSteamValidate(string GameID)
+    {
+        System.Diagnostics.Process.Start("steam://validate/");
+    }
 }
