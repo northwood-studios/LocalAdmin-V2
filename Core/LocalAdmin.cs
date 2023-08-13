@@ -659,7 +659,6 @@ public sealed class LocalAdmin : IDisposable
         {
             while (!_exit)
             {
-                Console.Write(">>");
                 var input = Console.ReadLine();
 
                 if (string.IsNullOrWhiteSpace(input))
@@ -879,6 +878,7 @@ public sealed class LocalAdmin : IDisposable
         _commandService.RegisterCommand(new ResaveCommand());
         _commandService.RegisterCommand(new PluginManagerCommand());
         _commandService.RegisterCommand(new LaCfgCommand());
+        _commandService.RegisterCommand(new SettingsCommand());
     }
 
     private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)
