@@ -11,6 +11,6 @@ internal sealed class LaCfgCommand : CommandBase
     internal override void Execute(string[] arguments)
     {
         ConsoleUtil.WriteLine($"Current LocalAdmin config file path is: {Core.LocalAdmin.CurrentConfigPath ?? "(null)"}", ConsoleColor.DarkGreen);
-        ConsoleUtil.WriteLine($"Current LocalAdmin Configuration: {LocalAdmin.V2.Core.LocalAdmin.Configuration.ToString()}")
+        ConsoleUtil.WriteLine($"Current LocalAdmin Configuration: \n{LocalAdmin.V2.Core.LocalAdmin.Configuration.ToString()}");
     }
 }
