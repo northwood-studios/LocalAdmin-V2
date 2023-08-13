@@ -9,15 +9,5 @@ internal sealed class LASettingsCommand : CommandBase
 {
     Config Settings;
     public LASettingsCommand() : base("settings") { }
-    internal override void Execute(string[] arguments)
-    {
-        Settings = LocalAdmin.V2.Core.LocalAdmin.Configuration;
-        ConsoleUtil.WriteLine(" |=====| Settings |=====| ");
-        Console.WriteLine();
-        GetConfigSetting();
-    }
-    private void GetConfigSetting()
-    {
-        ConsoleUtil.WriteLine(Settings.ToString());
-    }
+    internal override void Execute(string[] arguments) => ConsoleUtil.WriteLine(Settings.ToString());
 }
