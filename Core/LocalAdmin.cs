@@ -659,6 +659,7 @@ public sealed class LocalAdmin : IDisposable
         {
             while (!_exit)
             {
+                Console.Write(">>");
                 var input = Console.ReadLine();
 
                 if (string.IsNullOrWhiteSpace(input))
