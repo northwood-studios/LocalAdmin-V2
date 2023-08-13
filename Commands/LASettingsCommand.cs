@@ -5,10 +5,10 @@ using System;
 
 namespace LocalAdmin.V2.Commands;
 
-internal sealed class SettingsCommand : CommandBase
+internal sealed class LASettingsCommand : CommandBase
 {
     Config Settings;
-    public SettingsCommand() : base("settings") { }
+    public LASettingsCommand() : base("settings") { }
     internal override void Execute(string[] arguments)
     {
         Settings = LocalAdmin.V2.Core.LocalAdmin.Configuration;
