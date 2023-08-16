@@ -10,11 +10,18 @@ internal static class Program
             Utf8Json.Resolvers.GeneratedResolver.Instance,
             Utf8Json.Resolvers.BuiltinResolver.Instance
         );
-
-        while (true)
-        {
-            using var la = new LocalAdmin();
-            await la.Start(args);
+        if(File.Exists("startup.txt")){
+            while (true)
+            {
+                using var la = new LocalAdmin();
+                await la.Start(AutoStartupArguments.ReadStartupArgs());
+            }
+        }else{
+            while (true)
+            {
+                using var la = new LocalAdmin();
+                await la.Start(args);
+            }
         }
         // ReSharper disable once FunctionNeverReturns
     }
