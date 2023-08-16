@@ -10,7 +10,7 @@ internal static class Program
             Utf8Json.Resolvers.GeneratedResolver.Instance,
             Utf8Json.Resolvers.BuiltinResolver.Instance
         );
-        
+
         while (true)
         {
             using var la = new LocalAdmin();
