@@ -54,6 +54,9 @@
     </PropertyGroup>
     
     <ItemGroup>
+        <Content Include="laargs.txt">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
         <Content Include="LICENSE">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
@@ -64,6 +67,7 @@
 
         <None Remove=".editorconfig" />
         <None Remove=".gitignore" />
+        <None Remove="laargs.txt" />
         <None Remove="LocalAdmin V2.sln.DotSettings" />
         <None Remove="nuget.config" />
         <None Remove="Properties\launchSettings.json" />
