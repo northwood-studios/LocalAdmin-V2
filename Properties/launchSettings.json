@@ -1,7 +1,8 @@
 {
   "profiles": {
     "LocalAdmin V2 Net Core": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "-s"
     }
   }
 }

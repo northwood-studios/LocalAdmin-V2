@@ -1,10 +1,12 @@
+using LocalAdmin.V2.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace LocalAdmin.V2.Core
 {
-    public sealed class StartupArgManager
+    public static class StartupArgManager
     {
         /// <summary>
         /// Path to startup arguments file.
@@ -16,25 +18,28 @@ namespace LocalAdmin.V2.Core
         /// </summary>
         /// <param name="CMDArgs">Runtime Command-Line Arguments</param>
         /// <returns>Merged Arguments</returns>
-        public static string[] MergeStartupArgs(string[] CMDArgs)
+        public static string[] MergeStartupArgs(IEnumerable<string> CMDArgs)
         {
-            List<string> StartupArgs = new List<string>();
-            foreach (string arg in CMDArgs)
+            try
             {
-                if (!StartupArgs.Contains(arg))
-                    StartupArgs.Add(arg);
-            }
+                List<string> StartupArgs = new List<string>();
+                StartupArgs.AddRange(CMDArgs);
 
-            foreach (string farg in File.ReadAllLines(Path.GetFullPath(StartupArgsPath)))
-            {
-                if (!farg.StartsWith("#") && !farg.StartsWith(" "))
+                if (!File.Exists(Path.GetFullPath(StartupArgsPath)))
+                    File.WriteAllText(Path.GetFullPath(StartupArgsPath), string.Empty);
+
+                foreach (string farg in File.ReadAllLines(Path.GetFullPath(StartupArgsPath)))
                 {
-                    if (!StartupArgs.Contains(farg))
+                    if (farg.StartsWith("#"))
                         StartupArgs.Add(farg);
                 }
+                return StartupArgs.ToArray();
             }
-
-            return StartupArgs.ToArray();
+            catch (Exception ex)
+            {
+                ConsoleUtil.WriteLine($"An error occured while trying to merge arguments :: {ex}", ConsoleColor.Red);
+                return CMDArgs.ToArray();
+            }
         }
     }
 }
