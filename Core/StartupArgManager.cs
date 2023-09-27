@@ -37,7 +37,7 @@ namespace LocalAdmin.V2.Core
             }
             catch (Exception ex)
             {
-                ConsoleUtil.WriteLine($"An error occured while trying to merge arguments :: {ex}", ConsoleColor.Red);
+                ConsoleUtil.WriteLine($"An error occured while trying to merge arguments: {ex}", ConsoleColor.Red);
                 return CMDArgs.ToArray();
             }
         }
