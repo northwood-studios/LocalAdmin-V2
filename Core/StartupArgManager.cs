@@ -26,13 +26,17 @@ namespace LocalAdmin.V2.Core
                 StartupArgs.AddRange(CMDArgs);
 
                 if (!File.Exists(Path.GetFullPath(StartupArgsPath)))
+                {
                     File.WriteAllText(Path.GetFullPath(StartupArgsPath), string.Empty);
+                    return CMDArgs.ToArray();
+                }
 
                 foreach (string farg in File.ReadAllLines(Path.GetFullPath(StartupArgsPath)))
                 {
-                    if (farg.StartsWith("#"))
+                    if (!farg.StartsWith("#", StringComparison.Ordinal))
                         StartupArgs.Add(farg);
                 }
+
                 return StartupArgs.ToArray();
             }
             catch (Exception ex)
