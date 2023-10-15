@@ -25,13 +25,13 @@ namespace LocalAdmin.V2.Core
                 List<string> StartupArgs = new List<string>();
                 StartupArgs.AddRange(CMDArgs);
 
-                if (!File.Exists(Path.GetFullPath(StartupArgsPath)))
+                if (!File.Exists(StartupArgsPath))
                 {
-                    File.WriteAllText(Path.GetFullPath(StartupArgsPath), string.Empty);
+                    File.WriteAllText(StartupArgsPath, string.Empty);
                     return CMDArgs.ToArray();
                 }
 
-                foreach (string farg in File.ReadAllLines(Path.GetFullPath(StartupArgsPath)))
+                foreach (string farg in File.ReadAllLines(StartupArgsPath))
                 {
                     if (!farg.StartsWith("#", StringComparison.Ordinal))
                         StartupArgs.Add(farg);
