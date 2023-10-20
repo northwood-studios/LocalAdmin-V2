@@ -30,7 +30,7 @@ namespace LocalAdmin.V2.Core;
 
 public sealed class LocalAdmin : IDisposable
 {
-    public const string VersionString = "2.5.11";
+    public const string VersionString = "2.5.12";
     private const ushort DefaultPort = 7777;
 
     private static readonly ConcurrentQueue<string> InputQueue = new();
