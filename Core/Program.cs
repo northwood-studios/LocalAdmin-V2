@@ -14,7 +14,7 @@ internal static class Program
         while (true)
         {
             using var la = new LocalAdmin();
-            await la.Start(args);
+            await la.Start(StartupArgManager.MergeStartupArgs(args));
         }
         // ReSharper disable once FunctionNeverReturns
     }
