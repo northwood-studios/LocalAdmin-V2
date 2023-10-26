@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -1131,6 +1132,8 @@ public sealed class LocalAdmin : IDisposable
 
     private void CheckForNewVersion()
     {
+        // Replace with link to online version.
+        string url = "https://altex-studios.github.io/cdn/external/SCPSL_LOCALADMIN.txt";
         try
         {
             string onlineVersion = client.DownloadString(url);
