@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using LocalAdmin.V2.Commands.PluginManager;
 using LocalAdmin.V2.IO.Logging;
 using LocalAdmin.V2.PluginsManager;
+using System.Net.Http;
 
 namespace LocalAdmin.V2.Core;
 /*
@@ -591,13 +592,13 @@ public sealed class LocalAdmin : IDisposable
         CheckForNewVersion();
     }
 
-    private void CheckForNewVersion()
+    private static void CheckForNewVersion()
     {
         // Replace with link to online version.
         string url = "https://altex-studios.github.io/cdn/external/SCPSL_LOCALADMIN.txt";
         try
         {
-            string onlineVersion = new WebClient().DownloadString(url);
+            string onlineVersion = new HttpClient().GetStringAsync(new Uri(url)).Result;
 
             if (onlineVersion != VersionString){
                 ConsoleUtil.WriteLine("A new version of LocalAdmin is available! Go check it out: https://github.com/northwood-studios/LocalAdmin-V2/releases/latest", ConsoleColor.Yellow);
@@ -605,7 +606,7 @@ public sealed class LocalAdmin : IDisposable
 
         } catch (Exception ex)
         {
-
+            Console.WriteLine($"An error occured while trying to retrieve the latest version info: {ex}");
         }
     }
 
