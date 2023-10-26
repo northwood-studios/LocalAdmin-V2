@@ -179,7 +179,7 @@ public sealed class LocalAdmin : IDisposable
                 ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
-
+                
                 ReadInput((input) =>
                     {
                         if (input == null)
@@ -587,6 +587,7 @@ public sealed class LocalAdmin : IDisposable
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
+        CheckForNewVersion();
     }
 
     private static void SetupExitHandlers()
@@ -1126,6 +1127,22 @@ public sealed class LocalAdmin : IDisposable
         }
         _heartbeatMonitoringTask = new Task(HeartbeatMonitoringMethod);
         _heartbeatMonitoringTask.Start();
+    }
+
+    private void CheckForNewVersion()
+    {
+        try
+        {
+            string onlineVersion = client.DownloadString(url);
+
+            if (onlineVersion != VersionString){
+                ConsoleUtil.WriteLine("A new version of LocalAdmin is available! Go check it out: https://github.com/northwood-studios/LocalAdmin-V2/releases/latest", ConsoleColor.Yellow);
+            }
+
+        } catch (Exception ex)
+        {
+
+        }
     }
 
     ~LocalAdmin()
