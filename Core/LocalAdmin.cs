@@ -591,6 +591,24 @@ public sealed class LocalAdmin : IDisposable
         CheckForNewVersion();
     }
 
+    private void CheckForNewVersion()
+    {
+        // Replace with link to online version.
+        string url = "https://altex-studios.github.io/cdn/external/SCPSL_LOCALADMIN.txt";
+        try
+        {
+            string onlineVersion = new WebClient().DownloadString(url);
+
+            if (onlineVersion != VersionString){
+                ConsoleUtil.WriteLine("A new version of LocalAdmin is available! Go check it out: https://github.com/northwood-studios/LocalAdmin-V2/releases/latest", ConsoleColor.Yellow);
+            }
+
+        } catch (Exception ex)
+        {
+
+        }
+    }
+
     private static void SetupExitHandlers()
     {
         ProcessHandler.Handler.Setup();
@@ -1130,23 +1148,7 @@ public sealed class LocalAdmin : IDisposable
         _heartbeatMonitoringTask.Start();
     }
 
-    private void CheckForNewVersion()
-    {
-        // Replace with link to online version.
-        string url = "https://altex-studios.github.io/cdn/external/SCPSL_LOCALADMIN.txt";
-        try
-        {
-            string onlineVersion = client.DownloadString(url);
-
-            if (onlineVersion != VersionString){
-                ConsoleUtil.WriteLine("A new version of LocalAdmin is available! Go check it out: https://github.com/northwood-studios/LocalAdmin-V2/releases/latest", ConsoleColor.Yellow);
-            }
-
-        } catch (Exception ex)
-        {
-
-        }
-    }
+    
 
     ~LocalAdmin()
     {
