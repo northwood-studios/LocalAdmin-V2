@@ -633,7 +633,7 @@ internal static class PluginInstaller
             }
             finally
             {
-                if(File.Exists(installScriptFileName))
+                if (File.Exists(installScriptFileName))
                     File.Delete(installScriptFileName);
             }
 
