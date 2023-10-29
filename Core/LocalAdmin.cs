@@ -60,7 +60,7 @@ public sealed class LocalAdmin : IDisposable
     internal static Config? Configuration;
     internal static DataJson? DataJson;
     internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
-    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
+    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning, NoTerminalTitle;
 
     internal ShutdownAction ExitAction = ShutdownAction.Crash;
     internal bool DisableExitActionSignals;
@@ -116,8 +116,6 @@ public sealed class LocalAdmin : IDisposable
     internal async Task Start(string[] args)
     {
         Singleton = this;
-        Console.Title = BaseWindowTitle;
-
         HeartbeatStopwatch.Reset();
 
         if (!PathManager.CorrectPathFound && !args.Contains("--skipHomeCheck", StringComparer.Ordinal))
@@ -287,6 +285,9 @@ public sealed class LocalAdmin : IDisposable
                                         case 'a':
                                             NoPadding = true;
                                             break;
+                                        case 't':
+                                            NoTerminalTitle = true;
+                                            break;
                                     }
                                 }
                             }
@@ -360,6 +361,10 @@ public sealed class LocalAdmin : IDisposable
 
                                     case "--logEntriesLimit":
                                         capture = CaptureArgs.LogEntriesLimit;
+                                        break;
+
+                                    case "--noTerminalTitle":
+                                        NoTerminalTitle = true;
                                         break;
 
                                     case "--":
@@ -470,6 +475,8 @@ public sealed class LocalAdmin : IDisposable
                 }
             }
 
+            SetTerminalTitle(BaseWindowTitle);
+
             if (reconfigure)
                 ConfigWizard.RunConfigWizard(useDefault);
 
@@ -562,7 +569,7 @@ public sealed class LocalAdmin : IDisposable
         Menu();
 
         BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {GamePort}";
-        Console.Title = BaseWindowTitle;
+        SetTerminalTitle(BaseWindowTitle);
 
         Logger.Initialize();
 
@@ -1131,5 +1138,16 @@ public sealed class LocalAdmin : IDisposable
     ~LocalAdmin()
     {
         Exit(0);
+    }
+
+    /// <summary>
+    ///     Sets the terminal title if not disabled in the config or by command line arguments
+    /// </summary>
+    public static void SetTerminalTitle(string terminalTitle)
+    {
+        if (!NoTerminalTitle && (Configuration?.SetTerminalTitle ?? false))
+        {
+            Console.Title = terminalTitle;
+        }
     }
 }
