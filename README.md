@@ -22,7 +22,7 @@ Linux: `./LocalAdmin [port] [arguments] [-- arguments passthrough]`
 | --noLogs | -l | Disables LocalAdmin logging. |
 | --noAutoFlush | -n | Disables auto flush of LocalAdmin log files.<br>**Not compatible with --noLogs argument.** |
 | --noAlign | -a | Disables multiline log entries alignment. |
-| ----noTerminalTitle | -t | Disables LocalAdmin status in the Terminal title. |
+| --noTerminalTitle | -t | Disables LocalAdmin status in the terminal title. |
 | --dismissPluginManagerSecurityWarning | | Dismisses Plugin Manager security warning. |
 | --disableTrueColor | | Disables True Color output. |
 | --skipHomeCheck | | Skips `home` env var checking on startup (linux only). |
