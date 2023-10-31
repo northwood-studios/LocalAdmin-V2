@@ -783,6 +783,8 @@ public sealed class LocalAdmin : IDisposable
 
             _gameProcess = Process.Start(startInfo);
 
+            Console.Title = BaseWindowTitle + $"PID: {_gameProcess!.Id}";
+
             _gameProcess!.OutputDataReceived += (_, args) =>
             {
                 if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
