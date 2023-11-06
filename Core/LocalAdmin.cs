@@ -789,6 +789,8 @@ public sealed class LocalAdmin : IDisposable
             _processId = _gameProcess!.Id;
             Console.Title = BaseWindowTitle;
 
+            ConsoleUtil.WriteLine("Game process started with PID: " + _processId, ConsoleColor.DarkGreen);
+
             _gameProcess!.OutputDataReceived += (_, args) =>
             {
                 if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
