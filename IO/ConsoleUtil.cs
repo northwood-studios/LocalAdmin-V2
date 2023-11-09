@@ -28,6 +28,11 @@ public static class ConsoleUtil
         }
     }
 
+    public enum LogType
+    {
+        
+    }
+
     private static string GetLogsLocalTimestamp() => $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}]";
 
     private static string GetLogsUtcTimestamp() => Core.LocalAdmin.Configuration is { LaLogsUseZForUtc: true }
