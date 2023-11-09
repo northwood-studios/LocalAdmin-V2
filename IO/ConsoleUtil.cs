@@ -28,9 +28,27 @@ public static class ConsoleUtil
         }
     }
 
+/*
+    * Console colors:
+    * Gray - LocalAdmin log
+    * Red - critical error
+    * DarkGray - insignificant info
+    * Cyan - Header or important tip
+    * Yellow - warning
+    * DarkGreen - success
+    * Blue - normal SCPSL log
+*/
+
     public enum LogType
     {
-        
+        LALog = ConsoleColor.Gray,
+        Other = ConsoleColor.DarkGray,
+        Critical = ConsoleColor.Red,
+        Important = ConsoleColor.Cyan,
+        Warning = ConsoleColor.Yellow,
+        Success = ConsoleColor.DarkGreen,
+        Normal = ConsoleColor.Blue,
+        Unknown = ConsoleColor.White
     }
 
     private static string GetLogsLocalTimestamp() => $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture)}]";
@@ -77,7 +95,7 @@ public static class ConsoleUtil
         return _logsTimestampPadding;
     }
 
-    public static void Write(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
+    public static void Write(string content, LogType color = LogType.Unknown, int height = 0, bool log = true, bool display = true)
     {
         lock (Lck)
         {
@@ -88,7 +106,7 @@ public static class ConsoleUtil
             {
                 try
                 {
-                    Console.ForegroundColor = color;
+                    Console.ForegroundColor = (ConsoleColor)color;
                 }
                 catch
                 {
@@ -108,7 +126,7 @@ public static class ConsoleUtil
         }
     }
 
-    public static void WriteLine(string? content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
+    public static void WriteLine(string? content, LogType color = LogType.Unknown, int height = 0, bool log = true, bool display = true)
     {
         lock (Lck)
         {
@@ -119,7 +137,7 @@ public static class ConsoleUtil
             {
                 try
                 {
-                    Console.ForegroundColor = color;
+                    Console.ForegroundColor = (ConsoleColor)color;
                 }
                 catch
                 {
