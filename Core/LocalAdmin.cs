@@ -51,6 +51,7 @@ public sealed class LocalAdmin : IDisposable
     private uint _heartbeatRestartInSeconds;
     private Process? _gameProcess;
     private Task? _readerTask, _heartbeatMonitoringTask;
+    private static int? _processId;
 
     internal static readonly Stopwatch HeartbeatStopwatch = new();
     internal static LocalAdmin? Singleton;
@@ -59,7 +60,10 @@ public sealed class LocalAdmin : IDisposable
     internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000;
     internal static Config? Configuration;
     internal static DataJson? DataJson;
-    internal static string BaseWindowTitle = $"LocalAdmin v. {VersionString}";
+    internal static string BaseWindowTitle =>
+        $"LocalAdmin v. {VersionString}" +
+        (GamePort != 0 ? $" | Port: {GamePort}" : string.Empty) +
+        (_processId.HasValue ? $" | PID: {_processId}" : string.Empty);
     internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning, NoTerminalTitle;
 
     internal ShutdownAction ExitAction = ShutdownAction.Crash;
@@ -567,10 +571,7 @@ public sealed class LocalAdmin : IDisposable
             TerminateGame();
 
         Menu();
-
-        BaseWindowTitle = $"LocalAdmin v. {VersionString} on port {GamePort}";
         SetTerminalTitle(BaseWindowTitle);
-
         Logger.Initialize();
 
         ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen);
@@ -789,6 +790,11 @@ public sealed class LocalAdmin : IDisposable
             };
 
             _gameProcess = Process.Start(startInfo);
+
+            _processId = _gameProcess!.Id;
+            SetTerminalTitle(BaseWindowTitle);
+
+            ConsoleUtil.WriteLine("Game process started with PID: " + _processId, ConsoleColor.DarkGreen);
 
             _gameProcess!.OutputDataReceived += (_, args) =>
             {
