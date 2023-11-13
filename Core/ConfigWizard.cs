@@ -47,6 +47,8 @@ public static class ConfigWizard
         }
 
         LocalAdmin.Configuration.RestartOnCrash = BoolInput("Should the server be automatically restarted after a crash?");
+        LocalAdmin.Configuration.EnableHeartbeat = BoolInput("Should LocalAdmin attempt to detect silent crashes using heartbeat monitoring?");
+        LocalAdmin.Configuration.SetTerminalTitle = BoolInput("Should the LocalAdmin status be written in the terminal title?");
         LocalAdmin.Configuration.LaLiveViewUseUtc = !BoolInput("Should timestamps in the LocalAdmin live view use server timezone (otherwise UTC time will be use)?");
 
         string? withoutTimezone = null;

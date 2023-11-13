@@ -139,11 +139,11 @@ public class TcpServer
                                     break;
 
                                 case OutputCodes.IdleEnter:
-                                    Console.Title = "[IDLE] " + LocalAdmin.BaseWindowTitle;
+                                    LocalAdmin.SetTerminalTitle("[IDLE] " + LocalAdmin.BaseWindowTitle);
                                     break;
 
                                 case OutputCodes.IdleExit:
-                                    Console.Title = LocalAdmin.BaseWindowTitle;
+                                    LocalAdmin.SetTerminalTitle(LocalAdmin.BaseWindowTitle);
                                     break;
 
                                 case OutputCodes.ExitActionReset:

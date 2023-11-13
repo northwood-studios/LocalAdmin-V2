@@ -10,6 +10,7 @@ public class Config
 
     public bool RestartOnCrash = true;
     public bool EnableHeartbeat = true;
+    public bool SetTerminalTitle = true;
     public bool LaLiveViewUseUtc;
 
     public bool LaShowStdoutStderr;
@@ -43,6 +44,9 @@ public class Config
 
         sb.Append("enable_heartbeat: ");
         sb.AppendLine(EnableHeartbeat.ToString().ToLowerInvariant());
+
+        sb.Append("set_terminal_title: ");
+        sb.AppendLine(SetTerminalTitle.ToString().ToLowerInvariant());
 
         sb.Append("la_live_view_use_utc: ");
         sb.AppendLine(LaLiveViewUseUtc.ToString().ToLowerInvariant());
@@ -128,6 +132,10 @@ public class Config
 
                 case "enable_heartbeat" when bool.TryParse(sp[1], out var b):
                     cfg.EnableHeartbeat = b;
+                    break;
+
+                case "set_terminal_title" when bool.TryParse(sp[1], out var b):
+                    cfg.SetTerminalTitle = b;
                     break;
 
                 case "la_live_view_use_utc" when bool.TryParse(sp[1], out var b):
@@ -237,6 +245,7 @@ public class Config
 
         sb.AppendLine(RestartOnCrash ? "- Server will be automatically restarted after a crash." : "- Server will NOT be automatically restarted after a crash.");
         sb.AppendLine(EnableHeartbeat ? "- LocalAdmin will attempt to detect silent server crashes (heartbeat enabled)." : "- LocalAdmin will NOT attempt to detect silent server crashes (heartbeat DISABLED).");
+        sb.AppendLine(SetTerminalTitle ? "- LocalAdmin will attempt to show its current status in your terminal title." : "- LocalAdmin will NOT attempt to show its current status in your terminal title.");
         sb.AppendLine(LaLiveViewUseUtc ? "- LocalAdmin live view will use UTC timezone." : "- LocalAdmin live view will use local timezone.");
         sb.AppendLine($"- LocalAdmin live will use the following timestamp format: {LaLiveViewTimeFormat}");
         sb.AppendLine($"- UTC timezone will be displayed as \"{(LaLogsUseZForUtc ? "Z" : "+00:00")}\".");
