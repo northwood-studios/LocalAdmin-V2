@@ -42,11 +42,13 @@ public sealed class LocalAdmin : IDisposable
     private static bool _noTrueColor;
     private static bool _stdPrint;
     private static bool _ignoreNextRestart;
+    private static bool _noTerminalTitle;
     private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
 
     private readonly CommandService _commandService = new();
     private readonly string _scpslExecutable;
     private volatile bool _processClosing;
+    private bool _idleMode;
     private uint _heartbeatSpanMaxThreshold;
     private uint _heartbeatRestartInSeconds;
     private Process? _gameProcess;
@@ -60,11 +62,12 @@ public sealed class LocalAdmin : IDisposable
     internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000;
     internal static Config? Configuration;
     internal static DataJson? DataJson;
-    internal static string BaseWindowTitle =>
+    private string BaseWindowTitle =>
+        (_idleMode ? "[IDLE] " : string.Empty) +
         $"LocalAdmin v. {VersionString}" +
         (GamePort != 0 ? $" | Port: {GamePort}" : string.Empty) +
         (_processId.HasValue ? $" | PID: {_processId}" : string.Empty);
-    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning, NoTerminalTitle;
+    internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
 
     internal ShutdownAction ExitAction = ShutdownAction.Crash;
     internal bool DisableExitActionSignals;
@@ -120,6 +123,10 @@ public sealed class LocalAdmin : IDisposable
     internal async Task Start(string[] args)
     {
         Singleton = this;
+
+        if (args.Length == 0)
+            SetTerminalTitle();
+
         HeartbeatStopwatch.Reset();
 
         if (!PathManager.CorrectPathFound && !args.Contains("--skipHomeCheck", StringComparer.Ordinal))
@@ -290,7 +297,7 @@ public sealed class LocalAdmin : IDisposable
                                             NoPadding = true;
                                             break;
                                         case 't':
-                                            NoTerminalTitle = true;
+                                            _noTerminalTitle = true;
                                             break;
                                     }
                                 }
@@ -368,7 +375,7 @@ public sealed class LocalAdmin : IDisposable
                                         break;
 
                                     case "--noTerminalTitle":
-                                        NoTerminalTitle = true;
+                                        _noTerminalTitle = true;
                                         break;
 
                                     case "--":
@@ -479,7 +486,7 @@ public sealed class LocalAdmin : IDisposable
                 }
             }
 
-            SetTerminalTitle(BaseWindowTitle);
+            SetTerminalTitle();
 
             if (reconfigure)
                 ConfigWizard.RunConfigWizard(useDefault);
@@ -571,7 +578,7 @@ public sealed class LocalAdmin : IDisposable
             TerminateGame();
 
         Menu();
-        SetTerminalTitle(BaseWindowTitle);
+        SetTerminalTitle();
         Logger.Initialize();
 
         ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen);
@@ -792,7 +799,7 @@ public sealed class LocalAdmin : IDisposable
             _gameProcess = Process.Start(startInfo);
 
             _processId = _gameProcess!.Id;
-            SetTerminalTitle(BaseWindowTitle);
+            SetTerminalTitle();
 
             ConsoleUtil.WriteLine("Game process started with PID: " + _processId, ConsoleColor.DarkGreen);
 
@@ -1147,13 +1154,20 @@ public sealed class LocalAdmin : IDisposable
     }
 
     /// <summary>
-    ///     Sets the terminal title if not disabled in the config or by command line arguments
+    /// Sets the terminal title if not disabled in the config or by command line arguments
     /// </summary>
-    public static void SetTerminalTitle(string terminalTitle)
+    private void SetTerminalTitle()
     {
-        if (!NoTerminalTitle && (Configuration?.SetTerminalTitle ?? false))
-        {
-            Console.Title = terminalTitle;
-        }
+        if (!_noTerminalTitle && (Configuration?.SetTerminalTitle ?? false))
+            Console.Title = BaseWindowTitle;
+    }
+
+    internal static void SetIdleModeState(bool state)
+    {
+        if (Singleton == null)
+            return;
+
+        Singleton._idleMode = state;
+        Singleton.SetTerminalTitle();
     }
 }
