@@ -1158,7 +1158,7 @@ public sealed class LocalAdmin : IDisposable
     /// </summary>
     private void SetTerminalTitle()
     {
-        if (!_noTerminalTitle && (Configuration?.SetTerminalTitle ?? false))
+        if (!_noTerminalTitle && (Configuration?.SetTerminalTitle ?? true))
             Console.Title = BaseWindowTitle;
     }
 
