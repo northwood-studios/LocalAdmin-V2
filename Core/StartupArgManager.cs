@@ -14,35 +14,27 @@ namespace LocalAdmin.V2.Core
         private const string StartupArgsPath = "laargs.txt";
 
         /// <summary>
-        /// Merges Command-line arguments and arguments in <paramref name="StartupArgsPath"/>
+        /// Merges Command-line arguments and arguments in <paramref name="cmdArgs"/>
         /// </summary>
-        /// <param name="CMDArgs">Runtime Command-Line Arguments</param>
+        /// <param name="cmdArgs">Runtime Command-Line Arguments</param>
         /// <returns>Merged Arguments</returns>
-        public static string[] MergeStartupArgs(IEnumerable<string> CMDArgs)
+        public static string[] MergeStartupArgs(IEnumerable<string> cmdArgs)
         {
+            List<string> startupArgs = new List<string>();
+            startupArgs.AddRange(cmdArgs);
+
             try
             {
-                List<string> StartupArgs = new List<string>();
-                StartupArgs.AddRange(CMDArgs);
-
                 if (!File.Exists(StartupArgsPath))
-                {
-                    File.WriteAllText(StartupArgsPath, string.Empty);
-                    return CMDArgs.ToArray();
-                }
+                    return startupArgs.ToArray();
 
-                foreach (string farg in File.ReadAllLines(StartupArgsPath))
-                {
-                    if (!farg.StartsWith("#", StringComparison.Ordinal))
-                        StartupArgs.Add(farg);
-                }
-
-                return StartupArgs.ToArray();
+                startupArgs.AddRange(File.ReadAllLines(StartupArgsPath).Where(arg => !arg.StartsWith("#", StringComparison.Ordinal)));
+                return startupArgs.ToArray();
             }
             catch (Exception ex)
             {
                 ConsoleUtil.WriteLine($"An error occured while trying to merge arguments: {ex}", ConsoleColor.Red);
-                return CMDArgs.ToArray();
+                return startupArgs.ToArray();
             }
         }
     }
