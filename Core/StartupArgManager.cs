@@ -28,12 +28,7 @@ namespace LocalAdmin.V2.Core
                 if (!File.Exists(StartupArgsPath))
                     return startupArgs.ToArray();
 
-                foreach (string arg in File.ReadAllLines(StartupArgsPath))
-                {
-                    if (!arg.StartsWith("#", StringComparison.Ordinal))
-                        startupArgs.Add(arg);
-                }
-
+                startupArgs.AddRange(File.ReadAllLines(StartupArgsPath).Where(arg => !arg.StartsWith("#", StringComparison.Ordinal)));
                 return startupArgs.ToArray();
             }
             catch (Exception ex)

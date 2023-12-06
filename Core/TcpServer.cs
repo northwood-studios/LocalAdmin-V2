@@ -139,11 +139,11 @@ public class TcpServer
                                     break;
 
                                 case OutputCodes.IdleEnter:
-                                    LocalAdmin.SetIdleModeState(true);
+                                    LocalAdmin.Singleton?.SetIdleModeState(true);
                                     break;
 
                                 case OutputCodes.IdleExit:
-                                    LocalAdmin.SetIdleModeState(false);
+                                    LocalAdmin.Singleton?.SetIdleModeState(false);
                                     break;
 
                                 case OutputCodes.ExitActionReset:

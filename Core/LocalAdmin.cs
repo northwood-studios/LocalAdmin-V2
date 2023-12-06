@@ -1158,16 +1158,15 @@ public sealed class LocalAdmin : IDisposable
     /// </summary>
     private void SetTerminalTitle()
     {
-        if (!_noTerminalTitle && (Configuration?.SetTerminalTitle ?? true))
-            Console.Title = BaseWindowTitle;
-    }
-
-    internal static void SetIdleModeState(bool state)
-    {
-        if (Singleton == null)
+        if (_noTerminalTitle || Configuration?.SetTerminalTitle is false)
             return;
 
-        Singleton._idleMode = state;
-        Singleton.SetTerminalTitle();
+        Console.Title = BaseWindowTitle;
+    }
+
+    internal void SetIdleModeState(bool state)
+    {
+        _idleMode = state;
+        SetTerminalTitle();
     }
 }
