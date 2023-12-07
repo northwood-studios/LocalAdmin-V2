@@ -11,8 +11,7 @@ namespace LocalAdmin.V2.Core
         /// <summary>
         /// Path to startup arguments file.
         /// </summary>
-        private static string StartupArgsPath = Path.Combine(PathManager.GameUserDataRoot, "config", "laargs.txt");
-        
+        private static readonly string StartupArgsPath = Path.Combine(PathManager.ConfigPath, "laargs.txt");
         /// <summary>
         /// Merges Command-line arguments and arguments in <paramref name="cmdArgs"/>
         /// </summary>
