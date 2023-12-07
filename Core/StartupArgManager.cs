@@ -36,5 +36,39 @@ namespace LocalAdmin.V2.Core
                 return startupArgs.ToArray();
             }
         }
+
+        public static void MigrateArgsFile()
+        {
+            try
+            {
+                string OldFileLocation = "laargs.txt";
+
+                if (!File.Exists(StartupArgsPath))
+                {
+                    Console.WriteLine("File No Exist!");
+                    return;
+                }
+                if (string.IsNullOrEmpty(File.ReadAllText(OldFileLocation)) || string.IsNullOrWhiteSpace(File.ReadAllText(OldFileLocation)))
+                {
+                    Console.WriteLine("File in old location but empty.");
+                    File.Delete(OldFileLocation);
+                }
+                Console.WriteLine("File in old location.");
+
+                // Deletes the laargs.txt in the new location which basically screws the Move operation.
+                File.Delete(StartupArgsPath);
+
+                File.WriteAllText(StartupArgsPath, File.ReadAllText(OldFileLocation));
+                File.Delete(OldFileLocation);
+                
+                return;
+            }
+            catch (Exception ex)
+            {
+                // I have a massive skill issue and can't make this work without needing a try block. I am soley to blame.
+                ConsoleUtil.WriteLine($"An error occured while trying to migrate laargs.txt: {ex}", ConsoleColor.Red);
+                Console.ReadKey();
+            }
+        }
     }
 }

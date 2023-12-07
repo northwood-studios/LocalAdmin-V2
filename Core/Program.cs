@@ -1,3 +1,4 @@
+using System.IO;
 using System.Threading.Tasks;
 
 namespace LocalAdmin.V2.Core;
@@ -14,6 +15,10 @@ internal static class Program
         while (true)
         {
             using var la = new LocalAdmin();
+
+            if (File.Exists("laargs.txt"))
+                StartupArgManager.MigrateArgsFile();
+
             await la.Start(StartupArgManager.MergeStartupArgs(args));
         }
         // ReSharper disable once FunctionNeverReturns
