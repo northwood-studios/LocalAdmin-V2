@@ -16,9 +16,6 @@ internal static class Program
         {
             using var la = new LocalAdmin();
 
-            if (File.Exists("laargs.txt"))
-                StartupArgManager.MigrateArgsFile();
-
             await la.Start(StartupArgManager.MergeStartupArgs(args));
         }
         // ReSharper disable once FunctionNeverReturns

@@ -12,6 +12,7 @@ namespace LocalAdmin.V2.Core
         /// Path to startup arguments file.
         /// </summary>
         private static readonly string StartupArgsPath = Path.Combine(PathManager.ConfigPath, "laargs.txt");
+
         /// <summary>
         /// Merges Command-line arguments and arguments in <paramref name="cmdArgs"/>
         /// </summary>
@@ -19,6 +20,8 @@ namespace LocalAdmin.V2.Core
         /// <returns>Merged Arguments</returns>
         public static string[] MergeStartupArgs(IEnumerable<string> cmdArgs)
         {
+            MigrateArgsFile();
+
             List<string> startupArgs = new List<string>();
             startupArgs.AddRange(cmdArgs);
 
@@ -39,24 +42,27 @@ namespace LocalAdmin.V2.Core
 
         public static void MigrateArgsFile()
         {
-            try
-            {
-                string OldFileLocation = "laargs.txt";
+            const string OldFileLocation = "laargs.txt";
 
-                if (!File.Exists(StartupArgsPath)) { return; }
-                if (string.IsNullOrEmpty(File.ReadAllText(OldFileLocation)) || string.IsNullOrWhiteSpace(File.ReadAllText(OldFileLocation)))
-                    File.Delete(OldFileLocation);
-
-                File.Delete(StartupArgsPath);
-                File.WriteAllText(StartupArgsPath, File.ReadAllText(OldFileLocation));
-                File.Delete(OldFileLocation);
-                
+            if (!File.Exists(OldFileLocation))
                 return;
-            }
-            catch (Exception ex)
+
+            if (File.Exists(StartupArgsPath))
             {
-                ConsoleUtil.WriteLine($"An error occured while trying to migrate laargs.txt: {ex}", ConsoleColor.Red);
+                bool IsArgsFileEmpty = string.IsNullOrEmpty(File.ReadAllText(StartupArgsPath));
+
+                if (IsArgsFileEmpty)
+                {
+                    File.Delete(StartupArgsPath);
+                    File.Move(OldFileLocation, StartupArgsPath);
+                }
+                else
+                {
+                    File.Delete(OldFileLocation);
+                }
             }
+            else
+                File.Move(OldFileLocation, StartupArgsPath);
         }
     }
 }
