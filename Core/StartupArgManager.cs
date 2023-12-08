@@ -62,7 +62,9 @@ namespace LocalAdmin.V2.Core
                 }
             }
             else
+            {
                 File.Move(OldFileLocation, StartupArgsPath);
+            }
         }
     }
 }
