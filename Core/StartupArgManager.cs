@@ -40,16 +40,23 @@ namespace LocalAdmin.V2.Core
             }
         }
 
-        public static void MigrateArgsFile()
+        private static void MigrateArgsFile()
         {
-            const string OldFileLocation = "laargs.txt";
-
-            if (!File.Exists(StartupArgsPath))
+            try
             {
-                if (!File.Exists(OldFileLocation))
-                    return;
-                else
-                    File.Move(OldFileLocation, StartupArgsPath);
+                const string OldFileLocation = "laargs.txt";
+
+                if (!File.Exists(StartupArgsPath))
+                {
+                    if (!File.Exists(OldFileLocation))
+                        return;
+                    else
+                        File.Move(OldFileLocation, StartupArgsPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleUtil.WriteLine($"An error occured while trying to migrate 'laargs.txt': {ex}");
             }
         }
     }
