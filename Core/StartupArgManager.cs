@@ -44,26 +44,12 @@ namespace LocalAdmin.V2.Core
         {
             const string OldFileLocation = "laargs.txt";
 
-            if (!File.Exists(OldFileLocation))
-                return;
-
-            if (File.Exists(StartupArgsPath))
+            if (!File.Exists(StartupArgsPath))
             {
-                bool IsArgsFileEmpty = string.IsNullOrEmpty(File.ReadAllText(StartupArgsPath));
-
-                if (IsArgsFileEmpty)
-                {
-                    File.Delete(StartupArgsPath);
-                    File.Move(OldFileLocation, StartupArgsPath);
-                }
+                if (!File.Exists(OldFileLocation))
+                    return;
                 else
-                {
-                    File.Delete(OldFileLocation);
-                }
-            }
-            else
-            {
-                File.Move(OldFileLocation, StartupArgsPath);
+                    File.Move(OldFileLocation, StartupArgsPath);
             }
         }
     }
