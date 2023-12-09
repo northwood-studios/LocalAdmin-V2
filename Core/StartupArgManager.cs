@@ -53,6 +53,8 @@ namespace LocalAdmin.V2.Core
                     else
                         File.Move(OldFileLocation, StartupArgsPath);
                 }
+                else
+                    File.Delete(OldFileLocation);
             }
             catch (Exception ex)
             {
