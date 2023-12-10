@@ -42,24 +42,22 @@ namespace LocalAdmin.V2.Core
 
         private static void MigrateArgsFile()
         {
-            try
-            {
-                const string OldFileLocation = "laargs.txt";
+            const string ObsoleteFile = "laargs.txt";
 
-                if (!File.Exists(StartupArgsPath))
-                {
-                    if (!File.Exists(OldFileLocation))
-                        return;
-                    else
-                        File.Move(OldFileLocation, StartupArgsPath);
-                }
-                else
-                    File.Delete(OldFileLocation);
-            }
-            catch (Exception ex)
+            if (File.Exists(ObsoleteFile) && string.IsNullOrWhiteSpace(File.ReadAllText(ObsoleteFile)))
             {
-                ConsoleUtil.WriteLine($"An error occured while trying to migrate 'laargs.txt': {ex}");
+                File.Delete(ObsoleteFile);
+                return;
             }
+
+            if (File.Exists(StartupArgsPath))
+            {
+                ConsoleUtil.WriteLine("Unable to migrate your old laargs config. Aborting...");
+                return;
+            }
+
+            File.Move(ObsoleteFile, StartupArgsPath);
+            ConsoleUtil.WriteLine("Migrated your old laargs config.");
         }
     }
 }
