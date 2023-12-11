@@ -49,22 +49,27 @@ namespace LocalAdmin.V2.Core
                 if (File.Exists(ObsoleteFile) && string.IsNullOrWhiteSpace(File.ReadAllText(ObsoleteFile)))
                 {
                     File.Delete(ObsoleteFile);
-                    ConsoleUtil.WriteLine("Obsolete configuration file 'laargs.txt' is empty and has been deleted.");
+                    ConsoleUtil.WriteLine("Obsolete configuration file 'laargs.txt' is empty and has been deleted.", ConsoleColor.Gray);
                     return;
                 }
 
                 if (File.Exists(StartupArgsPath))
+                    return;
+
+                try
                 {
-                    ConsoleUtil.WriteLine("Unable to migrate your old 'laargs' configuration. The destination file already exists.");
+                    File.Move(ObsoleteFile, StartupArgsPath);
+                }
+                catch
+                {
                     return;
                 }
 
-                File.Move(ObsoleteFile, StartupArgsPath);
-                ConsoleUtil.WriteLine("Successfully migrated your old 'laargs' configuration.");
+                ConsoleUtil.WriteLine("Successfully migrated your old 'laargs' configuration.", ConsoleColor.DarkGreen);
             }
             catch (Exception ex)
             {
-                ConsoleUtil.WriteLine($"An error occurred during migration: {ex}");
+                ConsoleUtil.WriteLine($"An error occurred during migration: {ex}", ConsoleColor.Yellow);
             }
         }
     }
