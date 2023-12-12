@@ -59,11 +59,8 @@ namespace LocalAdmin.V2.Core
                 if (File.Exists(StartupArgsPath))
                     return;
 
-                if (File.Exists(ObsoleteFile) && !File.Exists(StartupArgsPath))
-                {
-                    File.Move(ObsoleteFile, StartupArgsPath);
-                    ConsoleUtil.WriteLine("Successfully migrated your old 'laargs' configuration.", ConsoleColor.DarkGreen);
-                }
+                File.Move(ObsoleteFile, StartupArgsPath);
+                ConsoleUtil.WriteLine("Successfully migrated your old 'laargs' configuration.", ConsoleColor.DarkGreen);
             }
             catch (Exception ex)
             {
