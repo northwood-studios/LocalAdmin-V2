@@ -898,6 +898,7 @@ public sealed class LocalAdmin : IDisposable
         CommandService.RegisterCommand(new ResaveCommand());
         CommandService.RegisterCommand(new PluginManagerCommand());
         CommandService.RegisterCommand(new LaCfgCommand());
+        CommandService.RegisterCommand(new ExitCommand());
     }
 
     private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)
