@@ -11,7 +11,7 @@ internal sealed class HelpCommand : CommandBase
 
     internal override void Execute(string[] arguments)
     {
-        var commands = Core.LocalAdmin.Singleton?._commandService.GetAllCommands().OrderBy(p => p.Name);
+        var commands = Core.LocalAdmin.Singleton?.CommandService.GetAllCommands().OrderBy(p => p.Name);
 
         ConsoleUtil.WriteLine(string.Empty);
         ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
@@ -23,7 +23,7 @@ internal sealed class HelpCommand : CommandBase
         {
             ConsoleUtil.WriteLine($"{item.Name} - {item.Description}");
         }
-
+        ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
         ConsoleUtil.WriteLine("---- Game Commands ----", ConsoleColor.DarkGray);
     }
 }

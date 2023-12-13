@@ -6,7 +6,7 @@ namespace LocalAdmin.V2.Commands;
 
 internal sealed class LicenseCommand : CommandBase
 {
-    public LicenseCommand() : base("License", "prints LocalAdmin license details.") { }
+    public LicenseCommand() : base("License", "Prints LocalAdmin license details.") { }
 
     internal override void Execute(string[] arguments)
     {
