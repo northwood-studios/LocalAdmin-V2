@@ -1,8 +1,6 @@
 using LocalAdmin.V2.Commands.Meta;
-using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace LocalAdmin.V2.Commands;
@@ -17,7 +15,6 @@ internal sealed class HelpCommand : CommandBase
 
         ConsoleUtil.WriteLine(string.Empty);
         ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
-        ConsoleUtil.WriteLine("EXIT - Stops the server.");
 
         if (commands is null)
             return;
