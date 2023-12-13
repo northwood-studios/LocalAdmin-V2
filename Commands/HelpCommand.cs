@@ -16,13 +16,14 @@ internal sealed class HelpCommand : CommandBase
         ConsoleUtil.WriteLine(string.Empty);
         ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
 
-        if (commands is null)
-            return;
-
-        foreach (var item in commands)
+        if (commands is not null)
         {
-            ConsoleUtil.WriteLine($"{item.Name} - {item.Description}");
+            foreach (var item in commands)
+            {
+                ConsoleUtil.WriteLine($"{item.Name} - {item.Description}");
+            }
         }
+        
         ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
         ConsoleUtil.WriteLine("---- Game Commands ----", ConsoleColor.DarkGray);
     }
