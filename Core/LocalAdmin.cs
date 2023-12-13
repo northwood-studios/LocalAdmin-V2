@@ -735,7 +735,7 @@ public sealed class LocalAdmin : IDisposable
                 if (split.Length == 0) continue;
                 var name = split[0].ToUpperInvariant();
 
-                var command = _commandService.GetCommandByName(name);
+                var command = CommandService.GetCommandByName(name);
 
                 if (command != null)
                 {
