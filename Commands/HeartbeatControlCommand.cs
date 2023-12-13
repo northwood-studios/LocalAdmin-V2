@@ -6,7 +6,7 @@ namespace LocalAdmin.V2.Commands;
 
 internal sealed class HeartbeatControlCommand : CommandBase
 {
-    public HeartbeatControlCommand() : base("hbctrl") { }
+    public HeartbeatControlCommand() : base("hbctrl", "Controls Heartbeat") { }
 
     internal override void Execute(string[] arguments)
     {

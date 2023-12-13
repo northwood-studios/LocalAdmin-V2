@@ -1,11 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LocalAdmin.V2.Commands.Meta;
 
 internal class CommandService
 {
-    private readonly Dictionary<string, CommandBase> _commands = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, CommandBase> _commands = new(StringComparer.OrdinalIgnoreCase);
 
     internal void RegisterCommand(CommandBase command)
     {
@@ -21,5 +22,10 @@ internal class CommandService
     internal CommandBase? GetCommandByName(string name)
     {
         return _commands.TryGetValue(name, out CommandBase? command) ? command : null;
+    }
+
+    internal static CommandBase[] GetAllCommands()
+    {
+        return _commands.Values.ToArray();
     }
 }

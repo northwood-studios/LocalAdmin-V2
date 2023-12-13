@@ -10,7 +10,7 @@ namespace LocalAdmin.V2.Commands.PluginManager;
 
 internal sealed class PluginManagerCommand : CommandBase
 {
-    public PluginManagerCommand() : base("p") { }
+    public PluginManagerCommand() : base("p", "Plugin Manager.") { }
 
     private static Stopwatch? _securityWarningStopwatch;
 
