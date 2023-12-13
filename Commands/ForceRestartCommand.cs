@@ -4,7 +4,7 @@ namespace LocalAdmin.V2.Commands;
 
 internal sealed class ForceRestartCommand : CommandBase
 {
-    public ForceRestartCommand() : base("Forcerestart") { }
+    public ForceRestartCommand() : base("Forcerestart", "Kills and restarts the server.") { }
 
     internal override void Execute(string[] arguments)
     {
