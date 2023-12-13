@@ -17,12 +17,8 @@ internal sealed class HelpCommand : CommandBase
         ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
 
         if (commands is not null)
-        {
             foreach (var item in commands)
-            {
                 ConsoleUtil.WriteLine($"{item.Name} - {item.Description}");
-            }
-        }
         
         ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
         ConsoleUtil.WriteLine("---- Game Commands ----", ConsoleColor.DarkGray);
