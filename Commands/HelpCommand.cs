@@ -1,4 +1,5 @@
 using LocalAdmin.V2.Commands.Meta;
+using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO;
 using System;
 using System.Collections.Generic;
@@ -12,11 +13,14 @@ internal sealed class HelpCommand : CommandBase
 
     internal override void Execute(string[] arguments)
     {
-        var commands = CommandService.GetAllCommands().OrderBy(p => p.Name);
+        var commands = Core.LocalAdmin.Singleton?._commandService.GetAllCommands().OrderBy(p => p.Name);
 
         ConsoleUtil.WriteLine(string.Empty);
         ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
         ConsoleUtil.WriteLine("EXIT - Stops the server.");
+
+        if (commands is null)
+            return;
 
         foreach (var item in commands)
         {

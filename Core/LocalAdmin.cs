@@ -45,7 +45,7 @@ public sealed class LocalAdmin : IDisposable
     private static bool _noTerminalTitle;
     private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
 
-    private readonly CommandService _commandService = new();
+    internal readonly CommandService _commandService = new();
     private readonly string _scpslExecutable;
     private volatile bool _processClosing;
     private bool _idleMode;
