@@ -889,15 +889,15 @@ public sealed class LocalAdmin : IDisposable
 
     private void RegisterCommands()
     {
-        _commandService.RegisterCommand(new HeartbeatCancelCommand());
-        _commandService.RegisterCommand(new HeartbeatControlCommand());
-        _commandService.RegisterCommand(new RestartCommand());
-        _commandService.RegisterCommand(new ForceRestartCommand());
-        _commandService.RegisterCommand(new HelpCommand());
-        _commandService.RegisterCommand(new LicenseCommand());
-        _commandService.RegisterCommand(new ResaveCommand());
-        _commandService.RegisterCommand(new PluginManagerCommand());
-        _commandService.RegisterCommand(new LaCfgCommand());
+        CommandService.RegisterCommand(new HeartbeatCancelCommand());
+        CommandService.RegisterCommand(new HeartbeatControlCommand());
+        CommandService.RegisterCommand(new RestartCommand());
+        CommandService.RegisterCommand(new ForceRestartCommand());
+        CommandService.RegisterCommand(new HelpCommand());
+        CommandService.RegisterCommand(new LicenseCommand());
+        CommandService.RegisterCommand(new ResaveCommand());
+        CommandService.RegisterCommand(new PluginManagerCommand());
+        CommandService.RegisterCommand(new LaCfgCommand());
     }
 
     private static void ReadInput(Func<string?, bool> checkInput, Action validInputAction, Action invalidInputAction)
