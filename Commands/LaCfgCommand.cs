@@ -6,7 +6,7 @@ namespace LocalAdmin.V2.Commands;
 
 internal sealed class LaCfgCommand : CommandBase
 {
-    public LaCfgCommand() : base("lacfg") { }
+    public LaCfgCommand() : base("lacfg", "Prints the current LocalAdmin configuration and the configuration file path.") { }
 
     internal override void Execute(string[] arguments)
     {

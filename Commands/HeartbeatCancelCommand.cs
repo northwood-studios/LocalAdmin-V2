@@ -6,7 +6,7 @@ namespace LocalAdmin.V2.Commands;
 
 internal sealed class HeartbeatCancelCommand : CommandBase
 {
-    public HeartbeatCancelCommand() : base("hbc") { }
+    public HeartbeatCancelCommand() : base("hbc", "Cancels heartbeat restart countdown.") { }
 
     internal override void Execute(string[] arguments)
     {

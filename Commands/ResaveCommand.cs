@@ -8,7 +8,7 @@ namespace LocalAdmin.V2.Commands;
 
 internal sealed class ResaveCommand : CommandBase
 {
-    public ResaveCommand() : base("resave") { }
+    public ResaveCommand() : base("resave", "Resaves the LocalAdmin configuration file.") { }
 
     internal override void Execute(string[] arguments)
     {

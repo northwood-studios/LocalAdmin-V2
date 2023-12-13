@@ -1,4 +1,4 @@
-﻿using LocalAdmin.V2.Commands.Meta;
+using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
 using System;
 
@@ -6,7 +6,7 @@ namespace LocalAdmin.V2.Commands;
 
 internal sealed class LicenseCommand : CommandBase
 {
-    public LicenseCommand() : base("License") { }
+    public LicenseCommand() : base("License", "Prints LocalAdmin license details.") { }
 
     internal override void Execute(string[] arguments)
     {
