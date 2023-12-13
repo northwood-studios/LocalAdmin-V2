@@ -8,7 +8,7 @@ namespace LocalAdmin.V2.Commands;
 
 internal sealed class HelpCommand : CommandBase
 {
-    public HelpCommand() : base("Help", true) { }
+    public HelpCommand() : base("Help", "Prints all available commands.", true) { }
 
     internal override void Execute(string[] arguments)
     {
@@ -16,7 +16,7 @@ internal sealed class HelpCommand : CommandBase
 
         ConsoleUtil.WriteLine(string.Empty);
         ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
-        ConsoleUtil.WriteLine("EXIT - stops the server.");
+        ConsoleUtil.WriteLine("EXIT - Stops the server.");
 
         foreach (var item in commands)
         {
