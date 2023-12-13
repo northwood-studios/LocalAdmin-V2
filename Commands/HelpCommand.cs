@@ -12,7 +12,7 @@ internal sealed class HelpCommand : CommandBase
 
     internal override void Execute(string[] arguments)
     {
-        var commands = from p in CommandService.GetAllCommands() orderby p.Name ascending select p;
+        var commands = CommandService.GetAllCommands().OrderBy(p => p.Name);
 
         ConsoleUtil.WriteLine(string.Empty);
         ConsoleUtil.WriteLine("---- LocalAdmin Commands ----", ConsoleColor.DarkGray);
