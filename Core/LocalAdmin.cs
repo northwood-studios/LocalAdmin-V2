@@ -602,6 +602,7 @@ public sealed class LocalAdmin : IDisposable
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
+        PluginManager TylerianPM = new(GamePort);
     }
 
     private static void SetupExitHandlers()

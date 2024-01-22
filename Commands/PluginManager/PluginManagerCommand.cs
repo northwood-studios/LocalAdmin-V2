@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using System;
+using TylerianPM.Models;
 namespace TylerianPM;
 
 internal sealed class PluginManagerCommand : CommandBase
@@ -29,10 +32,8 @@ internal sealed class PluginManagerCommand : CommandBase
                 Uninstall(arguments.Length >= 2 ? arguments[1] : null);
                 return;
             case "about":
-                ConsoleUtil.WriteLine("TylerianPM written by ALEXWARELLC & contributors.");
+                ConsoleUtil.WriteLine("[PM]-> TylerianPM written by ALEXWARELLC & contributors.");
                 return;
-
-
             case "help":
             default:
                 Help();
@@ -40,14 +41,28 @@ internal sealed class PluginManagerCommand : CommandBase
         }
     }
 
-    public void Install(string? ID)
+    public async Task Install(string? ID)
     {
         if (string.IsNullOrWhiteSpace(ID))
         {
             Help();
             return;
         }
-        ConsoleUtil.WriteLine($"Attmpting to install plugin '{ID}'...");
+
+        try
+        {
+            Plugin? plugin = await PluginManager.Instance?.CreatePlugin("https://store.alex.altexstudios.com/plugins.json");
+
+            if (plugin.ID == ID)
+                ConsoleUtil.WriteLine($"Retrieved Plugin: {plugin.Name} {plugin.ID}");
+            else
+                ConsoleUtil.WriteLine($"Unable to find a plugin which matched your query.");
+        }
+        catch (Exception ex)
+        {
+            ConsoleUtil.WriteLine($"[PM]-> An error occured while trying to perform an install operation. {ex}");
+            return;
+        }
     }
 
     public void Update(string? ID)
@@ -57,7 +72,7 @@ internal sealed class PluginManagerCommand : CommandBase
             Help();
             return;
         }
-        ConsoleUtil.WriteLine($"Updating plugin '{ID}'...");
+        ConsoleUtil.WriteLine($"[PM]-> Updating plugin '{ID}'...");
     }
 
     public void Uninstall(string? ID)
@@ -67,7 +82,7 @@ internal sealed class PluginManagerCommand : CommandBase
             Help();
             return;
         }
-        ConsoleUtil.WriteLine($"Uninstalling plugin '{ID}'...");
+        ConsoleUtil.WriteLine($"[PM]-> Uninstalling plugin '{ID}'...");
     }
 
     public void Help()
