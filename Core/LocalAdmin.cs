@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using LocalAdmin.V2.Commands.PluginManager;
+using TylerianPM;
 using LocalAdmin.V2.IO.Logging;
 using LocalAdmin.V2.PluginsManager;
 
