@@ -2,8 +2,8 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
-        <TargetFramework Condition="$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net7.0-windows</TargetFramework>
-        <TargetFramework Condition="!$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net7.0</TargetFramework>
+        <TargetFramework Condition="$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net8.0-windows</TargetFramework>
+        <TargetFramework Condition="!$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net8.0</TargetFramework>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <LangVersion>10</LangVersion>
         <Nullable>enable</Nullable>

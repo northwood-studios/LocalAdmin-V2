@@ -58,6 +58,7 @@ public class TcpServer
                 }
 
                 _client = _listener.EndAcceptTcpClient(result);
+                _client.NoDelay = true;
 
                 _client.ReceiveBufferSize = LocalAdmin.Configuration!.SlToLaBufferSize;
                 _client.SendBufferSize = LocalAdmin.Configuration.LaToSlBufferSize;
@@ -103,9 +104,7 @@ public class TcpServer
                                 continue;
                             }
 
-                            var length = (lengthBuffer[0] << 24) | (lengthBuffer[1] << 16) |
-                                         (lengthBuffer[2] << 8) | lengthBuffer[3];
-
+                            var length = MemoryMarshal.Cast<byte, int>(lengthBuffer)[0];
                             var buffer = ArrayPool<byte>.Shared.Rent(length);
 
                             while (_client.Available < length)
