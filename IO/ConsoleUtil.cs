@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.IO;
 using LocalAdmin.V2.IO.Logging;
@@ -7,6 +7,10 @@ namespace LocalAdmin.V2.IO;
 
 public static class ConsoleUtil
 {
+    internal const string InputIntro = "> ";
+
+    internal static int InputCursorLeft => InputIntro.Length + Core.LocalAdmin.CurrentInput.Length;
+
     private static readonly char[] ToTrim = { '\n', '\r' };
 
     private static readonly object Lck = new object();
@@ -93,6 +97,8 @@ public static class ConsoleUtil
                 if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                     Console.CursorTop += height;
 
+                ResetLine();
+
                 Console.Write($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
                 Console.ForegroundColor = ConsoleColor.White;
@@ -103,7 +109,7 @@ public static class ConsoleUtil
         }
     }
 
-    public static void WriteLine(string? content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
+    public static void WriteLine(string? content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true, bool inputIntro = true)
     {
         lock (Lck)
         {
@@ -124,13 +130,31 @@ public static class ConsoleUtil
                 if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                     Console.CursorTop += height;
 
+                ResetLine();
+
                 Console.WriteLine($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
-                Console.ForegroundColor = ConsoleColor.White;
+                if(inputIntro)
+                    WriteInputIntro();
             }
 
             if (log)
                 Logger.Log($"{GetLogsTimestamp()} {(multiline ? content.Replace("\n", GetLogsPadding(), StringComparison.Ordinal) : content)}");
         }
+    }
+
+    public static void WriteInputIntro()
+    {
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.Write("> ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write(Core.LocalAdmin.CurrentInput);
+    }
+
+    public static void ResetLine()
+    {
+        Console.CursorLeft = 0;
+        Console.Write(string.Empty.PadLeft(Console.WindowWidth));
+        Console.CursorLeft = 0;
     }
 }

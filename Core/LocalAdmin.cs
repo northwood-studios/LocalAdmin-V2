@@ -189,36 +189,42 @@ public sealed class LocalAdmin : IDisposable
                 ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
 
-                ReadInput((input) =>
+                bool onCheckInput(string? input)
+                {
+                    if (input == null)
+                        return false;
+
+                    switch (input.ToLowerInvariant())
                     {
-                        if (input == null)
+                        case "y":
+                        case "yes":
+                        case "1":
+                            DataJson!.EulaAccepted = DateTime.UtcNow;
+                            return true;
+
+                        case "n":
+                        case "no":
+                        case "nope":
+                        case "0":
+                            ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red);
+                            Terminate();
+                            return true;
+
+                        default:
                             return false;
+                    }
+                }
 
-                        switch (input.ToLowerInvariant())
-                        {
-                            case "y":
-                            case "yes":
-                            case "1":
-                                DataJson.EulaAccepted = DateTime.UtcNow;
-                                return true;
+                void onValidInput()
+                {
+                }
 
-                            case "n":
-                            case "no":
-                            case "nope":
-                            case "0":
-                                ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red);
-                                Terminate();
-                                return true;
+                void onInvalidInput()
+                {
+                    ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Red);
+                }
 
-                            default:
-                                return false;
-                        }
-
-                    }, () => { },
-                    () =>
-                    {
-                        ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Red);
-                    });
+                ReadInput(onCheckInput, onValidInput, onInvalidInput);
 
                 if (!_exit)
                     await SaveJsonOrTerminate();
@@ -233,22 +239,29 @@ public sealed class LocalAdmin : IDisposable
                 {
                     ConsoleUtil.WriteLine("You can pass port number as first startup argument.",
                         ConsoleColor.Green);
+                    ConsoleUtil.ResetLine();
                     Console.WriteLine(string.Empty);
                     ConsoleUtil.Write($"Port number (default: {DefaultPort}): ", ConsoleColor.Green);
+                    
+                    bool onCheckInput(string? input)
+                    {
+                        if (!string.IsNullOrEmpty(input))
+                            return ushort.TryParse(input, out GamePort);
 
-                    ReadInput((input) =>
-                        {
-                            if (!string.IsNullOrEmpty(input))
-                                return ushort.TryParse(input, out GamePort);
-                            GamePort = DefaultPort;
-                            return true;
+                        GamePort = DefaultPort;
+                        return true;
+                    }
 
-                        }, () => { },
-                        () =>
-                        {
-                            ConsoleUtil.WriteLine("Port number must be a unsigned short integer.",
-                                ConsoleColor.Red);
-                        });
+                    void onValidInput()
+                    {
+                    }
+
+                    void onInvalidInput()
+                    {
+                        ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red);
+                    }
+
+                    ReadInput(onCheckInput, onValidInput, onInvalidInput);
                 }
 
                 var capture = CaptureArgs.None;
@@ -581,8 +594,8 @@ public sealed class LocalAdmin : IDisposable
         SetTerminalTitle();
         Logger.Initialize();
 
-        ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen);
-        ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
+        ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen, inputIntro: false);
+        ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray, inputIntro: false);
 
         SetupServer();
 
@@ -594,14 +607,21 @@ public sealed class LocalAdmin : IDisposable
 
     private static void Menu()
     {
+        var headerLines = new string[]
+        {
+            $"SCP: Secret Laboratory - LocalAdmin v. {VersionString}",
+            string.Empty,
+            "Licensed under The MIT License (use command \"license\" to get license text).",
+            "Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2024",
+            "Type 'help' to get list of available commands.",
+            string.Empty
+        };
+
         ConsoleUtil.Clear();
-        ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine("Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2024", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
+
+        foreach (var line in headerLines) {
+            ConsoleUtil.WriteLine(line, ConsoleColor.Cyan, inputIntro: false);
+        }
     }
 
     private static void SetupExitHandlers()
@@ -668,18 +688,46 @@ public sealed class LocalAdmin : IDisposable
         Server.Start();
     }
 
+    internal static string CurrentInput = "";
+
     private static void SetupKeyboardInput()
     {
         new Task(() =>
         {
+            ConsoleKeyInfo consoleKeyInfo;
+
             while (!_exit)
             {
-                var input = Console.ReadLine();
+                ConsoleUtil.WriteInputIntro();
 
-                if (string.IsNullOrWhiteSpace(input))
+                do
+                {
+                    consoleKeyInfo = Console.ReadKey(true);
+
+                    if (consoleKeyInfo.Key == ConsoleKey.Backspace)
+                    {
+                        if (Console.CursorLeft < ConsoleUtil.InputIntro.Length+1)
+                            continue;
+
+                        Console.CursorLeft--;
+                        Console.Write(" ");
+                        Console.CursorLeft--;
+                    }
+                    else
+                    {
+                        Console.Write(consoleKeyInfo.KeyChar);
+                    }
+
+                    CurrentInput += consoleKeyInfo.KeyChar;
+                } while (consoleKeyInfo.Key != ConsoleKey.Enter);
+
+                //var CurrentInput = Console.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(CurrentInput))
                     continue;
 
-                InputQueue.Enqueue(input);
+                InputQueue.Enqueue(CurrentInput);
+                CurrentInput = string.Empty;
             }
         }).Start();
     }
@@ -705,13 +753,14 @@ public sealed class LocalAdmin : IDisposable
 
                 if (currentLineCursor > 0)
                 {
-                    Console.SetCursorPosition(0, currentLineCursor - 1);
-
-                    ConsoleUtil.WriteLine($"{string.Empty.PadLeft(Console.WindowWidth)}>>> {input}", ConsoleColor.DarkMagenta, -1);
-                    Console.SetCursorPosition(0, currentLineCursor);
+                    Console.CursorTop = currentLineCursor - 1;
+                    ConsoleUtil.ResetLine();
                 }
-                else
-                    ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
+
+                ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
+
+                if (currentLineCursor > 0)
+                    Console.CursorTop = currentLineCursor;
 
                 if (!_processRefreshFail && _gameProcess != null)
                 {
@@ -772,7 +821,7 @@ public sealed class LocalAdmin : IDisposable
     {
         if (File.Exists(_scpslExecutable))
         {
-            ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
+            ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen, inputIntro: false);
             var printStd = Configuration!.LaShowStdoutStderr || _stdPrint;
             var redirectStreams =
                 Configuration.LaLogStdoutStderr || printStd;
