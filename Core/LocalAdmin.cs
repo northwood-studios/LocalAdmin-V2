@@ -731,14 +731,9 @@ public sealed class LocalAdmin : IDisposable
 
             static void AddToCommandHistory(string command)
             {
-                if (_commandsHistory.Contains(command))
-                {
-                    _commandsHistory.Remove(command);
-                }
-                else if (_commandsHistory.Count == CommandsHistorySize)
-                {
+                if (!_commandsHistory.Remove(command) && _commandsHistory.Count == CommandsHistorySize)
                     _commandsHistory.RemoveAt(_commandsHistory.Count - 1);
-                }
+
                 _commandsHistory.Insert(0, command);
             }
 
