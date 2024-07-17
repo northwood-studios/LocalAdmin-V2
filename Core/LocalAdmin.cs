@@ -83,6 +83,24 @@ public sealed class LocalAdmin : IDisposable
     private static readonly object _inputLockObject = new object();
     private static List<string> _commandsHistory = new List<string>();
 
+    internal static string CurrentInput
+    {
+        get
+        {
+            lock (_inputLockObject)
+            {
+                return _currentInput;
+            }
+        }
+        set
+        {
+            lock (_inputLockObject)
+            {
+                _currentInput = value;
+            }
+        }
+    }
+
     internal enum ShutdownAction : byte
     {
         Crash,
@@ -198,15 +216,11 @@ public sealed class LocalAdmin : IDisposable
                     "Do you accept the EULA? [yes/no]",
                 };
 
-<<<<<<< Updated upstream
-=======
                 foreach (var line in headerLines)
                 {
                     ConsoleUtil.WriteLine(line, ConsoleColor.Cyan);
                 }
 
-
->>>>>>> Stashed changes
                 bool onCheckInput(string? input)
                 {
                     if (input == null)
@@ -224,21 +238,13 @@ public sealed class LocalAdmin : IDisposable
                         case "no":
                         case "nope":
                         case "0":
-<<<<<<< Updated upstream
-                            ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red);
-=======
                             ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red, inputIntro: false);
->>>>>>> Stashed changes
                             Terminate();
                             return true;
 
                         default:
                             return false;
-<<<<<<< Updated upstream
                     }
-=======
-                        }
->>>>>>> Stashed changes
                 }
 
                 void onValidInput()
@@ -264,12 +270,7 @@ public sealed class LocalAdmin : IDisposable
                 if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
                 {
                     ConsoleUtil.WriteLine("You can pass port number as first startup argument.",
-<<<<<<< Updated upstream
-                        ConsoleColor.Green);
-                    ConsoleUtil.ResetLine();
-=======
                         ConsoleColor.Green, inputIntro: false);
->>>>>>> Stashed changes
                     Console.WriteLine(string.Empty);
                     ConsoleUtil.Write($"Port number (default: {DefaultPort}): ", ConsoleColor.Green);
                     
@@ -278,34 +279,18 @@ public sealed class LocalAdmin : IDisposable
                         if (!string.IsNullOrEmpty(input))
                             return ushort.TryParse(input, out GamePort);
 
-<<<<<<< Updated upstream
                         GamePort = DefaultPort;
                         return true;
                     }
 
-=======
-                    bool onCheckInput(string? input)
-                    {
-                        if (!string.IsNullOrEmpty(input))
-                            return ushort.TryParse(input, out GamePort);
-
-                        GamePort = DefaultPort;
-                        return true;
-                    }
-
->>>>>>> Stashed changes
                     void onValidInput()
                     {
                     }
 
                     void onInvalidInput()
                     {
-<<<<<<< Updated upstream
-                        ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red);
-=======
                         ConsoleUtil.WriteLine("Port number must be a unsigned short integer.",
                             ConsoleColor.Red, inputIntro: false);
->>>>>>> Stashed changes
                     }
 
                     ReadInput(onCheckInput, onValidInput, onInvalidInput);
@@ -655,34 +640,20 @@ public sealed class LocalAdmin : IDisposable
 
     private static void Menu()
     {
-<<<<<<< Updated upstream
-        var headerLines = new string[]
-        {
-=======
         var headerLines = new string[] {
->>>>>>> Stashed changes
             $"SCP: Secret Laboratory - LocalAdmin v. {VersionString}",
             string.Empty,
             "Licensed under The MIT License (use command \"license\" to get license text).",
             "Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2024",
-<<<<<<< Updated upstream
-            "Type 'help' to get list of available commands.",
-            string.Empty
-=======
             string.Empty,
             "Type 'help' to get list of available commands.",
             string.Empty,
->>>>>>> Stashed changes
         };
 
         ConsoleUtil.Clear();
 
-<<<<<<< Updated upstream
-        foreach (var line in headerLines) {
-=======
         foreach (var line in headerLines)
         {
->>>>>>> Stashed changes
             ConsoleUtil.WriteLine(line, ConsoleColor.Cyan, inputIntro: false);
         }
     }
@@ -751,38 +722,11 @@ public sealed class LocalAdmin : IDisposable
         Server.Start();
     }
 
-<<<<<<< Updated upstream
-    internal static string CurrentInput = "";
-=======
-    internal static string CurrentInput
-    {
-        get
-        {
-            lock (_inputLockObject)
-            {
-                return _currentInput;
-            }
-        }
-        set
-        {
-            lock (_inputLockObject)
-            {
-                _currentInput = value;
-            }
-        }
-    }
->>>>>>> Stashed changes
-
     private static void SetupKeyboardInput()
     {
         new Task(() =>
         {
             ConsoleKeyInfo consoleKeyInfo;
-<<<<<<< Updated upstream
-
-            while (!_exit)
-            {
-=======
             int historyIndex = -1;
 
             static void AddToCommandHistory(string command)
@@ -802,31 +746,12 @@ public sealed class LocalAdmin : IDisposable
             {
                 NEXT_CYCLE:
                 ConsoleUtil.ResetLine();
->>>>>>> Stashed changes
                 ConsoleUtil.WriteInputIntro();
 
                 do
                 {
                     consoleKeyInfo = Console.ReadKey(true);
 
-<<<<<<< Updated upstream
-                    if (consoleKeyInfo.Key == ConsoleKey.Backspace)
-                    {
-                        if (Console.CursorLeft < ConsoleUtil.InputIntro.Length+1)
-                            continue;
-
-                        Console.CursorLeft--;
-                        Console.Write(" ");
-                        Console.CursorLeft--;
-                    }
-                    else
-                    {
-                        Console.Write(consoleKeyInfo.KeyChar);
-                    }
-
-                    CurrentInput += consoleKeyInfo.KeyChar;
-                } while (consoleKeyInfo.Key != ConsoleKey.Enter);
-=======
                     if (consoleKeyInfo.Key == ConsoleKey.UpArrow && _commandsHistory.Count > 0)
                     {
                         historyIndex = Math.Abs((historyIndex + 1) % _commandsHistory.Count);
@@ -853,15 +778,7 @@ public sealed class LocalAdmin : IDisposable
                         Console.Write(consoleKeyInfo.KeyChar);
                     }
                 } while (consoleKeyInfo.Key != ConsoleKey.Enter && !_exit);
->>>>>>> Stashed changes
 
-                //var CurrentInput = Console.ReadLine();
-
-                if (string.IsNullOrWhiteSpace(CurrentInput))
-                    continue;
-
-<<<<<<< Updated upstream
-=======
                 AddToCommandHistory(CurrentInput);
 
                 if (NoSetCursor)
@@ -869,7 +786,6 @@ public sealed class LocalAdmin : IDisposable
                     Console.WriteLine();
                 }
 
->>>>>>> Stashed changes
                 InputQueue.Enqueue(CurrentInput);
                 CurrentInput = string.Empty;
             }
@@ -893,22 +809,7 @@ public sealed class LocalAdmin : IDisposable
                 if (string.IsNullOrWhiteSpace(input))
                     continue;
 
-<<<<<<< Updated upstream
-                var currentLineCursor = NoSetCursor ? 0 : Console.CursorTop;
-
-                if (currentLineCursor > 0)
-                {
-                    Console.CursorTop = currentLineCursor - 1;
-                    ConsoleUtil.ResetLine();
-                }
-
                 ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
-
-                if (currentLineCursor > 0)
-                    Console.CursorTop = currentLineCursor;
-=======
-                ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
->>>>>>> Stashed changes
 
                 if (!_processRefreshFail && _gameProcess != null)
                 {

@@ -134,11 +134,7 @@ public static class ConsoleUtil
 
                 Console.WriteLine($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
-<<<<<<< Updated upstream
                 if(inputIntro)
-=======
-                if (inputIntro)
->>>>>>> Stashed changes
                     WriteInputIntro();
             }
 
@@ -149,12 +145,6 @@ public static class ConsoleUtil
 
     public static void WriteInputIntro()
     {
-<<<<<<< Updated upstream
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("> ");
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.Write(Core.LocalAdmin.CurrentInput);
-=======
         lock (Lck)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -162,22 +152,15 @@ public static class ConsoleUtil
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write(Core.LocalAdmin.CurrentInput);
         }
->>>>>>> Stashed changes
     }
 
     public static void ResetLine()
     {
-<<<<<<< Updated upstream
-        Console.CursorLeft = 0;
-        Console.Write(string.Empty.PadLeft(Console.WindowWidth));
-        Console.CursorLeft = 0;
-=======
         lock (Lck)
         {
             Console.CursorLeft = 0;
             Console.Write(string.Empty.PadLeft(Console.WindowWidth));
             Console.CursorLeft = 0;
         }
->>>>>>> Stashed changes
     }
 }
