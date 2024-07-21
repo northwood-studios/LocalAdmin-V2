@@ -37,7 +37,6 @@ public static class ConfigWizard
                !input.Equals("keep", StringComparison.OrdinalIgnoreCase))
         {
             Console.WriteLine("Do you want to edit that configuration? [edit/keep]: ");
-            ConsoleUtil.WriteInputIntro();
             input = Console.ReadLine();
         }
 
@@ -243,7 +242,6 @@ public static class ConfigWizard
             {
                 Console.WriteLine(
                     $"Do you want to save the configuration only for THIS server (on port {LocalAdmin.GamePort} or should it become a GLOBAL configuration (default one for all future servers - servers not configured yet)? [this/global]: ");
-                ConsoleUtil.WriteInputIntro();
                 input = Console.ReadLine();
             }
         }

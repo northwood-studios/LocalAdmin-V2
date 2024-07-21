@@ -13,6 +13,7 @@ public class Config
     public bool LaLiveViewUseUtc;
 
     public bool LaShowStdoutStderr;
+    public bool LaEnableNewCommandsInput = !Console.IsInputRedirected;
     public bool LaNoSetCursor = OperatingSystem.IsLinux();
     public bool EnableTrueColor = OperatingSystem.IsLinux();
     public bool EnableLaLogs = true;
@@ -55,6 +56,9 @@ public class Config
 
         sb.Append("la_show_stdout_and_stderr: ");
         sb.AppendLine(LaShowStdoutStderr.ToString().ToLowerInvariant());
+
+        sb.Append("la_enable_new_commands_input: ");
+        sb.AppendLine(LaEnableNewCommandsInput.ToString().ToLowerInvariant());
 
         sb.Append("la_no_set_cursor: ");
         sb.AppendLine(LaNoSetCursor.ToString().ToLowerInvariant());
@@ -147,6 +151,10 @@ public class Config
 
                 case "la_show_stdout_and_stderr" when bool.TryParse(sp[1], out var b):
                     cfg.LaShowStdoutStderr = b;
+                    break;
+
+                case "la_enable_new_commands_input" when bool.TryParse(sp[1], out var b):
+                    cfg.LaEnableNewCommandsInput = b;
                     break;
 
                 case "la_no_set_cursor" when bool.TryParse(sp[1], out var b):
@@ -249,6 +257,7 @@ public class Config
         sb.AppendLine($"- LocalAdmin live will use the following timestamp format: {LaLiveViewTimeFormat}");
         sb.AppendLine($"- UTC timezone will be displayed as \"{(LaLogsUseZForUtc ? "Z" : "+00:00")}\".");
         sb.AppendLine(LaShowStdoutStderr ? "- Standard outputs (that contain a lot of debug information) will be displayed." : "- Standard outputs (that contain a lot of debug information) will NOT be displayed.");
+        sb.AppendLine(LaEnableNewCommandsInput ? "- LocalAdmin new commands input is ENABLED. If this causes problems in your environment, you can disable it." : "- LocalAdmin new commands input is DISABLED.");
         sb.AppendLine(LaNoSetCursor ? "- Cursor position management is DISABLED." : "- Cursor position management is ENABLED.");
         sb.AppendLine(EnableTrueColor ? "- True Color output is ENABLED." : "- True Color output is DISABLED.");
         sb.AppendLine(EnableLaLogs ? "- LocalAdmin logs are ENABLED." : "- LocalAdmin logs are DISABLED.");

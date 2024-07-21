@@ -15,7 +15,6 @@ using System.Threading.Tasks;
 using LocalAdmin.V2.Commands.PluginManager;
 using LocalAdmin.V2.IO.Logging;
 using LocalAdmin.V2.PluginsManager;
-using System.Collections.Generic;
 
 namespace LocalAdmin.V2.Core;
 /*
@@ -34,7 +33,8 @@ public sealed class LocalAdmin : IDisposable
     public const string VersionString = "2.5.15";
     private const ushort DefaultPort = 7777;
 
-    private static readonly ConcurrentQueue<string> InputQueue = new();
+    internal static bool Exited => _exit;
+
     private static readonly Stopwatch RestartsStopwatch = new();
     private static string? _previousPat;
     private static bool _firstRun = true;
@@ -78,29 +78,6 @@ public sealed class LocalAdmin : IDisposable
     internal TcpServer? Server { get; private set; }
     internal bool EnableGameHeartbeat { get; private set; }
 
-    private const int CommandsHistorySize = 15;
-    private static string _currentInput = "";
-    private static readonly object _inputLockObject = new object();
-    private static List<string> _commandsHistory = new List<string>();
-
-    internal static string CurrentInput
-    {
-        get
-        {
-            lock (_inputLockObject)
-            {
-                return _currentInput;
-            }
-        }
-        set
-        {
-            lock (_inputLockObject)
-            {
-                _currentInput = value;
-            }
-        }
-    }
-
     internal enum ShutdownAction : byte
     {
         Crash,
@@ -137,7 +114,7 @@ public sealed class LocalAdmin : IDisposable
             _scpslExecutable = "SCPSL.x86_64";
         else
         {
-            ConsoleUtil.WriteLine("Failed - Unsupported platform! Please switch to the Windows, or Linux platform to continue.", ConsoleColor.Red, inputIntro: false);
+            ConsoleUtil.WriteLine("Failed - Unsupported platform! Please switch to the Windows, or Linux platform to continue.", ConsoleColor.Red);
             // shut up dotnet
             _scpslExecutable = string.Empty;
             Exit(1);
@@ -155,24 +132,24 @@ public sealed class LocalAdmin : IDisposable
 
         if (!PathManager.CorrectPathFound && !args.Contains("--skipHomeCheck", StringComparer.Ordinal))
         {
-            ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Red, inputIntro: false);
-            ConsoleUtil.WriteLine("Can't obtain a valid user home directory path!", ConsoleColor.Red, inputIntro: false);
+            ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Red);
+            ConsoleUtil.WriteLine("Can't obtain a valid user home directory path!", ConsoleColor.Red);
             if (OperatingSystem.IsWindows())
             {
-                ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red, inputIntro: false);
-                ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red, inputIntro: false);
+                ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
             }
             else if (OperatingSystem.IsLinux())
             {
-                ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red, inputIntro: false);
-                ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red, inputIntro: false);
+                ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
             }
             else
             {
-                ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform, please switch to Windows or Linux!", ConsoleColor.Red, inputIntro: false);
+                ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform, please switch to Windows or Linux!", ConsoleColor.Red);
                 throw new PlatformNotSupportedException();
             }
-            ConsoleUtil.WriteLine("To skip this check, use --skipHomeCheck argument.", ConsoleColor.Red, inputIntro: false);
+            ConsoleUtil.WriteLine("To skip this check, use --skipHomeCheck argument.", ConsoleColor.Red);
             Terminate();
             return;
         }
@@ -196,7 +173,7 @@ public sealed class LocalAdmin : IDisposable
 
             if (_restarts > _restartsLimit)
             {
-                ConsoleUtil.WriteLine("Restarts limit exceeded.", ConsoleColor.Red, inputIntro: false);
+                ConsoleUtil.WriteLine("Restarts limit exceeded.", ConsoleColor.Red);
                 Terminate();
             }
         }
@@ -207,56 +184,42 @@ public sealed class LocalAdmin : IDisposable
 
             if (DataJson!.EulaAccepted == null)
             {
-                var headerLines = new string[]
-                {
-                    $"Welcome to LocalAdmin version {VersionString}!",
-                    "Before starting please read and accept the SCP:SL EULA.",
-                    "You can find it on the following website: https://link.scpslgame.com/eula",
-                    string.Empty,
-                    "Do you accept the EULA? [yes/no]",
-                };
+                ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Cyan);
+                ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
+                ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
+                ConsoleUtil.WriteLine("", ConsoleColor.Cyan, skipInputIntro: true);
+                ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
 
-                foreach (var line in headerLines)
-                {
-                    ConsoleUtil.WriteLine(line, ConsoleColor.Cyan);
-                }
-
-                bool onCheckInput(string? input)
-                {
-                    if (input == null)
-                        return false;
-
-                    switch (input.ToLowerInvariant())
+                ReadInput((input) =>
                     {
-                        case "y":
-                        case "yes":
-                        case "1":
-                            DataJson!.EulaAccepted = DateTime.UtcNow;
-                            return true;
-
-                        case "n":
-                        case "no":
-                        case "nope":
-                        case "0":
-                            ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red, inputIntro: false);
-                            Terminate();
-                            return true;
-
-                        default:
+                        if (input == null)
                             return false;
-                    }
-                }
 
-                void onValidInput()
-                {
-                }
+                        switch (input.ToLowerInvariant())
+                        {
+                            case "y":
+                            case "yes":
+                            case "1":
+                                DataJson.EulaAccepted = DateTime.UtcNow;
+                                return true;
 
-                void onInvalidInput()
-                {
-                    ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Red);
-                }
+                            case "n":
+                            case "no":
+                            case "nope":
+                            case "0":
+                                ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red);
+                                Terminate();
+                                return true;
 
-                ReadInput(onCheckInput, onValidInput, onInvalidInput);
+                            default:
+                                return false;
+                        }
+
+                    }, () => { },
+                    () =>
+                    {
+                        ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Red);
+                    });
 
                 if (!_exit)
                     await SaveJsonOrTerminate();
@@ -264,36 +227,30 @@ public sealed class LocalAdmin : IDisposable
 
             var reconfigure = false;
             var useDefault = false;
+            var useOldCommandsInput = false;
 
             if (_firstRun)
             {
                 if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
                 {
                     ConsoleUtil.WriteLine("You can pass port number as first startup argument.",
-                        ConsoleColor.Green, inputIntro: false);
+                        ConsoleColor.Green, skipInputIntro: true);
                     Console.WriteLine(string.Empty);
                     ConsoleUtil.Write($"Port number (default: {DefaultPort}): ", ConsoleColor.Green);
-                    
-                    bool onCheckInput(string? input)
-                    {
-                        if (!string.IsNullOrEmpty(input))
-                            return ushort.TryParse(input, out GamePort);
 
-                        GamePort = DefaultPort;
-                        return true;
-                    }
+                    ReadInput((input) =>
+                        {
+                            if (!string.IsNullOrEmpty(input))
+                                return ushort.TryParse(input, out GamePort);
+                            GamePort = DefaultPort;
+                            return true;
 
-                    void onValidInput()
-                    {
-                    }
-
-                    void onInvalidInput()
-                    {
-                        ConsoleUtil.WriteLine("Port number must be a unsigned short integer.",
-                            ConsoleColor.Red, inputIntro: false);
-                    }
-
-                    ReadInput(onCheckInput, onValidInput, onInvalidInput);
+                        }, () => { },
+                        () =>
+                        {
+                            ConsoleUtil.WriteLine("Port number must be a unsigned short integer.",
+                                ConsoleColor.Red);
+                        });
                 }
 
                 var capture = CaptureArgs.None;
@@ -343,6 +300,10 @@ public sealed class LocalAdmin : IDisposable
                                             break;
                                         case 't':
                                             _noTerminalTitle = true;
+                                            break;
+
+                                        case 'i':
+                                            useOldCommandsInput = true;
                                             break;
                                     }
                                 }
@@ -423,6 +384,10 @@ public sealed class LocalAdmin : IDisposable
                                         _noTerminalTitle = true;
                                         break;
 
+                                    case "--oldCommandsInput":
+                                        useOldCommandsInput = true;
+                                        break;
+
                                     case "--":
                                         capture = CaptureArgs.ArgsPassthrough;
                                         break;
@@ -452,7 +417,7 @@ public sealed class LocalAdmin : IDisposable
                             if (!int.TryParse(arg, out _restartsLimit) || _restartsLimit < -1)
                             {
                                 _restartsLimit = 4;
-                                ConsoleUtil.WriteLine("restartsLimit argument value must be an integer greater or equal to -1.", ConsoleColor.Red, inputIntro: false);
+                                ConsoleUtil.WriteLine("restartsLimit argument value must be an integer greater or equal to -1.", ConsoleColor.Red);
                             }
                             capture = CaptureArgs.None;
                             break;
@@ -461,7 +426,7 @@ public sealed class LocalAdmin : IDisposable
                             if (!int.TryParse(arg, out _restartsTimeWindow) || _restartsLimit < 0)
                             {
                                 _restartsTimeWindow = 480;
-                                ConsoleUtil.WriteLine("restartsTimeWindow argument value must be an integer greater or equal to 0.", ConsoleColor.Red, inputIntro: false);
+                                ConsoleUtil.WriteLine("restartsTimeWindow argument value must be an integer greater or equal to 0.", ConsoleColor.Red);
                             }
                             capture = CaptureArgs.None;
                             break;
@@ -476,7 +441,7 @@ public sealed class LocalAdmin : IDisposable
                             {
                                 ConsoleUtil.WriteLine(
                                     "logLengthLimit argument value must be an integer greater or equal to 0.",
-                                    ConsoleColor.Red, inputIntro: false);
+                                    ConsoleColor.Red);
                                 LogLengthLimit = 25000000000;
                             }
 
@@ -494,8 +459,7 @@ public sealed class LocalAdmin : IDisposable
                             {
                                 ConsoleUtil.WriteLine(
                                     "logEntriesLimit argument value must be an integer greater or equal to 0.",
-                                    ConsoleColor.Red,
-                                    inputIntro: false);
+                                    ConsoleColor.Red);
                                 LogEntriesLimit = 10000000000;
                             }
 
@@ -541,6 +505,8 @@ public sealed class LocalAdmin : IDisposable
             AutoFlush &= Configuration.LaLogAutoFlush;
             EnableLogging &= Configuration.EnableLaLogs;
 
+            Configuration.LaEnableNewCommandsInput &= !useOldCommandsInput;
+
             if (Configuration.EnableHeartbeat)
             {
                 EnableGameHeartbeat = true;
@@ -551,7 +517,7 @@ public sealed class LocalAdmin : IDisposable
                 StartHeartbeatMonitoring();
             }
 
-            InputQueue.Clear();
+            CommandsInput.ClearQueue();
 
             if (_firstRun)
             {
@@ -571,7 +537,7 @@ public sealed class LocalAdmin : IDisposable
             {
                 _exit = false;
                 _firstRun = false;
-                SetupKeyboardInput();
+                CommandsInput.Start(Configuration.LaEnableNewCommandsInput);
             }
 
             RegisterCommands();
@@ -627,8 +593,8 @@ public sealed class LocalAdmin : IDisposable
         SetTerminalTitle();
         Logger.Initialize();
 
-        ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen, inputIntro: false);
-        ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray, inputIntro: false);
+        ConsoleUtil.WriteLine($"Started new session on port {GamePort}.", ConsoleColor.DarkGreen);
+        ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
 
         SetupServer();
 
@@ -640,22 +606,14 @@ public sealed class LocalAdmin : IDisposable
 
     private static void Menu()
     {
-        var headerLines = new string[] {
-            $"SCP: Secret Laboratory - LocalAdmin v. {VersionString}",
-            string.Empty,
-            "Licensed under The MIT License (use command \"license\" to get license text).",
-            "Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2024",
-            string.Empty,
-            "Type 'help' to get list of available commands.",
-            string.Empty,
-        };
-
         ConsoleUtil.Clear();
-
-        foreach (var line in headerLines)
-        {
-            ConsoleUtil.WriteLine(line, ConsoleColor.Cyan, inputIntro: false);
-        }
+        ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine("Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2024", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
     }
 
     private static void SetupExitHandlers()
@@ -722,71 +680,6 @@ public sealed class LocalAdmin : IDisposable
         Server.Start();
     }
 
-    private static void SetupKeyboardInput()
-    {
-        new Task(() =>
-        {
-            ConsoleKeyInfo consoleKeyInfo;
-            int historyIndex = -1;
-
-            static void AddToCommandHistory(string command)
-            {
-                if (!_commandsHistory.Remove(command) && _commandsHistory.Count == CommandsHistorySize)
-                    _commandsHistory.RemoveAt(_commandsHistory.Count - 1);
-
-                _commandsHistory.Insert(0, command);
-            }
-
-            while (!_exit)
-            {
-                NEXT_CYCLE:
-                ConsoleUtil.ResetLine();
-                ConsoleUtil.WriteInputIntro();
-
-                do
-                {
-                    consoleKeyInfo = Console.ReadKey(true);
-
-                    if (consoleKeyInfo.Key == ConsoleKey.UpArrow && _commandsHistory.Count > 0)
-                    {
-                        historyIndex = Math.Abs((historyIndex + 1) % _commandsHistory.Count);
-                        CurrentInput = _commandsHistory[historyIndex];
-                        goto NEXT_CYCLE;
-                    }
-                    else if (consoleKeyInfo.Key == ConsoleKey.DownArrow && _commandsHistory.Count > 0)
-                    {
-                        historyIndex = Math.Abs((historyIndex - 1) % _commandsHistory.Count);
-                        CurrentInput = _commandsHistory[historyIndex];
-                        goto NEXT_CYCLE;
-                    }
-                    else if (consoleKeyInfo.Key == ConsoleKey.Backspace)
-                    {
-                        if (Console.CursorLeft < ConsoleUtil.InputIntro.Length + 1)
-                            continue;
-
-                        CurrentInput = CurrentInput[..^1];
-                        Console.Write("\b \b");
-                    }
-                    else if (consoleKeyInfo.Key != ConsoleKey.Enter && !char.IsControl(consoleKeyInfo.KeyChar))
-                    {
-                        CurrentInput += consoleKeyInfo.KeyChar;
-                        Console.Write(consoleKeyInfo.KeyChar);
-                    }
-                } while (consoleKeyInfo.Key != ConsoleKey.Enter && !_exit);
-
-                AddToCommandHistory(CurrentInput);
-
-                if (NoSetCursor)
-                {
-                    Console.WriteLine();
-                }
-
-                InputQueue.Enqueue(CurrentInput);
-                CurrentInput = string.Empty;
-            }
-        }).Start();
-    }
-
     private void SetupReader()
     {
         async void ReaderTaskMethod()
@@ -795,7 +688,7 @@ public sealed class LocalAdmin : IDisposable
 
             while (!_exit)
             {
-                if (!InputQueue.TryDequeue(out var input))
+                if (!CommandsInput.TryDequeueCommand(out var input))
                 {
                     await Task.Delay(65);
                     continue;
@@ -804,7 +697,17 @@ public sealed class LocalAdmin : IDisposable
                 if (string.IsNullOrWhiteSpace(input))
                     continue;
 
-                ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
+                var currentLineCursor = NoSetCursor || Configuration!.LaEnableNewCommandsInput ? 0 : Console.CursorTop;
+
+                if (currentLineCursor > 0)
+                {
+                    Console.SetCursorPosition(0, currentLineCursor - 1);
+
+                    ConsoleUtil.WriteLine($"{string.Empty.PadLeft(Console.WindowWidth)}>>> {input}", ConsoleColor.DarkMagenta, -1);
+                    Console.SetCursorPosition(0, currentLineCursor);
+                }
+                else
+                    ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta, -1);
 
                 if (!_processRefreshFail && _gameProcess != null)
                 {
@@ -812,7 +715,7 @@ public sealed class LocalAdmin : IDisposable
                     {
                         if (_gameProcess.HasExited)
                         {
-                            ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red, inputIntro: false);
+                            ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
                             _exit = true;
                             continue;
                         }
@@ -838,7 +741,9 @@ public sealed class LocalAdmin : IDisposable
 
                 var exit = false;
 
-                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("exit ", StringComparison.OrdinalIgnoreCase) || input.Equals("quit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("quit ", StringComparison.OrdinalIgnoreCase) || input.Equals("stop", StringComparison.OrdinalIgnoreCase) || input.StartsWith("stop ", StringComparison.OrdinalIgnoreCase))
+                if (input.StartsWith("exit", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("quit", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("stop", StringComparison.OrdinalIgnoreCase))
                 {
                     DisableExitActionSignals = true;
                     ExitAction = ShutdownAction.SilentShutdown;
@@ -865,7 +770,7 @@ public sealed class LocalAdmin : IDisposable
     {
         if (File.Exists(_scpslExecutable))
         {
-            ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen, inputIntro: false);
+            ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
             var printStd = Configuration!.LaShowStdoutStderr || _stdPrint;
             var redirectStreams =
                 Configuration.LaLogStdoutStderr || printStd;
@@ -1066,7 +971,7 @@ public sealed class LocalAdmin : IDisposable
 
             if (waitForKey && ExitAction != ShutdownAction.SilentShutdown)
             {
-                ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray, inputIntro: false);
+                ConsoleUtil.WriteLine("Press any key to close...", ConsoleColor.DarkGray);
                 Console.ReadKey(true);
             }
 
@@ -1102,7 +1007,7 @@ public sealed class LocalAdmin : IDisposable
 
                 if (DataJson == null)
                 {
-                    ConsoleUtil.WriteLine("Json file is corrupted! Terminating LocalAdmin. If the issue persists, please delete the file and restart LocalAdmin.", ConsoleColor.Red, inputIntro: false);
+                    ConsoleUtil.WriteLine("Json file is corrupted! Terminating LocalAdmin. If the issue persists, please delete the file and restart LocalAdmin.", ConsoleColor.Red);
                     Terminate();
                 }
             }
@@ -1115,7 +1020,7 @@ public sealed class LocalAdmin : IDisposable
         }
         catch (Exception e)
         {
-            ConsoleUtil.WriteLine($"Failed to read JSON config file: {e.Message}", ConsoleColor.Red, inputIntro: false);
+            ConsoleUtil.WriteLine($"Failed to read JSON config file: {e.Message}", ConsoleColor.Red);
             DataJson = null;
             Terminate();
             throw;
@@ -1138,7 +1043,7 @@ public sealed class LocalAdmin : IDisposable
     internal static void HandleExitSignal()
     {
         Console.WriteLine("exit");
-        InputQueue.Enqueue("exit");
+        CommandsInput.EnqueueCommand("exit");
     }
 
     internal void HandleHeartbeat()

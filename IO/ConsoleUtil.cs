@@ -7,10 +7,6 @@ namespace LocalAdmin.V2.IO;
 
 public static class ConsoleUtil
 {
-    internal const string InputIntro = "> ";
-
-    internal static int InputCursorLeft => InputIntro.Length + Core.LocalAdmin.CurrentInput.Length;
-
     private static readonly char[] ToTrim = { '\n', '\r' };
 
     private static readonly object Lck = new object();
@@ -97,8 +93,6 @@ public static class ConsoleUtil
                 if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                     Console.CursorTop += height;
 
-                ResetLine();
-
                 Console.Write($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
                 Console.ForegroundColor = ConsoleColor.White;
@@ -109,7 +103,7 @@ public static class ConsoleUtil
         }
     }
 
-    public static void WriteLine(string? content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true, bool inputIntro = true)
+    public static void WriteLine(string? content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true, bool skipInputIntro = false)
     {
         lock (Lck)
         {
@@ -130,12 +124,14 @@ public static class ConsoleUtil
                 if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                     Console.CursorTop += height;
 
-                ResetLine();
+                ResetCurrentLine();
 
                 Console.WriteLine($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
-                if(inputIntro)
-                    WriteInputIntro();
+                Console.ForegroundColor = ConsoleColor.White;
+
+                if (Core.LocalAdmin.Configuration?.LaEnableNewCommandsInput ?? false && !skipInputIntro)
+                    WriteCommandsInput();
             }
 
             if (log)
@@ -143,24 +139,36 @@ public static class ConsoleUtil
         }
     }
 
-    public static void WriteInputIntro()
+    public static void ResetCurrentLine()
     {
         lock (Lck)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write("> ");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.Write(Core.LocalAdmin.CurrentInput);
+            Console.Write("\r"+new string(' ', Console.WindowWidth)+"\r");
         }
     }
 
-    public static void ResetLine()
+    internal static void WriteCommandsInput()
     {
         lock (Lck)
         {
-            Console.CursorLeft = 0;
-            Console.Write(string.Empty.PadLeft(Console.WindowWidth));
-            Console.CursorLeft = 0;
+            Console.Write(CommandsInput.IntroText);
+            Console.Write(CommandsInput.CurrentInput);
+        }
+    }
+
+    internal static void RemoveLastCharacter()
+    {
+        lock (Lck)
+        {
+            Console.Write("\b \b");
+        }
+    }
+
+    internal static void WriteChar(char value)
+    {
+        lock (Lck)
+        {
+            Console.Write(value);
         }
     }
 }
