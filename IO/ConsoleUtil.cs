@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.IO;
 using LocalAdmin.V2.IO.Logging;
@@ -103,7 +103,7 @@ public static class ConsoleUtil
         }
     }
 
-    public static void WriteLine(string? content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
+    public static void WriteLine(string? content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true, bool skipInputIntro = false)
     {
         lock (Lck)
         {
@@ -124,13 +124,51 @@ public static class ConsoleUtil
                 if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                     Console.CursorTop += height;
 
+                ResetCurrentLine();
+
                 Console.WriteLine($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
                 Console.ForegroundColor = ConsoleColor.White;
+
+                if (Core.LocalAdmin.Configuration?.LaEnableNewCommandsInput ?? false && !skipInputIntro)
+                    WriteCommandsInput();
             }
 
             if (log)
                 Logger.Log($"{GetLogsTimestamp()} {(multiline ? content.Replace("\n", GetLogsPadding(), StringComparison.Ordinal) : content)}");
+        }
+    }
+
+    public static void ResetCurrentLine()
+    {
+        lock (Lck)
+        {
+            Console.Write("\r"+new string(' ', Console.WindowWidth)+"\r");
+        }
+    }
+
+    internal static void WriteCommandsInput()
+    {
+        lock (Lck)
+        {
+            Console.Write(CommandsInput.IntroText);
+            Console.Write(CommandsInput.CurrentInput);
+        }
+    }
+
+    internal static void RemoveLastCharacter()
+    {
+        lock (Lck)
+        {
+            Console.Write("\b \b");
+        }
+    }
+
+    internal static void WriteChar(char value)
+    {
+        lock (Lck)
+        {
+            Console.Write(value);
         }
     }
 }

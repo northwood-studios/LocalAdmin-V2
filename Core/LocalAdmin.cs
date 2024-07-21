@@ -33,7 +33,8 @@ public sealed class LocalAdmin : IDisposable
     public const string VersionString = "2.5.15";
     private const ushort DefaultPort = 7777;
 
-    private static readonly ConcurrentQueue<string> InputQueue = new();
+    internal static bool Exited => _exit;
+
     private static readonly Stopwatch RestartsStopwatch = new();
     private static string? _previousPat;
     private static bool _firstRun = true;
@@ -186,7 +187,7 @@ public sealed class LocalAdmin : IDisposable
                 ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
-                ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
+                ConsoleUtil.WriteLine("", ConsoleColor.Cyan, skipInputIntro: true);
                 ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
 
                 ReadInput((input) =>
@@ -226,13 +227,14 @@ public sealed class LocalAdmin : IDisposable
 
             var reconfigure = false;
             var useDefault = false;
+            var useOldCommandsInput = false;
 
             if (_firstRun)
             {
                 if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
                 {
                     ConsoleUtil.WriteLine("You can pass port number as first startup argument.",
-                        ConsoleColor.Green);
+                        ConsoleColor.Green, skipInputIntro: true);
                     Console.WriteLine(string.Empty);
                     ConsoleUtil.Write($"Port number (default: {DefaultPort}): ", ConsoleColor.Green);
 
@@ -298,6 +300,10 @@ public sealed class LocalAdmin : IDisposable
                                             break;
                                         case 't':
                                             _noTerminalTitle = true;
+                                            break;
+
+                                        case 'i':
+                                            useOldCommandsInput = true;
                                             break;
                                     }
                                 }
@@ -376,6 +382,10 @@ public sealed class LocalAdmin : IDisposable
 
                                     case "--noTerminalTitle":
                                         _noTerminalTitle = true;
+                                        break;
+
+                                    case "--oldCommandsInput":
+                                        useOldCommandsInput = true;
                                         break;
 
                                     case "--":
@@ -495,6 +505,8 @@ public sealed class LocalAdmin : IDisposable
             AutoFlush &= Configuration.LaLogAutoFlush;
             EnableLogging &= Configuration.EnableLaLogs;
 
+            Configuration.LaEnableNewCommandsInput &= !useOldCommandsInput;
+
             if (Configuration.EnableHeartbeat)
             {
                 EnableGameHeartbeat = true;
@@ -505,7 +517,7 @@ public sealed class LocalAdmin : IDisposable
                 StartHeartbeatMonitoring();
             }
 
-            InputQueue.Clear();
+            CommandsInput.ClearQueue();
 
             if (_firstRun)
             {
@@ -525,7 +537,7 @@ public sealed class LocalAdmin : IDisposable
             {
                 _exit = false;
                 _firstRun = false;
-                SetupKeyboardInput();
+                CommandsInput.Start(Configuration.LaEnableNewCommandsInput);
             }
 
             RegisterCommands();
@@ -668,22 +680,6 @@ public sealed class LocalAdmin : IDisposable
         Server.Start();
     }
 
-    private static void SetupKeyboardInput()
-    {
-        new Task(() =>
-        {
-            while (!_exit)
-            {
-                var input = Console.ReadLine();
-
-                if (string.IsNullOrWhiteSpace(input))
-                    continue;
-
-                InputQueue.Enqueue(input);
-            }
-        }).Start();
-    }
-
     private void SetupReader()
     {
         async void ReaderTaskMethod()
@@ -692,7 +688,7 @@ public sealed class LocalAdmin : IDisposable
 
             while (!_exit)
             {
-                if (!InputQueue.TryDequeue(out var input))
+                if (!CommandsInput.TryDequeueCommand(out var input))
                 {
                     await Task.Delay(65);
                     continue;
@@ -701,7 +697,7 @@ public sealed class LocalAdmin : IDisposable
                 if (string.IsNullOrWhiteSpace(input))
                     continue;
 
-                var currentLineCursor = NoSetCursor ? 0 : Console.CursorTop;
+                var currentLineCursor = NoSetCursor || Configuration!.LaEnableNewCommandsInput ? 0 : Console.CursorTop;
 
                 if (currentLineCursor > 0)
                 {
@@ -745,7 +741,9 @@ public sealed class LocalAdmin : IDisposable
 
                 var exit = false;
 
-                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("exit ", StringComparison.OrdinalIgnoreCase) || input.Equals("quit", StringComparison.OrdinalIgnoreCase) || input.StartsWith("quit ", StringComparison.OrdinalIgnoreCase) || input.Equals("stop", StringComparison.OrdinalIgnoreCase) || input.StartsWith("stop ", StringComparison.OrdinalIgnoreCase))
+                if (input.StartsWith("exit", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("quit", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("stop", StringComparison.OrdinalIgnoreCase))
                 {
                     DisableExitActionSignals = true;
                     ExitAction = ShutdownAction.SilentShutdown;
@@ -1045,7 +1043,7 @@ public sealed class LocalAdmin : IDisposable
     internal static void HandleExitSignal()
     {
         Console.WriteLine("exit");
-        InputQueue.Enqueue("exit");
+        CommandsInput.EnqueueCommand("exit");
     }
 
     internal void HandleHeartbeat()
