@@ -44,7 +44,6 @@ public sealed class LocalAdmin : IDisposable
     private static bool _ignoreNextRestart;
     private static bool _noTerminalTitle;
     private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
-    private static bool _autoEula;
 
     internal readonly CommandService CommandService = new();
     private readonly string _scpslExecutable;
@@ -184,7 +183,10 @@ public sealed class LocalAdmin : IDisposable
 
             var isEulaNotAccepted = DataJson!.EulaAccepted == null;
 
-            if (isEulaNotAccepted && _autoEula)
+            var autoEula = Environment.GetEnvironmentVariable("EULA")?.ToUpperInvariant() is "1" or "TRUE"
+                           || args.Contains("--eula");
+
+            if (isEulaNotAccepted && autoEula)
             {
                 DataJson.EulaAccepted = DateTime.UtcNow;
             }
@@ -383,10 +385,6 @@ public sealed class LocalAdmin : IDisposable
 
                                     case "--noTerminalTitle":
                                         _noTerminalTitle = true;
-                                        break;
-
-                                    case "--eula":
-                                        _autoEula = true;
                                         break;
 
                                     case "--":
