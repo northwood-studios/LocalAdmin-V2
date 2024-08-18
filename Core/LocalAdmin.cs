@@ -44,6 +44,7 @@ public sealed class LocalAdmin : IDisposable
     private static bool _ignoreNextRestart;
     private static bool _noTerminalTitle;
     private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
+    private static bool _autoEula;
 
     internal readonly CommandService CommandService = new();
     private readonly string _scpslExecutable;
@@ -181,7 +182,13 @@ public sealed class LocalAdmin : IDisposable
         {
             await LoadJsonOrTerminate();
 
-            if (DataJson!.EulaAccepted == null)
+            var isEulaNotAccepted = DataJson!.EulaAccepted == null;
+
+            if (isEulaNotAccepted && _autoEula)
+            {
+                DataJson.EulaAccepted = DateTime.UtcNow;
+            }
+            else if (isEulaNotAccepted)
             {
                 ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Cyan);
                 ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
@@ -376,6 +383,10 @@ public sealed class LocalAdmin : IDisposable
 
                                     case "--noTerminalTitle":
                                         _noTerminalTitle = true;
+                                        break;
+
+                                    case "--eula":
+                                        _autoEula = true;
                                         break;
 
                                     case "--":
