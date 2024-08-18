@@ -188,6 +188,7 @@ public sealed class LocalAdmin : IDisposable
 
             if (isEulaNotAccepted && autoEula)
             {
+                ConsoleUtil.WriteLine("EULA was auto-accepted due to the provided argument or environment variable", ConsoleColor.Yellow);
                 DataJson.EulaAccepted = DateTime.UtcNow;
             }
             else if (isEulaNotAccepted)
