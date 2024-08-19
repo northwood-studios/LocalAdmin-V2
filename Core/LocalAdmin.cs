@@ -44,6 +44,7 @@ public sealed class LocalAdmin : IDisposable
     private static bool _ignoreNextRestart;
     private static bool _noTerminalTitle;
     private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
+    private static bool _autoEula;
 
     internal readonly CommandService CommandService = new();
     private readonly string _scpslExecutable;
@@ -181,57 +182,56 @@ public sealed class LocalAdmin : IDisposable
         {
             await LoadJsonOrTerminate();
 
-            var isEulaNotAccepted = DataJson!.EulaAccepted == null;
-
-            var autoEula = Environment.GetEnvironmentVariable("SLLA_EULA")?.ToUpperInvariant() is "1" or "TRUE"
-                           || args.Contains("--eula");
-
-            if (isEulaNotAccepted && autoEula)
+            if (DataJson!.EulaAccepted == null)
             {
-                ConsoleUtil.WriteLine("EULA was auto-accepted due to the provided argument or environment variable", ConsoleColor.Yellow);
-                DataJson.EulaAccepted = DateTime.UtcNow;
-            }
-            else if (isEulaNotAccepted)
-            {
-                ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Cyan);
-                ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
-                ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
-                ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
-                ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
+                if (args.Contains("--acceptEULA", StringComparer.Ordinal) ||
+                    Environment.GetEnvironmentVariable("SLLA_EULA")?.ToUpperInvariant() is "1" or "TRUE")
+                {
+                    DataJson!.EulaAccepted = DateTime.UtcNow;
+                    _autoEula = true;
+                }
+                else
+                {
 
-                ReadInput((input) =>
-                    {
-                        if (input == null)
-                            return false;
+                    ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Cyan);
+                    ConsoleUtil.WriteLine("Before starting please read and accept the SCP:SL EULA.", ConsoleColor.Cyan);
+                    ConsoleUtil.WriteLine("You can find it on the following website: https://link.scpslgame.com/eula", ConsoleColor.Cyan);
+                    ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
+                    ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
 
-                        switch (input.ToLowerInvariant())
+                    ReadInput((input) =>
                         {
-                            case "y":
-                            case "yes":
-                            case "1":
-                                DataJson.EulaAccepted = DateTime.UtcNow;
-                                return true;
-
-                            case "n":
-                            case "no":
-                            case "nope":
-                            case "0":
-                                ConsoleUtil.WriteLine("You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.", ConsoleColor.Red);
-                                Terminate();
-                                return true;
-
-                            default:
+                            if (input == null)
                                 return false;
-                        }
 
-                    }, () => { },
-                    () =>
-                    {
-                        ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Red);
-                    });
+                            switch (input.ToLowerInvariant())
+                            {
+                                case "y":
+                                case "yes":
+                                case "1":
+                                    DataJson.EulaAccepted = DateTime.UtcNow;
+                                    return true;
 
-                if (!_exit)
-                    await SaveJsonOrTerminate();
+                                case "n":
+                                case "no":
+                                case "nope":
+                                case "0":
+                                    ConsoleUtil.WriteLine(
+                                        "You have to accept the EULA to use LocalAdmin and SCP: Secret Laboratory Dedicated Server.",
+                                        ConsoleColor.Red);
+                                    Terminate();
+                                    return true;
+
+                                default:
+                                    return false;
+                            }
+
+                        }, () => { },
+                        () => { ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Red); });
+
+                    if (!_exit)
+                        await SaveJsonOrTerminate();
+                }
             }
 
             var reconfigure = false;
@@ -544,6 +544,9 @@ public sealed class LocalAdmin : IDisposable
             StartSession();
 
             _readerTask!.Start();
+
+            if (_autoEula)
+                ConsoleUtil.WriteLine("EULA was auto-accepted due to the provided argument or environment variable", ConsoleColor.Yellow);
 
             if (!EnableLogging)
                 ConsoleUtil.WriteLine("Logging has been disabled.", ConsoleColor.Red);
