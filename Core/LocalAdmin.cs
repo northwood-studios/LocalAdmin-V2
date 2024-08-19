@@ -189,6 +189,8 @@ public sealed class LocalAdmin : IDisposable
                 {
                     DataJson!.EulaAccepted = DateTime.UtcNow;
                     _autoEula = true;
+
+                    await SaveJsonOrTerminate();
                 }
                 else
                 {
