@@ -186,7 +186,7 @@ public sealed class LocalAdmin : IDisposable
             if (DataJson!.EulaAccepted == null)
             {
                 if (args.Contains("--acceptEULA", StringComparer.Ordinal) ||
-                    Environment.GetEnvironmentVariable("SLLA_EULA")?.ToUpperInvariant() is "1" or "TRUE")
+                    Environment.GetEnvironmentVariable("ACCEPT_SLLA_EULA")?.ToUpperInvariant() is "1" or "TRUE")
                 {
                     DataJson!.EulaAccepted = DateTime.UtcNow;
                     autoEula = true;
