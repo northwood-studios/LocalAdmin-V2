@@ -44,7 +44,6 @@ public sealed class LocalAdmin : IDisposable
     private static bool _ignoreNextRestart;
     private static bool _noTerminalTitle;
     private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
-    private static bool _autoEula;
 
     internal readonly CommandService CommandService = new();
     private readonly string _scpslExecutable;
@@ -182,13 +181,15 @@ public sealed class LocalAdmin : IDisposable
         {
             await LoadJsonOrTerminate();
 
+            var autoEula = false;
+
             if (DataJson!.EulaAccepted == null)
             {
                 if (args.Contains("--acceptEULA", StringComparer.Ordinal) ||
                     Environment.GetEnvironmentVariable("SLLA_EULA")?.ToUpperInvariant() is "1" or "TRUE")
                 {
                     DataJson!.EulaAccepted = DateTime.UtcNow;
-                    _autoEula = true;
+                    autoEula = true;
 
                     await SaveJsonOrTerminate();
                 }
@@ -546,7 +547,7 @@ public sealed class LocalAdmin : IDisposable
 
             _readerTask!.Start();
 
-            if (_autoEula)
+            if (autoEula)
                 ConsoleUtil.WriteLine("SCP: Secret Laboratory EULA (https://link.scpslgame.com/eula) was accepted by providing a startup argument or setting an environment variable.", ConsoleColor.Yellow);
 
             if (!EnableLogging)
