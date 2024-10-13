@@ -667,7 +667,7 @@ public sealed class LocalAdmin : IDisposable
             }
             else
             {
-                Version glibc = Version.Parse(Marshal.PtrToStringUTF8(GetGlibcVersion()));
+                Version glibc = Version.Parse(Marshal.PtrToStringUTF8((nint) GetGlibcVersion()));
                 
                 Version minimumGlibc = new(2, 35); // Ubuntu 22.04
                 if (glibc < minimumGlibc)
