@@ -621,7 +621,7 @@ public sealed class LocalAdmin : IDisposable
     }
 
 	[StructLayout(LayoutKind.Sequential)]
-	private struct OSVERSIONINFO
+	private unsafe struct OSVERSIONINFO
 	{
 		public uint dwOSVersionInfoSize;
 		public uint dwMajorVersion;
