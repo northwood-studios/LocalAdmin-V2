@@ -4,6 +4,7 @@ using LocalAdmin.V2.IO;
 using LocalAdmin.V2.IO.ExitHandlers;
 using System;
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -647,7 +648,7 @@ public sealed class LocalAdmin : IDisposable
 			        dwOSVersionInfoSize = (uint) sizeof(OSVERSIONINFO)
 		        };
 
-                uint status = GetVersion(&info);
+                uint status = GetWindowsVersion(&info);
 			    if (status != 0)
 				    throw new Win32Exception(NtStatusToErrorCode(status));
                 Version windows = new((int) info.dwMajorVersion, (int) info.dwMinorVersion, (int) info.dwBuildNumber);
