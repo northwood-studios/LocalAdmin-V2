@@ -6,6 +6,7 @@
         <TargetFramework Condition="!$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net8.0</TargetFramework>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <LangVersion>10</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
         <RootNamespace>LocalAdmin.V2</RootNamespace>
         <AssemblyName>LocalAdmin</AssemblyName>
