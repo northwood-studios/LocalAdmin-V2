@@ -658,6 +658,7 @@ public sealed class LocalAdmin : IDisposable
                 {
                     ConsoleUtil.WriteLine($"Unsupported Windows version! SCPSL servers require Windows 21H1+ (build 19043+) and your server has {windows}!", ConsoleColor.Red);
                 }
+                return;
 
                 [DllImport("ntdll", EntryPoint = "RtlGetVersion")]
                 static extern uint GetWindowsVersion(OSVERSIONINFO* lpVersionInformation);
@@ -665,19 +666,17 @@ public sealed class LocalAdmin : IDisposable
                 [DllImport("ntdll", EntryPoint = "RtlNtStatusToDosError")]
                 static extern int NtStatusToErrorCode(uint status);
             }
-            else
-            {
-                Version glibc = Version.Parse(Marshal.PtrToStringUTF8((nint) GetGlibcVersion()));
-                
-                Version minimumGlibc = new(2, 35); // Ubuntu 22.04
-                if (glibc < minimumGlibc)
-                {
-                    ConsoleUtil.WriteLine($"Unsupported Linux version! SCPSL servers require Ubuntu 22.04+ (glibc 2.35) while your distro is based on glibc {glibc}!)", ConsoleColor.Red);
-                }
+            
+            Version glibc = Version.Parse(Marshal.PtrToStringUTF8((nint) GetGlibcVersion()));
 
-                [DllImport("libc", EntryPoint = "gnu_get_libc_version")]
-                static extern sbyte* GetGlibcVersion();
+            Version minimumGlibc = new(2, 35); // Ubuntu 22.04
+            if (glibc < minimumGlibc)
+            {
+                ConsoleUtil.WriteLine($"Unsupported Linux version! SCPSL servers require Ubuntu 22.04+ (glibc 2.35) while your distro is based on glibc {glibc}!)", ConsoleColor.Red);
             }
+
+            [DllImport("libc", EntryPoint = "gnu_get_libc_version")]
+            static extern sbyte* GetGlibcVersion();
         }
         catch (Exception ex)
         {
