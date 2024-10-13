@@ -521,6 +521,7 @@ public sealed class LocalAdmin : IDisposable
 
             if (_firstRun)
             {
+                VerifySystemVersion();
                 try
                 {
                     SetupExitHandlers();
@@ -619,6 +620,70 @@ public sealed class LocalAdmin : IDisposable
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
     }
 
+	[StructLayout(LayoutKind.Sequential)]
+	private struct OSVERSIONINFO
+	{
+		public uint dwOSVersionInfoSize;
+		public uint dwMajorVersion;
+		public uint dwMinorVersion;
+		public uint dwBuildNumber;
+		private uint dwPlatformId;
+		public fixed ushort szCSDVersion[128];
+		public ushort wServicePackMajor;
+		public ushort wServicePackMinor;
+		private ushort wSuiteMask;
+		public byte wProductType;
+		private byte wReserved;
+	}
+
+    private static unsafe void VerifySystemVersion()
+    {
+        try
+        {
+            if (OperatingSystem.IsWindows())
+            {
+		        OSVERSIONINFO info = new()
+		        {
+			        dwOSVersionInfoSize = (uint) sizeof(OSVERSIONINFO)
+		        };
+
+                uint status = GetVersion(&info);
+			    if (status != 0)
+				    throw new Win32Exception(NtStatusToErrorCode(status));
+                Version windows = new((int) info.dwMajorVersion, (int) info.dwMinorVersion, (int) info.dwBuildNumber);
+                
+                Version minimumWindows = new(10, 0, 19043); // Windows 21H1+
+                if (windows < minimumWindows)
+                {
+                    ConsoleUtil.WriteLine($"Unsupported Windows version! SCPSL servers require Windows 21H1+ (build 19043+) and your server has {windows}!", ConsoleColor.Red);
+                }
+
+                [DllImport("ntdll", EntryPoint = "RtlGetVersion")]
+                static extern uint GetWindowsVersion(OSVERSIONINFO* lpVersionInformation);
+
+                [DllImport("ntdll", EntryPoint = "RtlNtStatusToDosError")]
+                static extern int NtStatusToErrorCode(uint status);
+            }
+            else
+            {
+                Version glibc = Version.Parse(Marshal.PtrToStringUTF8(GetGlibcVersion()));
+                
+                Version minimumGlibc = new(2, 35); // Ubuntu 22.04
+                if (glibc < minimumGlibc)
+                {
+                    ConsoleUtil.WriteLine($"Unsupported Linux version! SCPSL servers require Ubuntu 22.04+ (glibc 2.35) while your distro is based on glibc {glibc}!)", ConsoleColor.Red);
+                }
+
+                [DllImport("libc", EntryPoint = "gnu_get_libc_version")]
+                static extern sbyte* GetGlibcVersion();
+            }
+        }
+        catch (Exception ex)
+        {
+            ConsoleUtil.WriteLine($"Failed to check the OS version: {ex.Message}", ConsoleColor.Red);
+        }
+    }
+    
     private static void SetupExitHandlers()
     {
         ProcessHandler.Handler.Setup();
