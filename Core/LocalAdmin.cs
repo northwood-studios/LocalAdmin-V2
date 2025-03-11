@@ -536,11 +536,10 @@ public sealed class LocalAdmin : IDisposable
             }
 
             RegisterCommands();
+
             SetupReader();
 
             StartSession();
-
-            _readerTask!.Start();
 
             if (autoEula)
                 ConsoleUtil.WriteLine("SCP: Secret Laboratory EULA (https://link.scpslgame.com/eula) was accepted by providing a startup argument or setting an environment variable.", ConsoleColor.Yellow);
