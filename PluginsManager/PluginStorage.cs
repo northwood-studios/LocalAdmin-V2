@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
+using LocalAdmin.V2.JSON;
+using LocalAdmin.V2.JSON.Objects;
 
 namespace LocalAdmin.V2.PluginsManager;
 
@@ -21,20 +23,13 @@ internal static class PluginStorage
                 return null;
             }
 
-            var metadataPath = pluginsPath + "metadata.json";
-
-            if (!File.Exists(metadataPath))
-            {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Metadata file for port {port} doesn't exist. Skipped.", ConsoleColor.Blue);
-                return null;
-            }
-
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading metadata...", ConsoleColor.Blue);
-            var metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime);
 
-            if (metadata == null)
+            var metadataPath = $"{pluginsPath}metadata.json";
+            uint timeout = ignoreLocks ? 0 : PluginInstaller.DefaultLockTime;
+            if (await FileUtils.TryReadJsonAsync(metadataPath, FileShare.Read, JsonGenerated.Default.ServerPluginsConfig, timeout) is not {} metadata)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to parse metadata file for port {port}!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to read metadata file for port {port}. Skipped.", ConsoleColor.Blue);
                 return null;
             }
 
@@ -59,23 +54,23 @@ internal static class PluginStorage
                     ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins update check failed! Aborting plugins update.", ConsoleColor.Yellow);
 
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
-                metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime);
 
-                if (metadata == null || metadata.InstalledPlugins.Count == 0)
+                if (await FileUtils.TryReadJsonAsync(metadataPath, FileShare.Read, JsonGenerated.Default.ServerPluginsConfig, timeout) is not { } newMetadata)
                 {
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
                     return null;
                 }
+                metadata = newMetadata;
             }
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading LocalAdmin config file...", ConsoleColor.Blue);
-            await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+            await Core.LocalAdmin.Singleton.LoadJsonOrTerminate();
 
-            List<PluginListEntry> plugins = new();
+            List<PluginListEntry> plugins = [];
 
             foreach (var plugin in metadata.InstalledPlugins)
             {
-                var pluginPath = pluginsPath + $"{plugin.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
+                var pluginPath = $"{pluginsPath}{plugin.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
 
                 if (!File.Exists(pluginPath))
                 {
@@ -86,8 +81,8 @@ internal static class PluginStorage
                 var currentHash = Sha.Sha256File(pluginPath);
                 string? latestVersion = null;
 
-                if (Core.LocalAdmin.DataJson!.PluginVersionCache!.ContainsKey(plugin.Key))
-                    latestVersion = Core.LocalAdmin.DataJson.PluginVersionCache[plugin.Key].Version;
+                if (Core.LocalAdmin.DataJson!.PluginVersionCache.TryGetValue(plugin.Key, out PluginVersionCache value))
+                    latestVersion = value.Version;
 
                 List<string>? dependencies = null;
 
@@ -96,7 +91,7 @@ internal static class PluginStorage
                     if (!dep.Value.InstalledByPlugins.Contains(plugin.Key))
                         continue;
 
-                    dependencies ??= new();
+                    dependencies ??= [];
                     dependencies.Add(dep.Key);
                 }
 

@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 
 namespace LocalAdmin.V2.IO.ExitHandlers;
 
 internal sealed class ProcessHandler : IExitHandler
 {
-    public static readonly ProcessHandler Handler = new ProcessHandler();
+    public static readonly ProcessHandler Handler = new();
 
     public void Setup()
     {

@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 
 namespace LocalAdmin.V2.IO.ExitHandlers;
 
 internal sealed class AppDomainHandler : IExitHandler
 {
-    public static readonly AppDomainHandler Handler = new AppDomainHandler();
+    public static readonly AppDomainHandler Handler = new();
 
     public void Setup()
     {
@@ -15,8 +15,7 @@ internal sealed class AppDomainHandler : IExitHandler
 
     private static void Exit(object? sender, EventArgs e)
     {
-        if (Core.LocalAdmin.Singleton != null)
-            Core.LocalAdmin.Singleton.Exit(0);
+        Core.LocalAdmin.Singleton?.Exit(0);
     }
 
     private static void DomainUnload(object? sender, EventArgs e)
@@ -38,15 +37,13 @@ internal sealed class AppDomainHandler : IExitHandler
         {
             ConsoleUtil.WriteLine($"Unhandled Exception: {ex}", ConsoleColor.Red);
 
-            if (Core.LocalAdmin.Singleton != null)
-                Core.LocalAdmin.Singleton.Exit(ex.HResult);
+            Core.LocalAdmin.Singleton?.Exit(ex.HResult);
         }
         else
         {
             ConsoleUtil.WriteLine("Unhandled Exception!", ConsoleColor.Red);
 
-            if (Core.LocalAdmin.Singleton != null)
-                Core.LocalAdmin.Singleton.Exit(1);
+            Core.LocalAdmin.Singleton?.Exit(1);
         }
     }
 }

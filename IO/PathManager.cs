@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
 
 namespace LocalAdmin.V2.IO;
 
@@ -19,12 +18,12 @@ internal static class PathManager
         ProcessHostPolicy();
 
         GameUserDataRoot = _configDirOverride
-            ? "AppData" + Path.DirectorySeparatorChar
-            : GetSpecialFolderPath() + "SCP Secret Laboratory" + Path.DirectorySeparatorChar;
+            ? $"AppData{Path.DirectorySeparatorChar}"
+            : $"{GetSpecialFolderPath()}SCP Secret Laboratory{Path.DirectorySeparatorChar}";
 
         ConfigPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}";
 
-        InternalJsonDataPath = ConfigPath + "localadmin_internal_data.json";
+        InternalJsonDataPath = $"{ConfigPath}localadmin_internal_data.json";
     }
 
     private static string GetSpecialFolderPath()
@@ -46,17 +45,18 @@ internal static class PathManager
                 CorrectPathFound = true;
 
                 if (OperatingSystem.IsLinux())
-                    return path + Path.DirectorySeparatorChar + ".config" + Path.DirectorySeparatorChar;
+                    return $"{path}{Path.DirectorySeparatorChar}.config{Path.DirectorySeparatorChar}";
 
                 if (OperatingSystem.IsWindows())
-                    return path + Path.DirectorySeparatorChar + "AppData" + Path.DirectorySeparatorChar + "Roaming" + Path.DirectorySeparatorChar;
+                    return
+                        $"{path}{Path.DirectorySeparatorChar}AppData{Path.DirectorySeparatorChar}Roaming{Path.DirectorySeparatorChar}";
 
                 ConsoleUtil.WriteLine("Failed to get special folder path - unsupported platform!", ConsoleColor.Red);
                 throw new PlatformNotSupportedException();
             }
 
             CorrectPathFound = false;
-            ConsoleUtil.WriteLine($"Failed to get special folder path - it's always null or empty!", ConsoleColor.Red);
+            ConsoleUtil.WriteLine("Failed to get special folder path - it's always null or empty!", ConsoleColor.Red);
 
             return string.Empty;
         }

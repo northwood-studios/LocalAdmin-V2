@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.Commands.PluginManager.Subcommands;
 using LocalAdmin.V2.IO;
@@ -8,13 +9,11 @@ using LocalAdmin.V2.PluginsManager;
 
 namespace LocalAdmin.V2.Commands.PluginManager;
 
-internal sealed class PluginManagerCommand : CommandBase
+internal sealed class PluginManagerCommand() : CommandBase("p", "Plugin Manager.")
 {
-    public PluginManagerCommand() : base("p", "Plugin Manager.") { }
-
     private static Stopwatch? _securityWarningStopwatch;
 
-    internal override async void Execute(string[] arguments)
+    internal override async ValueTask Execute(string[] arguments)
     {
         if (!Core.LocalAdmin.DismissPluginsSecurityWarning && !Core.LocalAdmin.DataJson!.PluginManagerWarningDismissed)
         {
@@ -44,8 +43,8 @@ internal sealed class PluginManagerCommand : CommandBase
 
             _securityWarningStopwatch = null;
             ConsoleUtil.WriteLine("Plugin manager has been enabled. USE AT YOUR OWN RISK.", ConsoleColor.Yellow);
-            Core.LocalAdmin.DataJson.PluginManagerWarningDismissed = true;
-            await Core.LocalAdmin.DataJson.TrySave(PathManager.InternalJsonDataPath);
+            Core.LocalAdmin.DataJson = Core.LocalAdmin.DataJson with { PluginManagerWarningDismissed = true };
+            await Core.LocalAdmin.Singleton.SaveJsonOrTerminate();
             return;
         }
 
@@ -78,11 +77,11 @@ internal sealed class PluginManagerCommand : CommandBase
                 ConsoleUtil.WriteLine("Run \"p token\" command to get more details.", ConsoleColor.Yellow);
             }
 
-            ConsoleUtil.WriteLine("------------" + Environment.NewLine, ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine($"------------{Environment.NewLine}", ConsoleColor.DarkGray);
             return;
         }
 
-        bool optionsSet = arguments.Length >= 2 && arguments[1].Length > 1 && arguments[1].StartsWith("-", StringComparison.Ordinal);
+        bool optionsSet = arguments.Length >= 2 && arguments[1].Length > 1 && arguments[1].StartsWith('-');
         string[]? args;
         var options = string.Empty;
 
@@ -102,7 +101,7 @@ internal sealed class PluginManagerCommand : CommandBase
             case "c":
             case "ch":
             case "chk":
-                CheckCommand.Check(options);
+                await CheckCommand.Check(options);
                 break;
 
             //Install
@@ -125,26 +124,26 @@ internal sealed class PluginManagerCommand : CommandBase
 
             case "install":
             case "i":
-                InstallCommand.Install(args, options);
+                await InstallCommand.Install(args, options);
                 break;
 
             case "list":
             case "l":
             case "ls":
-                ListCommand.List(options);
+                await ListCommand.List(options);
                 break;
 
             case "maintenance":
             case "m":
             case "mn":
             case "mnt":
-                MaintenanceCommand.Maintenance(options);
+                await MaintenanceCommand.Maintenance(options);
                 break;
 
             case "refresh":
             case "ref":
             case "rf":
-                _ = OfficialPluginsList.RefreshOfficialPluginsList();
+                await OfficialPluginsList.RefreshOfficialPluginsList();
                 break;
 
             case "remove":
@@ -152,7 +151,7 @@ internal sealed class PluginManagerCommand : CommandBase
             case "rm":
             case "uninstall":
             case "un":
-                _ = PluginInstaller.TryUninstallPlugin(args[0],
+                await PluginInstaller.TryUninstallPlugin(args[0],
                     options.Contains('g', StringComparison.Ordinal) ? "global" : Core.LocalAdmin.GamePort.ToString(),
                     options.Contains('i', StringComparison.Ordinal),
                     options.Contains('s', StringComparison.Ordinal));
@@ -161,18 +160,18 @@ internal sealed class PluginManagerCommand : CommandBase
             case "token":
             case "t":
             case "pat":
-                TokenCommand.Token(args == null || args.Length == 0 ? null : args[0]);
+                await TokenCommand.Token(args == null || args.Length == 0 ? null : args[0]);
                 break;
 
             case "update":
             case "u":
             case "up":
             case "upd":
-                UpdateCommand.Update(options);
+                await UpdateCommand.Update(options);
                 break;
 
             default:
-                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Unknown command: p " + arguments[0].ToLowerInvariant(), ConsoleColor.Red);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Unknown command: p {arguments[0].ToLowerInvariant()}", ConsoleColor.Red);
                 break;
         }
     }

@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
+using LocalAdmin.V2.JSON;
+using LocalAdmin.V2.JSON.Objects;
 
 namespace LocalAdmin.V2.PluginsManager;
 
@@ -10,38 +13,42 @@ internal static class PluginUpdater
 {
     internal static async Task<bool> CheckForUpdates(string port, bool ignoreLocks)
     {
-        var metadataPath = PluginInstaller.PluginsPath(port) + "metadata.json";
+        var metadataPath = $"{PluginInstaller.PluginsPath(port)}metadata.json";
 
         try
         {
-            if (!File.Exists(metadataPath))
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
+            uint timeout = ignoreLocks ? 0 : PluginInstaller.DefaultLockTime;
+            await using FileStream? fileStream =
+                await FileUtils.TryOpenAsync(metadataPath, FileAccess.ReadWrite, FileShare.None, timeout);
+
+            if (fileStream == null)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No metadata file for port {port}. Skipped.", ConsoleColor.Blue);
                 return true;
             }
 
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
-            var metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime, true);
+            var metadata = await JsonSerializer.DeserializeAsync<ServerPluginsConfig>(fileStream, JsonGenerated.Default.ServerPluginsConfig);
 
             if (metadata == null)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
-                JsonFile.UnlockFile(metadataPath);
                 return true;
             }
 
             if (metadata.InstalledPlugins.Count == 0)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
-                metadata.LastUpdateCheck = DateTime.UtcNow;
+                metadata = metadata with { LastUpdateCheck = DateTime.UtcNow };
 
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing metadata...", ConsoleColor.Blue);
-                await metadata.TrySave(metadataPath, 0, true);
+                fileStream.SetLength(0);
+                await JsonSerializer.SerializeAsync(fileStream, metadata, JsonGenerated.Default.ServerPluginsConfig);
                 return true;
             }
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading LocalAdmin config file...", ConsoleColor.Blue);
-            await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+            await Core.LocalAdmin.Singleton.LoadJsonOrTerminate();
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Processing installed plugins...", ConsoleColor.Blue);
 
@@ -83,23 +90,19 @@ internal static class PluginUpdater
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing LocalAdmin config file...", ConsoleColor.Blue);
             await Core.LocalAdmin.Singleton.SaveJsonOrTerminate();
 
-            metadata.LastUpdateCheck = DateTime.UtcNow;
+            metadata = metadata with { LastUpdateCheck = DateTime.UtcNow };
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing metadata...", ConsoleColor.Blue);
-            if (await metadata.TrySave(metadataPath, 0, true))
-                return true;
 
-            ConsoleUtil.WriteLine(
-                "[PLUGIN MANAGER] Failed to save metadata.",
-                ConsoleColor.Red);
+            fileStream.SetLength(0);
+            await JsonSerializer.SerializeAsync(fileStream, metadata, JsonGenerated.Default.ServerPluginsConfig);
 
-            return false;
+            return true;
         }
         catch (Exception e)
         {
             ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to check for plugin updates for port {port}! Exception: {e.Message}",
                 ConsoleColor.Red);
-            JsonFile.UnlockFile(metadataPath);
 
             return false;
         }
@@ -108,7 +111,7 @@ internal static class PluginUpdater
     internal static async Task UpdatePlugins(string port, bool ignoreLocks, bool overwrite, bool skipUpdateCheck)
     {
         var pluginsPath = PluginInstaller.PluginsPath(port);
-        var metadataPath = pluginsPath + "metadata.json";
+        var metadataPath = $"{pluginsPath}metadata.json";
 
         try
         {
@@ -119,9 +122,10 @@ internal static class PluginUpdater
             }
 
             ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
-            var metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime);
+            uint timeout = ignoreLocks ? 0 : PluginInstaller.DefaultLockTime;
 
-            if (metadata == null || metadata.InstalledPlugins.Count == 0)
+            if (await FileUtils.TryReadJsonAsync(metadataPath, FileShare.Read, JsonGenerated.Default.ServerPluginsConfig, timeout) is not {} metadata
+                || metadata.InstalledPlugins.Count == 0)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
                 return;
@@ -151,20 +155,21 @@ internal static class PluginUpdater
                 }
 
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
-                metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime);
-
-                if (metadata == null || metadata.InstalledPlugins.Count == 0)
+                if (await FileUtils.TryReadJsonAsync(metadataPath, FileShare.Read, JsonGenerated.Default.ServerPluginsConfig, timeout) is not { } newMetadata
+                    || newMetadata.InstalledPlugins.Count == 0)
                 {
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
                     return;
                 }
+
+                metadata = newMetadata;
             }
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading LocalAdmin config file...", ConsoleColor.Blue);
-            await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+            await Core.LocalAdmin.Singleton.LoadJsonOrTerminate();
 
             var i = 0;
-            List<string> toRemove = new();
+            List<string> toRemove = [];
 
             foreach (var plugin in metadata.InstalledPlugins)
             {
@@ -173,7 +178,7 @@ internal static class PluginUpdater
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Processing plugin {plugin.Key} ({i}/{metadata.InstalledPlugins.Count})...", ConsoleColor.Blue);
 
                 var safeName = plugin.Key.Replace("/", "_", StringComparison.Ordinal);
-                var pluginPath = pluginsPath + $"{safeName}.dll";
+                var pluginPath = $"{pluginsPath}{safeName}.dll";
 
                 if (!File.Exists(pluginPath))
                 {
@@ -204,7 +209,7 @@ internal static class PluginUpdater
                     continue;
                 }
 
-                if (!Core.LocalAdmin.DataJson!.PluginVersionCache!.ContainsKey(plugin.Key))
+                if (!Core.LocalAdmin.DataJson!.PluginVersionCache.ContainsKey(plugin.Key))
                 {
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {plugin.Key} is not cached! Skipped.", ConsoleColor.Yellow);
                     continue;
@@ -224,15 +229,16 @@ internal static class PluginUpdater
 
             if (toRemove.Count != 0)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Removing manually uninstalled plugins from metadata file...", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Removing manually uninstalled plugins from metadata file...", ConsoleColor.Blue);
 
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
-                metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime, true);
+                await using FileStream fileStream = await FileUtils.OpenAsync(metadataPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None, timeout);
+
+                metadata = await JsonSerializer.DeserializeAsync(fileStream, JsonGenerated.Default.ServerPluginsConfig);
 
                 if (metadata == null || metadata.InstalledPlugins.Count == 0)
                 {
                     ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading metadata filed.", ConsoleColor.Red);
-                    JsonFile.UnlockFile(metadataPath);
                     return;
                 }
 
@@ -242,8 +248,9 @@ internal static class PluginUpdater
                 }
 
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing metadata...", ConsoleColor.Blue);
-                if (!await metadata.TrySave(metadataPath, 0, true))
-                    return;
+
+                fileStream.SetLength(0);
+                await JsonSerializer.SerializeAsync(fileStream, metadata, JsonGenerated.Default.ServerPluginsConfig);
 
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing metadata complete.", ConsoleColor.Blue);
             }
@@ -252,7 +259,6 @@ internal static class PluginUpdater
         {
             ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to update plugins for port {port}! Exception: {e.Message}",
                 ConsoleColor.Red);
-            JsonFile.UnlockFile(metadataPath);
         }
     }
 }

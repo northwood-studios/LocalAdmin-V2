@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.IO.Logging;
@@ -28,7 +29,7 @@ public class TcpServer
 
     public event EventHandler<string>? Received;
 
-    private readonly TcpListener _listener;
+    private readonly TcpListener _listener = new(IPAddress.Loopback, 0);
     private TcpClient? _client;
     private NetworkStream? _networkStream;
 
@@ -36,10 +37,8 @@ public class TcpServer
     internal bool Connected;
     private bool _exit = true;
     private int _txBuffer;
-    private readonly object _lck = new();
+    private readonly Lock _lck = new();
     private readonly UTF8Encoding _encoding = new(false, true);
-
-    public TcpServer() => _listener = new TcpListener(IPAddress.Loopback, 0);
 
     public void Start()
     {
@@ -100,7 +99,7 @@ public class TcpServer
                             if (readAmount < 4)
                             {
                                 Received?.Invoke(this,
-                                    "4[LocalAdmin] Received **INVALID** data message length. Length: " + readAmount);
+                                    $"4[LocalAdmin] Received **INVALID** data message length. Length: {readAmount}");
                                 continue;
                             }
 
@@ -127,7 +126,7 @@ public class TcpServer
                         else
                         {
                             if (LocalAdmin.PrintControlMessages)
-                                Received?.Invoke(this, "7[LocalAdmin] Received control message: " + codeBuffer[0]);
+                                Received?.Invoke(this, $"7[LocalAdmin] Received control message: {codeBuffer[0]}");
 
                             switch ((OutputCodes)codeBuffer[0])
                             {
@@ -171,7 +170,7 @@ public class TcpServer
 
                                 default:
                                     Received?.Invoke(this,
-                                        "4[LocalAdmin] Received **INVALID** control message: " + codeBuffer[0]);
+                                        $"4[LocalAdmin] Received **INVALID** control message: {codeBuffer[0]}");
                                     break;
                             }
                         }

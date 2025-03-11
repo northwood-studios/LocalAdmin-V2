@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
@@ -7,45 +7,40 @@ namespace LocalAdmin.V2.IO.ExitHandlers;
 /// <summary>
 ///     Native signal processing on Windows NT systems.
 /// </summary>
-internal sealed class WindowsHandler : IExitHandler
+internal sealed unsafe partial class WindowsHandler : IExitHandler
 {
-    public static readonly WindowsHandler Handler = new WindowsHandler();
-
-    // .Net Core sometimes crashes when the delegate isn't in a field
-    private static readonly HandlerRoutine Routine = OnNativeSignal;
+    public static readonly WindowsHandler Handler = new();
 
     public void Setup()
     {
-        if (!SetConsoleCtrlHandler(Routine, true))
+        if (SetConsoleCtrlHandler(&OnNativeSignal, 1) != 0)
         {
             throw new Win32Exception();
         }
     }
 
-    private static bool OnNativeSignal(CtrlTypes ctrl)
+    [UnmanagedCallersOnly]
+    private static int OnNativeSignal(CtrlTypes ctrl)
     {
         if (Core.LocalAdmin.Singleton == null)
             Environment.Exit(0);
-        else Core.LocalAdmin.HandleExitSignal();
+        else
+            Core.LocalAdmin.HandleExitSignal();
 
-        return true;
+        return 1;
     }
 
-#region Native
+    #region Native
+    [LibraryImport("Kernel32", SetLastError = true)]
+    private static partial int SetConsoleCtrlHandler(delegate* unmanaged<CtrlTypes, int> handler, int add);
 
-    [DllImport("Kernel32", SetLastError = true)]
-    private static extern bool SetConsoleCtrlHandler(HandlerRoutine handler, bool add);
-
-    private delegate bool HandlerRoutine(CtrlTypes ctrlType);
-
-    private enum CtrlTypes
+    private enum CtrlTypes : uint
     {
-        CTRL_C_EVENT,
-        CTRL_BREAK_EVENT,
-        CTRL_CLOSE_EVENT,
-        CTRL_LOGOFF_EVENT,
-        CTRL_SHUTDOWN_EVENT
+        CtrlCEvent = 0,
+        CtrlBreakEvent = 1,
+        CtrlCloseEvent = 2,
+        CtrlLogoffEvent = 5,
+        CtrlShutdownEvent = 6
     }
-
-#endregion
+    #endregion
 }

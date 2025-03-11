@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
-using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO;
-using Utf8Json;
+using LocalAdmin.V2.JSON;
+using LocalAdmin.V2.JSON.Objects;
 
 namespace LocalAdmin.V2.PluginsManager;
 
@@ -13,7 +13,7 @@ internal static class OfficialPluginsList
     private static readonly HttpClient HttpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(45),
-        DefaultRequestHeaders = { { "User-Agent", "LocalAdmin v. " + Core.LocalAdmin.VersionString } }
+        DefaultRequestHeaders = { { "User-Agent", $"LocalAdmin v. {Core.LocalAdmin.VersionString}" } }
     };
 
     internal static bool IsRefreshNeeded()
@@ -36,7 +36,7 @@ internal static class OfficialPluginsList
     {
         try
         {
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Refreshing plugins list...", ConsoleColor.Blue);
+            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Refreshing plugins list...", ConsoleColor.Blue);
             var response = await HttpClient.GetAsync("https://gra2.scpslgame.com/localadmin.php?v=1");
 
             if (!response.IsSuccessStatusCode)
@@ -51,19 +51,18 @@ internal static class OfficialPluginsList
                 return;
             }
 
-            var data = JsonSerializer.Deserialize<Dictionary<string, PluginAlias>>(await response.Content.ReadAsStringAsync());
+            var data = JsonSerializer.Deserialize(await response.Content.ReadAsStreamAsync(), JsonGenerated.Default.DictionaryStringPluginAlias);
 
             if (data == null)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to refresh plugins list! (deserialization error)", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Failed to refresh plugins list! (deserialization error)", ConsoleColor.Red);
                 return;
             }
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading LocalAdmin config file...", ConsoleColor.Blue);
-            await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+            await Core.LocalAdmin.Singleton.LoadJsonOrTerminate();
 
-            Core.LocalAdmin.DataJson!.PluginAliases = data;
-            Core.LocalAdmin.DataJson.LastPluginAliasesRefresh = DateTime.UtcNow;
+            Core.LocalAdmin.DataJson = Core.LocalAdmin.DataJson! with { PluginAliases = data, LastPluginAliasesRefresh = DateTime.UtcNow };
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing LocalAdmin config file...", ConsoleColor.Blue);
             await Core.LocalAdmin.Singleton.SaveJsonOrTerminate();
@@ -79,11 +78,8 @@ internal static class OfficialPluginsList
     internal static string ResolvePluginAlias(string alias, PluginAliasFlags requiredFlags)
     {
         if (Core.LocalAdmin.DataJson == null || Core.LocalAdmin.DataJson.PluginAliases == null ||
-            !Core.LocalAdmin.DataJson.PluginAliases.ContainsKey(alias))
+            !Core.LocalAdmin.DataJson.PluginAliases.TryGetValue(alias, out PluginAlias pluginAlias))
             return alias;
-
-        var pluginAlias = Core.LocalAdmin.DataJson.PluginAliases[alias];
-
         if (((PluginAliasFlags)pluginAlias.Flags & requiredFlags) == 0)
             return alias;
 

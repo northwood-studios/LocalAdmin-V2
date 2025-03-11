@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 
@@ -20,12 +20,11 @@ public static class Logger
             EndLogging();
 
         string dir = Core.LocalAdmin.LaLogsPath ?? PathManager.GameUserDataRoot + LogFolderName + Path.DirectorySeparatorChar + Core.LocalAdmin.GamePort + Path.DirectorySeparatorChar;
-        if (!Directory.Exists(dir))
-            Directory.CreateDirectory(dir);
+        Directory.CreateDirectory(dir);
 
         _totalLength = 0;
         _totalEntries = 0;
-        _logPath = dir + $"LocalAdmin Log {DateTime.Now:yyyy-MM-dd HH.mm.ss}.txt";
+        _logPath = $"{dir}LocalAdmin Log {DateTime.Now:yyyy-MM-dd HH.mm.ss}.txt";
         _logging = true;
 
         Log($"{ConsoleUtil.GetLogsTimestamp()} Logging started.");
@@ -83,7 +82,7 @@ public static class Logger
         }
         catch (Exception e)
         {
-            Console.Write("Failed to write log: " + e.Message);
+            Console.Write($"Failed to write log: {e.Message}");
         }
     }
 

@@ -1,37 +1,48 @@
-﻿#if LINUX_SIGNALS
-using Mono.Unix;
-using Mono.Unix.Native;
 using System;
-using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace LocalAdmin.V2.IO.ExitHandlers
 {
     /// <summary>
     ///     Native signal processing on Unix systems.
     /// </summary>
-    internal sealed class UnixHandler : IExitHandler
+    internal sealed class UnixHandler : IExitHandler, IDisposable
     {
-        public static readonly UnixHandler Handler = new UnixHandler();
-        private static readonly UnixSignal[] Signals = {
-            new UnixSignal(Signum.SIGINT),  // CTRL + C pressed
-            new UnixSignal(Signum.SIGTERM), // Sending KILL
-            new UnixSignal(Signum.SIGUSR1),
-            new UnixSignal(Signum.SIGUSR2),
-            new UnixSignal(Signum.SIGHUP)   // Terminal is closed
-        };
-
+        public static readonly UnixHandler Handler = new();
+        private PosixSignalRegistration[]? _signals;
 
         public void Setup()
         {
-            new Thread(() =>
+            Dispose();
+
+            Action<PosixSignalContext> handler = SignalHandler;
+            _signals =
+            [
+                PosixSignalRegistration.Create(PosixSignal.SIGINT, handler), // CTRL + C pressed
+                PosixSignalRegistration.Create(PosixSignal.SIGTERM, handler), // Sending KILL
+                PosixSignalRegistration.Create((PosixSignal)10, handler), // SIGUSR1
+                PosixSignalRegistration.Create((PosixSignal)12, handler), // SIGUSR1
+                PosixSignalRegistration.Create(PosixSignal.SIGHUP, handler), // Terminal is closed
+                PosixSignalRegistration.Create(PosixSignal.SIGQUIT, handler) // QUIT pressed
+            ];
+        }
+
+        private static void SignalHandler(PosixSignalContext obj)
+        {
+            if (Core.LocalAdmin.Singleton == null)
+                Environment.Exit(0);
+            else
+                Core.LocalAdmin.HandleExitSignal();
+        }
+
+        public void Dispose()
+        {
+            foreach (PosixSignalRegistration signal in _signals.AsSpan())
             {
-                // Blocking operation with infinite expectation of any signal
-                UnixSignal.WaitAny(Signals, -1);
-                if (Core.LocalAdmin.Singleton == null)
-                    Environment.Exit(0);
-                else Core.LocalAdmin.HandleExitSignal();
-            }).Start();
+                signal.Dispose();
+            }
+
+            _signals = null;
         }
     }
 }
-#endif
