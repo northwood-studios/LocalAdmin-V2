@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
@@ -50,7 +51,7 @@ internal static class PluginInstaller
                 return new QueryResult();
             }
 
-            var data = await JsonSerializer.DeserializeAsync(await response.Content.ReadAsStreamAsync(), JsonGenerated.Default.GitHubRelease);
+            var data = await response.Content.ReadFromJsonAsync(JsonGenerated.Default.GitHubRelease);
 
             if (data.tagName == null)
             {

@@ -1,6 +1,6 @@
 using System;
 using System.Net.Http;
-using System.Text.Json;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.JSON;
@@ -51,7 +51,7 @@ internal static class OfficialPluginsList
                 return;
             }
 
-            var data = await JsonSerializer.DeserializeAsync(await response.Content.ReadAsStreamAsync(), JsonGenerated.Default.DictionaryStringPluginAlias);
+            var data = await response.Content.ReadFromJsonAsync(JsonGenerated.Default.DictionaryStringPluginAlias);
 
             if (data == null)
             {
