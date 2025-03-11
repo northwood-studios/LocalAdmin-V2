@@ -51,7 +51,7 @@ internal static class OfficialPluginsList
                 return;
             }
 
-            var data = JsonSerializer.Deserialize(await response.Content.ReadAsStreamAsync(), JsonGenerated.Default.DictionaryStringPluginAlias);
+            var data = await JsonSerializer.DeserializeAsync(await response.Content.ReadAsStreamAsync(), JsonGenerated.Default.DictionaryStringPluginAlias);
 
             if (data == null)
             {

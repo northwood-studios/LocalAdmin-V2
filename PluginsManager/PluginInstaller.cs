@@ -50,7 +50,7 @@ internal static class PluginInstaller
                 return new QueryResult();
             }
 
-            var data = JsonSerializer.Deserialize(await response.Content.ReadAsStreamAsync(), JsonGenerated.Default.GitHubRelease);
+            var data = await JsonSerializer.DeserializeAsync(await response.Content.ReadAsStreamAsync(), JsonGenerated.Default.GitHubRelease);
 
             if (data.tagName == null)
             {
