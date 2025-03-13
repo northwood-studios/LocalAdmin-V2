@@ -66,18 +66,7 @@ internal static class FileUtils
         return lines;
     }
 
-    public static async ValueTask<T?> TryReadJsonAsync<T>(string path, FileShare share, JsonTypeInfo<T> json, uint timeout = 2000, object? dummy = null) where T : class
-    {
-        Debug.Assert(dummy == null);
-        _ = dummy;
-
-        await using FileStream? stream = await TryOpenAsync(path, FileAccess.Read, share, timeout);
-        if (stream == null)
-            return null;
-        return await JsonSerializer.DeserializeAsync(stream, json);
-    }
-
-    public static async ValueTask<T?> TryReadJsonAsync<T>(string path, FileShare share, JsonTypeInfo<T> json, uint timeout = 2000) where T : struct
+    public static async ValueTask<T?> TryReadJsonAsync<T>(string path, FileShare share, JsonTypeInfo<T> json, uint timeout = 2000) where T : class
     {
         await using FileStream? stream = await TryOpenAsync(path, FileAccess.Read, share, timeout);
         if (stream == null)

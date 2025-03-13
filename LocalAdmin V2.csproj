@@ -35,8 +35,5 @@
         <Content Include="LICENSE">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <Content Include="NOTICE-LocalAdmin">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
     </ItemGroup>
 </Project>
