@@ -1,14 +1,15 @@
 using System;
 using System.Linq;
-using LocalAdmin.V2.Core;
+using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
+using LocalAdmin.V2.JSON.Objects;
 using LocalAdmin.V2.PluginsManager;
 
 namespace LocalAdmin.V2.Commands.PluginManager.Subcommands;
 
 internal static class InstallCommand
 {
-    internal static async void Install(string[] args, string options)
+    internal static async Task Install(string[] args, string options)
     {
         PluginInstaller.QueryResult res;
         string version;
@@ -35,14 +36,13 @@ internal static class InstallCommand
         if (args.Length == 1 || args.Length == 2 && args[1].Equals("latest", StringComparison.OrdinalIgnoreCase))
         {
             if (!performUpdate)
-                await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+                await Core.LocalAdmin.Singleton.LoadJsonOrTerminate();
 
             res = await PluginInstaller.TryCachePlugin(args[0], true);
             if (!res.Success)
                 return;
 
-            if (!await Core.LocalAdmin.DataJson!.TrySave(PathManager.InternalJsonDataPath))
-                return;
+            await Core.LocalAdmin.Singleton.SaveJsonOrTerminate();
 
             version = "latest";
         }

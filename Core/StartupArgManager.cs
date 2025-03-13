@@ -1,8 +1,8 @@
-using LocalAdmin.V2.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using LocalAdmin.V2.IO;
 
 namespace LocalAdmin.V2.Core
 {
@@ -22,36 +22,34 @@ namespace LocalAdmin.V2.Core
         {
             MigrateArgsFile();
 
-            List<string> startupArgs = new List<string>();
-            startupArgs.AddRange(cmdArgs);
+            string[] startupArgs = [.. cmdArgs];
 
             try
             {
                 if (!File.Exists(StartupArgsPath))
-                    return startupArgs.ToArray();
+                    return [.. startupArgs];
 
-                startupArgs.AddRange(File.ReadAllLines(StartupArgsPath).Where(arg => !arg.StartsWith("#", StringComparison.Ordinal)));
-                return startupArgs.ToArray();
+                return [.. startupArgs, .. File.ReadLines(StartupArgsPath).Where(arg => !arg.StartsWith('#'))];
             }
             catch (Exception ex)
             {
                 ConsoleUtil.WriteLine($"An error occured while trying to merge arguments: {ex}", ConsoleColor.Red);
-                return startupArgs.ToArray();
+                return [.. startupArgs];
             }
         }
 
         private static void MigrateArgsFile()
         {
-            const string ObsoleteFile = "laargs.txt";
+            const string obsoleteFile = "laargs.txt";
 
             try
             {
-                if (!File.Exists(ObsoleteFile))
+                if (!File.Exists(obsoleteFile))
                     return;
 
-                if (string.IsNullOrWhiteSpace(File.ReadAllText(ObsoleteFile)))
+                if (string.IsNullOrWhiteSpace(File.ReadAllText(obsoleteFile)))
                 {
-                    File.Delete(ObsoleteFile);
+                    File.Delete(obsoleteFile);
                     ConsoleUtil.WriteLine("Obsolete configuration file 'laargs.txt' is empty and has been deleted.", ConsoleColor.Gray);
                     return;
                 }
@@ -59,7 +57,7 @@ namespace LocalAdmin.V2.Core
                 if (File.Exists(StartupArgsPath))
                     return;
 
-                File.Move(ObsoleteFile, StartupArgsPath);
+                File.Move(obsoleteFile, StartupArgsPath);
                 ConsoleUtil.WriteLine("Successfully migrated your old 'laargs' configuration.", ConsoleColor.DarkGreen);
             }
             catch (Exception ex)

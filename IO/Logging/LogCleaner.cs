@@ -100,9 +100,8 @@ public static class LogCleaner
                                 Core.LocalAdmin.Configuration.RoundLogsCompressionThresholdDays)
                             {
                                 stage = "Compression - p2";
-                                var p2 = root + "LA-ToCompress-" + d + Path.DirectorySeparatorChar;
-                                if (!Directory.Exists(p2))
-                                    Directory.CreateDirectory(p2);
+                                var p2 = $"{root}LA-ToCompress-{d}{Path.DirectorySeparatorChar}";
+                                Directory.CreateDirectory(p2);
 
                                 stage = "Compression - moving";
                                 File.Move(file, p2 + name);
@@ -169,17 +168,17 @@ public static class LogCleaner
                             if (name.Length != 24 || !name.StartsWith("LA-ToCompress-", StringComparison.Ordinal))
                                 continue;
 
-                            var d = root + "Round Logs Archive " + name.Substring(14);
+                            var d = $"{root}Round Logs Archive {name[14..]}";
 
                             if (Directory.Exists(d))
                             {
-                                ConsoleUtil.WriteLine($"[Log Maintenance] Failed to compress old round log directory. Target directory already exists.", ConsoleColor.Red);
+                                ConsoleUtil.WriteLine("[Log Maintenance] Failed to compress old round log directory. Target directory already exists.", ConsoleColor.Red);
                                 continue;
                             }
 
-                            if (File.Exists(d + ".zip"))
+                            if (File.Exists($"{d}.zip"))
                             {
-                                ConsoleUtil.WriteLine($"[Log Maintenance] Failed to compress old round log directory. Target ZIP file already exists.", ConsoleColor.Red);
+                                ConsoleUtil.WriteLine("[Log Maintenance] Failed to compress old round log directory. Target ZIP file already exists.", ConsoleColor.Red);
                                 continue;
                             }
 
@@ -187,7 +186,7 @@ public static class LogCleaner
                             Directory.Move(dir, d);
 
                             stage = "Compressing directory";
-                            ZipFile.CreateFromDirectory(d, d + ".zip", CompressionLevel.Optimal, true, Encoding.UTF8);
+                            ZipFile.CreateFromDirectory(d, $"{d}.zip", CompressionLevel.Optimal, true, Encoding.UTF8);
 
                             stage = "Removing uncompressed directory";
                             Directory.Delete(d, true);
@@ -227,7 +226,7 @@ public static class LogCleaner
                                     CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var date))
                                 continue;
 
-                            var diff = (now - date);
+                            var diff = now - date;
 
                             stage = "File name processed";
                             if (diff.TotalDays > Core.LocalAdmin.Configuration.LaLogsExpirationDays)

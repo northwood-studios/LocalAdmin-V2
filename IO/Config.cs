@@ -5,7 +5,7 @@ namespace LocalAdmin.V2.IO;
 
 public class Config
 {
-    private static readonly string[] SplitArray = { ": " };
+    private static readonly string[] SplitArray = [": "];
 
     public bool RestartOnCrash = true;
     public bool EnableHeartbeat = true;

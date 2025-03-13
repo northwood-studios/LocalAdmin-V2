@@ -1,20 +1,21 @@
 using LocalAdmin.V2.Commands;
 using LocalAdmin.V2.Commands.Meta;
+using LocalAdmin.V2.Commands.PluginManager;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.IO.ExitHandlers;
+using LocalAdmin.V2.IO.Logging;
+using LocalAdmin.V2.JSON;
+using LocalAdmin.V2.JSON.Objects;
+using LocalAdmin.V2.PluginsManager;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using LocalAdmin.V2.Commands.PluginManager;
-using LocalAdmin.V2.IO.Logging;
-using LocalAdmin.V2.PluginsManager;
 
 namespace LocalAdmin.V2.Core;
 /*
@@ -30,14 +31,14 @@ namespace LocalAdmin.V2.Core;
 
 public sealed class LocalAdmin : IDisposable
 {
-    public const string VersionString = "2.5.16";
+    public const string VersionString = "2.6.0";
     private const ushort DefaultPort = 7777;
 
     private static readonly ConcurrentQueue<string> InputQueue = new();
     private static readonly Stopwatch RestartsStopwatch = new();
     private static string? _previousPat;
     private static bool _firstRun = true;
-    private static string _gameArguments = string.Empty;
+    private static string[] _gameArguments = [];
     private static bool _exit, _processRefreshFail;
     private static bool _noTrueColor;
     private static bool _stdPrint;
@@ -56,17 +57,14 @@ public sealed class LocalAdmin : IDisposable
     private static int? _processId;
 
     internal static readonly Stopwatch HeartbeatStopwatch = new();
-    internal static LocalAdmin? Singleton;
+    internal static LocalAdmin Singleton = null!;
     internal static ushort GamePort;
     internal static string? ConfigPath, CurrentConfigPath, LaLogsPath, GameLogsPath;
     internal static ulong LogLengthLimit = 25000000000, LogEntriesLimit = 10000000000;
     internal static Config? Configuration;
     internal static DataJson? DataJson;
     private string BaseWindowTitle =>
-        (_idleMode ? "[IDLE] " : string.Empty) +
-        $"LocalAdmin v. {VersionString}" +
-        (GamePort != 0 ? $" | Port: {GamePort}" : string.Empty) +
-        (_processId.HasValue ? $" | PID: {_processId}" : string.Empty);
+        $"{(_idleMode ? "[IDLE] " : string.Empty)}LocalAdmin v. {VersionString}{(GamePort != 0 ? $" | Port: {GamePort}" : string.Empty)}{(_processId.HasValue ? $" | PID: {_processId}" : string.Empty)}";
     internal static bool NoSetCursor, PrintControlMessages, AutoFlush = true, EnableLogging = true, NoPadding, DismissPluginsSecurityWarning;
 
     internal ShutdownAction ExitAction = ShutdownAction.Crash;
@@ -138,15 +136,10 @@ public sealed class LocalAdmin : IDisposable
                 ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
                 ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
             }
-            else if (OperatingSystem.IsLinux())
+            else
             {
                 ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
                 ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
-            }
-            else
-            {
-                ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform, please switch to Windows or Linux!", ConsoleColor.Red);
-                throw new PlatformNotSupportedException();
             }
             ConsoleUtil.WriteLine("To skip this check, use --skipHomeCheck argument.", ConsoleColor.Red);
             Terminate();
@@ -188,7 +181,7 @@ public sealed class LocalAdmin : IDisposable
                 if (args.Contains("--acceptEULA", StringComparer.Ordinal) ||
                     Environment.GetEnvironmentVariable("ACCEPT_SCPSL_EULA")?.ToUpperInvariant() is "1" or "TRUE")
                 {
-                    DataJson!.EulaAccepted = DateTime.UtcNow;
+                    DataJson = DataJson with { EulaAccepted = DateTime.UtcNow };
                     autoEula = true;
 
                     await SaveJsonOrTerminate();
@@ -201,7 +194,7 @@ public sealed class LocalAdmin : IDisposable
                     ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
                     ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
 
-                    ReadInput((input) =>
+                    ReadInput(input =>
                         {
                             if (input == null)
                                 return false;
@@ -211,7 +204,7 @@ public sealed class LocalAdmin : IDisposable
                                 case "y":
                                 case "yes":
                                 case "1":
-                                    DataJson.EulaAccepted = DateTime.UtcNow;
+                                    DataJson = DataJson with { EulaAccepted = DateTime.UtcNow };
                                     return true;
 
                                 case "n":
@@ -248,7 +241,7 @@ public sealed class LocalAdmin : IDisposable
                     Console.WriteLine(string.Empty);
                     ConsoleUtil.Write($"Port number (default: {DefaultPort}): ", ConsoleColor.Green);
 
-                    ReadInput((input) =>
+                    ReadInput(input =>
                         {
                             if (!string.IsNullOrEmpty(input))
                                 return ushort.TryParse(input, out GamePort);
@@ -270,7 +263,7 @@ public sealed class LocalAdmin : IDisposable
                     switch (capture)
                     {
                         case CaptureArgs.None:
-                            if (arg.StartsWith("-", StringComparison.Ordinal) &&
+                            if (arg.StartsWith('-') &&
                                 !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
                             {
                                 for (var i = 1; i < arg.Length; i++)
@@ -397,7 +390,7 @@ public sealed class LocalAdmin : IDisposable
                             break;
 
                         case CaptureArgs.ArgsPassthrough:
-                            _gameArguments += $"\"{arg}\" ";
+                            _gameArguments = [..args, arg];
                             break;
 
                         case CaptureArgs.ConfigPath:
@@ -448,8 +441,8 @@ public sealed class LocalAdmin : IDisposable
                             }
 
                             capture = CaptureArgs.None;
-                        }
                             break;
+                        }
 
                         case CaptureArgs.LogEntriesLimit:
                         {
@@ -466,11 +459,11 @@ public sealed class LocalAdmin : IDisposable
                             }
 
                             capture = CaptureArgs.None;
-                        }
                             break;
+                        }
 
                         default:
-                            throw new ArgumentOutOfRangeException();
+                            throw new UnreachableException();
                     }
                 }
             }
@@ -479,20 +472,21 @@ public sealed class LocalAdmin : IDisposable
             {
                 CurrentConfigPath = ConfigPath;
 
-                if (File.Exists(ConfigPath))
-                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(ConfigPath, Encoding.UTF8));
-                else reconfigure = true;
+                if (await FileUtils.TryReadLinesAsync(ConfigPath, FileShare.Read) is { } configuration)
+                    Configuration = Config.DeserializeConfig([.. configuration]);
+                else
+                    reconfigure = true;
             }
             else
             {
                 CurrentConfigPath = Path.Combine(PathManager.GameUserDataRoot, "config", GamePort.ToString(), "config_localadmin.txt");
-                if (File.Exists(CurrentConfigPath))
-                    Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
+                if (await FileUtils.TryReadLinesAsync(CurrentConfigPath, FileShare.Read) is { } configuration)
+                    Configuration = Config.DeserializeConfig([.. configuration]);
                 else
                 {
                     CurrentConfigPath = Path.Combine(PathManager.GameUserDataRoot, "config", "config_localadmin_global.txt");
-                    if (File.Exists(CurrentConfigPath))
-                        Configuration = Config.DeserializeConfig(await File.ReadAllLinesAsync(CurrentConfigPath, Encoding.UTF8));
+                    if (await FileUtils.TryReadLinesAsync(CurrentConfigPath, FileShare.Read) is { } globalConfiguration)
+                        Configuration = Config.DeserializeConfig([.. globalConfiguration]);
                     else
                         reconfigure = true;
                 }
@@ -541,11 +535,10 @@ public sealed class LocalAdmin : IDisposable
             }
 
             RegisterCommands();
+
             SetupReader();
 
             StartSession();
-
-            _readerTask!.Start();
 
             if (autoEula)
                 ConsoleUtil.WriteLine("SCP: Secret Laboratory EULA (https://link.scpslgame.com/eula) was accepted by providing a startup argument or setting an environment variable.", ConsoleColor.Yellow);
@@ -613,7 +606,7 @@ public sealed class LocalAdmin : IDisposable
         ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine("Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2024", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine("Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2025", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
@@ -626,49 +619,9 @@ public sealed class LocalAdmin : IDisposable
 
         if (OperatingSystem.IsWindows())
             WindowsHandler.Handler.Setup();
-        else if (OperatingSystem.IsLinux())
-        {
-#if LINUX_SIGNALS
-                try
-                {
-                    UnixHandler.Handler.Setup();
-                }
-                catch (DllNotFoundException ex)
-                {
-                    if (!CheckMonoException(ex)) throw;
-                }
-                catch (EntryPointNotFoundException ex)
-                {
-                    if (!CheckMonoException(ex)) throw;
-                }
-                catch (TypeInitializationException ex)
-                {
-                    switch (ex.InnerException)
-                    {
-                        case DllNotFoundException dll:
-                            if (!CheckMonoException(dll)) throw;
-                            break;
-                        case EntryPointNotFoundException dll:
-                            if (!CheckMonoException(dll)) throw;
-                            break;
-                        default:
-                            throw;
-                    }
-                }
-#else
-            ConsoleUtil.WriteLine("Invalid Linux build! Please download LocalAdmin from GitHub here: https://github.com/northwood-studios/LocalAdmin-V2/releases", ConsoleColor.Red);
-#endif
-        }
+        else
+            UnixHandler.Handler.Setup();
     }
-
-#if LINUX_SIGNALS
-        private static bool CheckMonoException(Exception ex)
-        {
-            if (!ex.Message.Contains("MonoPosixHelper")) return false;
-            ConsoleUtil.WriteLine("Native exit handling for Linux requires Mono to be installed!", ConsoleColor.Yellow);
-            return true;
-        }
-#endif
 
     private void SetupServer()
     {
@@ -701,9 +654,10 @@ public sealed class LocalAdmin : IDisposable
 
     private void SetupReader()
     {
-        async void ReaderTaskMethod()
+        async Task ReaderTaskMethod()
         {
-            while (Server == null) await Task.Delay(20);
+            while (Server == null)
+                await Task.Delay(20);
 
             while (!_exit)
             {
@@ -754,7 +708,7 @@ public sealed class LocalAdmin : IDisposable
 
                 if (command != null)
                 {
-                    command.Execute(split.Skip(1).ToArray());
+                    await command.Execute(split.Skip(1).ToArray());
                     if (!command.SendToGame) continue;
                 }
 
@@ -780,50 +734,61 @@ public sealed class LocalAdmin : IDisposable
             }
         }
 
-        _readerTask = new Task(ReaderTaskMethod);
+        _readerTask = ReaderTaskMethod();
     }
 
     private void RunScpsl()
     {
         if (File.Exists(_scpslExecutable))
         {
-            ConsoleUtil.WriteLine("Executing: " + _scpslExecutable, ConsoleColor.DarkGreen);
+            ConsoleUtil.WriteLine($"Executing: {_scpslExecutable}", ConsoleColor.DarkGreen);
             var printStd = Configuration!.LaShowStdoutStderr || _stdPrint;
             var redirectStreams =
                 Configuration.LaLogStdoutStderr || printStd;
 
-            var extraArgs = string.Empty;
-
-            if (_noTrueColor || !Configuration.EnableTrueColor)
-                extraArgs = " -disableAnsiColors";
-
-            if (EnableGameHeartbeat)
-                extraArgs += " -heartbeat";
-
             var startInfo = new ProcessStartInfo
             {
                 FileName = _scpslExecutable,
-                Arguments =
-                    $"-batchmode -nographics -txbuffer {Configuration.SlToLaBufferSize} -rxbuffer {Configuration.LaToSlBufferSize} -port{GamePort} -console{Server!.ConsolePort} -id{Environment.ProcessId}{extraArgs} {_gameArguments}",
                 CreateNoWindow = true,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
-                RedirectStandardError = true
+                RedirectStandardError = true,
+                ArgumentList =
+                {
+                    "-batchmode",
+                    "-nographics",
+                    "-txbuffer",
+                    Configuration.SlToLaBufferSize.ToString(),
+                    "-rxbuffer",
+                    Configuration.LaToSlBufferSize.ToString(),
+                    $"-port{GamePort}",
+                    $"-console{Server!.ConsolePort}",
+                    $"-id{Environment.ProcessId}"
+                }
             };
+
+            if (_noTrueColor || !Configuration.EnableTrueColor)
+                startInfo.ArgumentList.Add("-disableAnsiColors");
+
+            if (EnableGameHeartbeat)
+                startInfo.ArgumentList.Add("-heartbeat");
+
+            foreach (string argument in _gameArguments)
+                startInfo.ArgumentList.Add(argument);
 
             _gameProcess = Process.Start(startInfo);
 
             _processId = _gameProcess!.Id;
             SetTerminalTitle();
 
-            ConsoleUtil.WriteLine("Game process started with PID: " + _processId, ConsoleColor.DarkGreen);
+            ConsoleUtil.WriteLine($"Game process started with PID: {_processId}", ConsoleColor.DarkGreen);
 
             _gameProcess!.OutputDataReceived += (_, args) =>
             {
                 if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
                     return;
 
-                ConsoleUtil.WriteLine("[STDOUT] " + args.Data, ConsoleColor.Gray,
+                ConsoleUtil.WriteLine($"[STDOUT] {args.Data}", ConsoleColor.Gray,
                     log: Configuration.LaLogStdoutStderr,
                     display: printStd);
             };
@@ -833,7 +798,7 @@ public sealed class LocalAdmin : IDisposable
                 if (!redirectStreams || string.IsNullOrWhiteSpace(args.Data))
                     return;
 
-                ConsoleUtil.WriteLine("[STDERR] " + args.Data, ConsoleColor.DarkMagenta,
+                ConsoleUtil.WriteLine($"[STDERR] {args.Data}", ConsoleColor.DarkMagenta,
                     log: Configuration.LaLogStdoutStderr,
                     display: printStd);
             };
@@ -895,10 +860,8 @@ public sealed class LocalAdmin : IDisposable
 
             if (OperatingSystem.IsWindows())
                 Exit((int)WindowsErrorCode.ERROR_FILE_NOT_FOUND, true);
-            else if (OperatingSystem.IsLinux())
-                Exit((int)UnixErrorCode.ERROR_FILE_NOT_FOUND, true);
             else
-                Exit(1);
+                Exit((int)UnixErrorCode.ERROR_FILE_NOT_FOUND, true);
         }
     }
 
@@ -960,7 +923,7 @@ public sealed class LocalAdmin : IDisposable
             try
             {
                 if (_readerTask is { IsCompleted: true })
-                    _readerTask?.Dispose();
+                    _readerTask.Dispose();
             }
             catch
             {
@@ -970,7 +933,7 @@ public sealed class LocalAdmin : IDisposable
             try
             {
                 if (_heartbeatMonitoringTask is { IsCompleted: true })
-                    _heartbeatMonitoringTask?.Dispose();
+                    _heartbeatMonitoringTask.Dispose();
             }
             catch
             {
@@ -1009,45 +972,44 @@ public sealed class LocalAdmin : IDisposable
     {
         try
         {
-            if (!Directory.Exists(PathManager.ConfigPath))
-                Directory.CreateDirectory(PathManager.ConfigPath);
+            Directory.CreateDirectory(PathManager.ConfigPath);
 
-            if (!File.Exists(PathManager.InternalJsonDataPath))
+            if (await FileUtils.TryReadJsonAsync(PathManager.InternalJsonDataPath, FileShare.Read, JsonGenerated.Default.DataJson) is { } dataJson)
             {
-                DataJson = new DataJson();
-                await SaveJsonOrTerminate();
+                DataJson = dataJson;
             }
             else
             {
-                DataJson = await JsonFile.Load<DataJson>(PathManager.InternalJsonDataPath);
-                JsonFile.UnlockFile(PathManager.InternalJsonDataPath);
-
-                if (DataJson == null)
-                {
-                    ConsoleUtil.WriteLine("Json file is corrupted! Terminating LocalAdmin. If the issue persists, please delete the file and restart LocalAdmin.", ConsoleColor.Red);
-                    Terminate();
-                }
+                DataJson = new DataJson(null, null, false, null,
+                    [], []);
+                await SaveJsonOrTerminate();
             }
 
-            if (_previousPat != DataJson!.GitHubPersonalAccessToken)
+            if (_previousPat != DataJson.GitHubPersonalAccessToken)
             {
                 _previousPat = DataJson.GitHubPersonalAccessToken;
                 PluginInstaller.RefreshPat();
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            ConsoleUtil.WriteLine($"Failed to read JSON config file: {e.Message}", ConsoleColor.Red);
-            DataJson = null;
+            ConsoleUtil.WriteLine($"Failed to read JSON config file: {ex.Message}", ConsoleColor.Red);
             Terminate();
-            throw;
         }
     }
 
     internal async Task SaveJsonOrTerminate()
     {
-        if (!(await DataJson!.TrySave(PathManager.InternalJsonDataPath)))
+        try
+        {
+            await using FileStream fileStream = await FileUtils.OpenAsync(PathManager.InternalJsonDataPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await JsonSerializer.SerializeAsync(fileStream, DataJson, JsonGenerated.Default.DataJson);
+        }
+        catch (Exception ex)
+        {
+            ConsoleUtil.WriteLine($"Failed to write JSON config file: {ex.Message}", ConsoleColor.Red);
             Terminate();
+        }
     }
 
     private void Terminate()
@@ -1088,7 +1050,7 @@ public sealed class LocalAdmin : IDisposable
 
     private void StartHeartbeatMonitoring()
     {
-        async void HeartbeatMonitoringMethod()
+        async Task HeartbeatMonitoringMethod()
         {
             {
                 ushort i = 0;
@@ -1130,7 +1092,7 @@ public sealed class LocalAdmin : IDisposable
                         continue;
 
                     case HeartbeatStatus.Active:
-                        if (HeartbeatStopwatch.ElapsedMilliseconds <= (_heartbeatSpanMaxThreshold * 1000))
+                        if (HeartbeatStopwatch.ElapsedMilliseconds <= _heartbeatSpanMaxThreshold * 1000)
                         {
                             if (HeartbeatWarningStage != 0)
                                 ConsoleUtil.WriteLine("Heartbeat has been received. Restart procedure aborted.", ConsoleColor.DarkGreen);
@@ -1160,8 +1122,7 @@ public sealed class LocalAdmin : IDisposable
                 }
             }
         }
-        _heartbeatMonitoringTask = new Task(HeartbeatMonitoringMethod);
-        _heartbeatMonitoringTask.Start();
+        _heartbeatMonitoringTask = HeartbeatMonitoringMethod();
     }
 
     ~LocalAdmin()

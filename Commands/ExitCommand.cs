@@ -1,11 +1,9 @@
+using System.Threading.Tasks;
 using LocalAdmin.V2.Commands.Meta;
-using LocalAdmin.V2.Core;
 
 namespace LocalAdmin.V2.Commands;
 
-internal sealed class ExitCommand : CommandBase
+internal sealed class ExitCommand() : CommandBase("Exit", "Stops the server.", true)
 {
-    public ExitCommand() : base("Exit", "Stops the server.", true) { }
-
-    internal override void Execute(string[] arguments) { }
+    internal override ValueTask Execute(string[] arguments) => ValueTask.CompletedTask;
 }

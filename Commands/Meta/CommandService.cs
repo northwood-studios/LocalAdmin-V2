@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace LocalAdmin.V2.Commands.Meta;
 
@@ -21,11 +20,11 @@ internal class CommandService
 
     internal CommandBase? GetCommandByName(string name)
     {
-        return _commands.TryGetValue(name, out CommandBase? command) ? command : null;
+        return _commands.GetValueOrDefault(name);
     }
 
     internal CommandBase[] GetAllCommands()
     {
-        return _commands.Values.ToArray();
+        return [.. _commands.Values];
     }
 }

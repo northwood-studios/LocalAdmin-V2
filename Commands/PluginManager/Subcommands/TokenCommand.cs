@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.PluginsManager;
 
@@ -6,7 +7,7 @@ namespace LocalAdmin.V2.Commands.PluginManager.Subcommands;
 
 internal static class TokenCommand
 {
-    internal static async void Token(string? token)
+    internal static async Task Token(string? token)
     {
         if (token == null)
         {
@@ -15,7 +16,7 @@ internal static class TokenCommand
             ConsoleUtil.WriteLine(
                 "[PLUGIN MANAGER] Setting GitHub Personal Access Token (PAT) is important, because it greatly increases rate limits.",
                 ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Token is currently: " + (set ? "SET" : "NOT SET"),
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Token is currently: {(set ? "SET" : "NOT SET")}",
                 set ? ConsoleColor.DarkGreen : ConsoleColor.Yellow);
             ConsoleUtil.WriteLine("[PLUGIN MANAGER]", ConsoleColor.DarkGray);
 
@@ -48,15 +49,18 @@ internal static class TokenCommand
         }
 
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading LocalAdmin config file...", ConsoleColor.Blue);
-        await Core.LocalAdmin.Singleton!.LoadJsonOrTerminate();
+        await Core.LocalAdmin.Singleton.LoadJsonOrTerminate();
 
-        Core.LocalAdmin.DataJson!.GitHubPersonalAccessToken = token.Equals("UNSET", StringComparison.OrdinalIgnoreCase) ? null : token;
+        Core.LocalAdmin.DataJson = Core.LocalAdmin.DataJson! with
+        {
+            GitHubPersonalAccessToken = token.Equals("UNSET", StringComparison.OrdinalIgnoreCase) ? null : token
+        };
 
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing LocalAdmin config file...", ConsoleColor.Blue);
-        if (await Core.LocalAdmin.DataJson.TrySave(PathManager.InternalJsonDataPath))
-            ConsoleUtil.WriteLine("[PLUGIN MANAGER] GitHub Personal Access Token has been updated.", ConsoleColor.DarkGreen);
-        else
-            ConsoleUtil.WriteLine("[PLUGIN MANAGER] Failed to save data.json.", ConsoleColor.Red);
+
+        await Core.LocalAdmin.Singleton.SaveJsonOrTerminate();
+
+        ConsoleUtil.WriteLine("[PLUGIN MANAGER] GitHub Personal Access Token has been updated.", ConsoleColor.DarkGreen);
 
         PluginInstaller.RefreshPat();
     }

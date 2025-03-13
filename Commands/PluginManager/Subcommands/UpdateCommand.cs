@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
 using LocalAdmin.V2.PluginsManager;
 
@@ -6,7 +7,7 @@ namespace LocalAdmin.V2.Commands.PluginManager.Subcommands;
 
 internal static class UpdateCommand
 {
-    internal static async void Update(string options)
+    internal static async Task Update(string options)
     {
         bool iSet = options.Contains('i', StringComparison.Ordinal),
             gSet = options.Contains('g', StringComparison.Ordinal),
@@ -14,28 +15,15 @@ internal static class UpdateCommand
             oSet = options.Contains('o', StringComparison.Ordinal),
             sSet = options.Contains('s', StringComparison.Ordinal);
 
-        bool local = false, global = false;
-
-        switch (gSet)
+        if (!lSet && !gSet)
         {
-            case false when !lSet:
-            case true when lSet:
-                local = global = true;
-                break;
-
-            case true:
-                global = true;
-                break;
-
-            default:
-                local = true;
-                break;
+            lSet = gSet = true;
         }
 
-        if (local)
+        if (lSet)
             await PluginUpdater.UpdatePlugins(Core.LocalAdmin.GamePort.ToString(), iSet, oSet, sSet);
 
-        if (global)
+        if (gSet)
             await PluginUpdater.UpdatePlugins("global", iSet, oSet, sSet);
 
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Updating plugins update complete.", ConsoleColor.DarkGreen);

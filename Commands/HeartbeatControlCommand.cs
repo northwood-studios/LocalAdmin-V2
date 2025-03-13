@@ -1,25 +1,24 @@
 using System;
+using System.Threading.Tasks;
 using LocalAdmin.V2.Commands.Meta;
 using LocalAdmin.V2.IO;
 
 namespace LocalAdmin.V2.Commands;
 
-internal sealed class HeartbeatControlCommand : CommandBase
+internal sealed class HeartbeatControlCommand() : CommandBase("hbctrl", "Controls Heartbeat")
 {
-    public HeartbeatControlCommand() : base("hbctrl", "Controls Heartbeat") { }
-
-    internal override void Execute(string[] arguments)
+    internal override ValueTask Execute(string[] arguments)
     {
-        if (!Core.LocalAdmin.Singleton!.EnableGameHeartbeat)
+        if (!Core.LocalAdmin.Singleton.EnableGameHeartbeat)
         {
             ConsoleUtil.WriteLine("Heartbeat is not enabled in the LA config!", ConsoleColor.Yellow);
-            return;
+            return ValueTask.CompletedTask;
         }
 
         if (arguments.Length != 1)
         {
             ConsoleUtil.WriteLine("Usage: hbctrl <enable|disable|status>", ConsoleColor.Yellow);
-            return;
+            return ValueTask.CompletedTask;
         }
 
         switch (arguments[0].ToLowerInvariant())
@@ -68,26 +67,20 @@ internal sealed class HeartbeatControlCommand : CommandBase
                 ConsoleUtil.WriteLine("Unknown subcommand. Run \"hbctrl\" for get command usage.", ConsoleColor.Red);
                 break;
         }
+        return ValueTask.CompletedTask;
     }
 
     private static string HeartbeatStatusString
     {
         get
         {
-            switch (Core.LocalAdmin.Singleton!.CurrentHeartbeatStatus)
+            return Core.LocalAdmin.Singleton.CurrentHeartbeatStatus switch
             {
-                case Core.LocalAdmin.HeartbeatStatus.Disabled:
-                    return "DISABLED";
-
-                case Core.LocalAdmin.HeartbeatStatus.AwaitingFirstHeartbeat:
-                    return "ACTIVE - AWAITING FIRST HEARTBEAT";
-
-                case Core.LocalAdmin.HeartbeatStatus.Active:
-                    return "ACTIVE - MONITORING";
-
-                default:
-                    return "(unknown)";
-            }
+                Core.LocalAdmin.HeartbeatStatus.Disabled => "DISABLED",
+                Core.LocalAdmin.HeartbeatStatus.AwaitingFirstHeartbeat => "ACTIVE - AWAITING FIRST HEARTBEAT",
+                Core.LocalAdmin.HeartbeatStatus.Active => "ACTIVE - MONITORING",
+                _ => "(unknown)"
+            };
         }
     }
 }

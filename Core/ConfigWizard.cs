@@ -23,8 +23,7 @@ public static class ConfigWizard
         Console.WriteLine("Welcome to LocalAdmin Configuration Wizard!");
         Console.WriteLine();
         Console.WriteLine(
-            "We will ask you a couple of questions. You can always change your answers by running LocalAdmin with \"--reconfigure\" argument or manually editing configuration files in " +
-            (LocalAdmin.ConfigPath ?? PathManager.GameUserDataRoot) + "config directory.");
+            $"We will ask you a couple of questions. You can always change your answers by running LocalAdmin with \"--reconfigure\" argument or manually editing configuration files in {LocalAdmin.ConfigPath ?? PathManager.GameUserDataRoot}config directory.");
         Console.WriteLine();
 
         Console.WriteLine(LocalAdmin.Configuration == null ? "This is the default LocalAdmin configuration:" : "That's your current LocalAdmin configuration:");
@@ -155,7 +154,7 @@ public static class ConfigWizard
         LocalAdmin.Configuration.LaLogsUseZForUtc = BoolInput("Should UTC timezone should be displayed as \"Z\" instead of \"+00:00\"?");
         if (LocalAdmin.Configuration is { LaLogsUseZForUtc: true, LaLiveViewUseUtc: true } &&
             withoutTimezone != null)
-            LocalAdmin.Configuration.LaLiveViewTimeFormat = withoutTimezone + "Z";
+            LocalAdmin.Configuration.LaLiveViewTimeFormat = $"{withoutTimezone}Z";
 
         LocalAdmin.Configuration.LaShowStdoutStderr = BoolInput("Should standard outputs (contain a lot of debug information) be visible on the LocalAdmin live view?");
         LocalAdmin.Configuration.LaNoSetCursor = BoolInput("Should cursor position management be DISABLED (disable only if you are experiencing issues with the console, may cause issues especially on linux)?");
@@ -202,7 +201,7 @@ public static class ConfigWizard
     {
         while (true)
         {
-            Console.WriteLine(question + " [yes/no]: ");
+            Console.WriteLine($"{question} [yes/no]: ");
             var input = Console.ReadLine();
 
             if (input == null) continue;
@@ -219,7 +218,7 @@ public static class ConfigWizard
     {
         while (true)
         {
-            Console.WriteLine(question + " ");
+            Console.WriteLine($"{question} ");
             var input = Console.ReadLine();
 
             if (input == null) continue;
@@ -255,7 +254,7 @@ public static class ConfigWizard
             if (parent == null)
             {
                 Console.WriteLine("FATAL ERROR: Can't create config directory (Directory processing error).");
-                Console.WriteLine("Path: " + LocalAdmin.ConfigPath);
+                Console.WriteLine($"Path: {LocalAdmin.ConfigPath}");
                 Environment.Exit(1);
                 return;
             }
@@ -269,27 +268,24 @@ public static class ConfigWizard
                 catch (Exception e)
                 {
                     Console.WriteLine("FATAL ERROR: Can't create config directory.");
-                    Console.WriteLine("Path: " + parent.FullName);
-                    Console.WriteLine("Exception: " + e.Message);
+                    Console.WriteLine($"Path: {parent.FullName}");
+                    Console.WriteLine($"Exception: {e.Message}");
                     Environment.Exit(1);
                     return;
                 }
             }
 
-            if (File.Exists(parent.FullName))
+            try
             {
-                try
-                {
-                    File.Delete(parent.FullName);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("FATAL ERROR: Can't delete config file.");
-                    Console.WriteLine("Path: " + parent.FullName);
-                    Console.WriteLine("Exception: " + e.Message);
-                    Environment.Exit(1);
-                    return;
-                }
+                File.Delete(parent.FullName);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("FATAL ERROR: Can't delete config file.");
+                Console.WriteLine($"Path: {parent.FullName}");
+                Console.WriteLine($"Exception: {e.Message}");
+                Environment.Exit(1);
+                return;
             }
 
             try
@@ -299,8 +295,8 @@ public static class ConfigWizard
             catch (Exception e)
             {
                 Console.WriteLine("FATAL ERROR: Can't write config file.");
-                Console.WriteLine("Path: " + LocalAdmin.ConfigPath);
-                Console.WriteLine("Exception: " + e.Message);
+                Console.WriteLine($"Path: {LocalAdmin.ConfigPath}");
+                Console.WriteLine($"Exception: {e.Message}");
                 Environment.Exit(1);
                 return;
             }
@@ -312,40 +308,34 @@ public static class ConfigWizard
         var cfgPath =
             $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}{LocalAdmin.GamePort}{Path.DirectorySeparatorChar}";
 
-        if (!Directory.Exists(cfgPath))
+        try
         {
-            try
-            {
-                Directory.CreateDirectory(cfgPath);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("FATAL ERROR: Can't create config directory.");
-                Console.WriteLine("Path: " + cfgPath);
-                Console.WriteLine("Exception: " + e.Message);
-                Environment.Exit(1);
-                return;
-            }
+            Directory.CreateDirectory(cfgPath);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("FATAL ERROR: Can't create config directory.");
+            Console.WriteLine($"Path: {cfgPath}");
+            Console.WriteLine($"Exception: {e.Message}");
+            Environment.Exit(1);
+            return;
         }
 
         cfgPath += "config_localadmin.txt";
 
         if (input != null && input.Equals("this", StringComparison.OrdinalIgnoreCase))
         {
-            if (File.Exists(cfgPath))
+            try
             {
-                try
-                {
-                    File.Delete(cfgPath);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("FATAL ERROR: Can't delete config file.");
-                    Console.WriteLine("Path: " + cfgPath);
-                    Console.WriteLine("Exception: " + e.Message);
-                    Environment.Exit(1);
-                    return;
-                }
+                File.Delete(cfgPath);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("FATAL ERROR: Can't delete config file.");
+                Console.WriteLine($"Path: {cfgPath}");
+                Console.WriteLine($"Exception: {e.Message}");
+                Environment.Exit(1);
+                return;
             }
 
             try
@@ -356,8 +346,8 @@ public static class ConfigWizard
             catch (Exception e)
             {
                 Console.WriteLine("FATAL ERROR: Can't write config file.");
-                Console.WriteLine("Path: " + cfgPath);
-                Console.WriteLine("Exception: " + e.Message);
+                Console.WriteLine($"Path: {cfgPath}");
+                Console.WriteLine($"Exception: {e.Message}");
                 Environment.Exit(1);
                 return;
             }
@@ -366,56 +356,47 @@ public static class ConfigWizard
             return;
         }
 
-        if (File.Exists(cfgPath))
+        try
         {
-            try
-            {
-                File.Delete(cfgPath);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("FATAL ERROR: Can't delete **LOCAL** config file.");
-                Console.WriteLine("Path: " + cfgPath);
-                Console.WriteLine("Exception: " + e.Message);
-                Environment.Exit(1);
-                return;
-            }
+            File.Delete(cfgPath);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("FATAL ERROR: Can't delete **LOCAL** config file.");
+            Console.WriteLine($"Path: {cfgPath}");
+            Console.WriteLine($"Exception: {e.Message}");
+            Environment.Exit(1);
+            return;
         }
 
         cfgPath = $"{PathManager.GameUserDataRoot}config{Path.DirectorySeparatorChar}";
 
-        if (!Directory.Exists(cfgPath))
+        try
         {
-            try
-            {
-                Directory.CreateDirectory(cfgPath);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("FATAL ERROR: Can't  **GLOBAL** config directory.");
-                Console.WriteLine("Path: " + cfgPath);
-                Console.WriteLine("Exception: " + e.Message);
-                Environment.Exit(1);
-                return;
-            }
+            Directory.CreateDirectory(cfgPath);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("FATAL ERROR: Can't  **GLOBAL** config directory.");
+            Console.WriteLine($"Path: {cfgPath}");
+            Console.WriteLine($"Exception: {e.Message}");
+            Environment.Exit(1);
+            return;
         }
 
         cfgPath += "config_localadmin_global.txt";
 
-        if (File.Exists(cfgPath))
+        try
         {
-            try
-            {
-                File.Delete(cfgPath);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("FATAL ERROR: Can't delete **GLOBAL** config file.");
-                Console.WriteLine("Path: " + cfgPath);
-                Console.WriteLine("Exception: " + e.Message);
-                Environment.Exit(1);
-                return;
-            }
+            File.Delete(cfgPath);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("FATAL ERROR: Can't delete **GLOBAL** config file.");
+            Console.WriteLine($"Path: {cfgPath}");
+            Console.WriteLine($"Exception: {e.Message}");
+            Environment.Exit(1);
+            return;
         }
 
         try
@@ -426,8 +407,8 @@ public static class ConfigWizard
         catch (Exception e)
         {
             Console.WriteLine("FATAL ERROR: Can't write **GLOBAL** config file.");
-            Console.WriteLine("Path: " + cfgPath);
-            Console.WriteLine("Exception: " + e.Message);
+            Console.WriteLine($"Path: {cfgPath}");
+            Console.WriteLine($"Exception: {e.Message}");
             Environment.Exit(1);
             return;
         }

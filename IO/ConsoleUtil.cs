@@ -1,15 +1,16 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.IO;
+using System.Threading;
 using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.IO;
 
 public static class ConsoleUtil
 {
-    private static readonly char[] ToTrim = { '\n', '\r' };
+    private static readonly char[] ToTrim = ['\n', '\r'];
 
-    private static readonly object Lck = new object();
+    private static readonly Lock Lck = new();
 
     private static string? _liveTimestampPadding, _logsTimestampPadding;
 

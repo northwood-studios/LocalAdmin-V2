@@ -1,45 +1,16 @@
 using System;
 using System.Collections.Generic;
-using Utf8Json;
+using System.Text.Json.Serialization;
+
 // ReSharper disable InconsistentNaming
 
-namespace LocalAdmin.V2.PluginsManager;
+namespace LocalAdmin.V2.JSON.Objects;
 
-public readonly struct GitHubRelease
-{
-    public readonly string? message;
+public readonly record struct GitHubRelease(
+    string? message,
+    uint id,
+    [property: JsonPropertyName("tag_name")] string? tagName,
+    [property: JsonPropertyName("published_at")] DateTime publishedAt,
+    List<GitHubReleaseAsset> assets);
 
-    public readonly uint id;
-
-    public readonly string? tag_name;
-
-    public readonly DateTime published_at;
-
-    public readonly List<GitHubReleaseAsset> assets;
-
-    [SerializationConstructor]
-    public GitHubRelease(string? message, uint id, string? tag_name, DateTime published_at, List<GitHubReleaseAsset> assets)
-    {
-        this.message = message;
-        this.id = id;
-        this.tag_name = tag_name;
-        this.published_at = published_at;
-        this.assets = assets;
-
-        this.assets ??= new();
-    }
-}
-
-public readonly struct GitHubReleaseAsset
-{
-    public readonly string name;
-
-    public readonly string url;
-
-    [SerializationConstructor]
-    public GitHubReleaseAsset(string name, string url)
-    {
-        this.name = name;
-        this.url = url;
-    }
-}
+public readonly record struct GitHubReleaseAsset(string name, string url);
