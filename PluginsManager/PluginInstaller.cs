@@ -26,8 +26,8 @@ internal static class PluginInstaller
             ? null
             : new AuthenticationHeaderValue("Bearer", Core.LocalAdmin.DataJson.GitHubPersonalAccessToken);
 
-    internal static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}PluginAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
-    private static string DependenciesPath(string port) => $"{PluginsPath(port)}dependencies{Path.DirectorySeparatorChar}";
+    internal static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}LabAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
+    private static string DependenciesPath(string port) => $"{PathManager.GameUserDataRoot}LabAPI{Path.DirectorySeparatorChar}dependencies{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
     private static string TempPath(ushort port) => $"{PathManager.GameUserDataRoot}internal{Path.DirectorySeparatorChar}LA Temp{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
 
     internal const uint DefaultLockTime = 30000;
