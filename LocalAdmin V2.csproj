@@ -13,7 +13,7 @@
         <PackageId>LocalAdmin V2</PackageId>
         <Company>Northwood Studios</Company>
         <Authors>Łukasz "zabszk" Jurczyk, KernelError</Authors>
-        <Copyright>Copyright by Łukasz "zabszk" Jurczyk and KernelError, 2019 - 2024</Copyright>
+        <Copyright>Copyright by Łukasz "zabszk" Jurczyk and KernelError, 2019 - 2025</Copyright>
 
         <SuppressAotAnalysisWarnings>true</SuppressAotAnalysisWarnings>
         <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
