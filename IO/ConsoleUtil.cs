@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using LocalAdmin.V2.Core;
 using LocalAdmin.V2.IO.Logging;
 
 namespace LocalAdmin.V2.IO;
@@ -11,7 +12,11 @@ public static class ConsoleUtil
 
     private static readonly object Lck = new object();
 
+    public static readonly string Prompt = "> ";
+
     private static string? _liveTimestampPadding, _logsTimestampPadding;
+
+    private static string? _tempInput;
 
     public static void Clear()
     {
@@ -72,6 +77,8 @@ public static class ConsoleUtil
         return _logsTimestampPadding;
     }
 
+    public static void SetTempInput(string input) => _tempInput = input;
+
     public static void Write(string content, ConsoleColor color = ConsoleColor.White, int height = 0, bool log = true, bool display = true)
     {
         lock (Lck)
@@ -124,9 +131,12 @@ public static class ConsoleUtil
                 if (height > 0 && !Core.LocalAdmin.NoSetCursor)
                     Console.CursorTop += height;
 
+                Console.SetCursorPosition(0, Console.WindowHeight - 1);
+
                 Console.WriteLine($"{GetLiveViewTimestamp()} {(multiline ? content.Replace("\n", GetLiveViewPadding(), StringComparison.Ordinal) : content)}");
 
                 Console.ForegroundColor = ConsoleColor.White;
+                Console.Write(Prompt + _tempInput);
             }
 
             if (log)
