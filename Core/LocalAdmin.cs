@@ -35,6 +35,7 @@ public sealed class LocalAdmin : IDisposable
 
     private static readonly ConcurrentQueue<string> InputQueue = new();
     private static readonly Stopwatch RestartsStopwatch = new();
+    private static readonly StringBuilder InputBuilder = new();
     private static string? _previousPat;
     private static bool _firstRun = true;
     private static string _gameArguments = string.Empty;
@@ -243,7 +244,7 @@ public sealed class LocalAdmin : IDisposable
             {
                 if (args.Length == 0 || !ushort.TryParse(args[0], out GamePort))
                 {
-                    ConsoleUtil.WriteLine("You can pass port number as first startup argument.",
+                    ConsoleUtil.Write("You can pass port number as first startup argument.\n",
                         ConsoleColor.Green);
                     Console.WriteLine(string.Empty);
                     ConsoleUtil.Write($"Port number (default: {DefaultPort}): ", ConsoleColor.Green);
@@ -689,12 +690,46 @@ public sealed class LocalAdmin : IDisposable
         {
             while (!_exit)
             {
-                var input = Console.ReadLine();
+                if (Console.IsInputRedirected)
+                {
+                    var line = Console.ReadLine();
 
-                if (string.IsNullOrWhiteSpace(input))
-                    continue;
+                    if (string.IsNullOrWhiteSpace(line))
+                        return;
 
-                InputQueue.Enqueue(input);
+                    InputQueue.Enqueue(line);
+                    InputBuilder.Clear();
+                }
+                else
+                {
+                    var keyInfo = Console.ReadKey(intercept: true);
+                    switch (keyInfo.Key)
+                    {
+                        case ConsoleKey.Enter:
+                            if (InputBuilder.Length == 0)
+                                break;
+                            InputQueue.Enqueue(InputBuilder.ToString());
+                            InputBuilder.Clear();
+                            Console.WriteLine();
+                            Console.SetCursorPosition(ConsoleUtil.Prompt.Length, Console.CursorTop);
+                            break;
+                        case ConsoleKey.Backspace or ConsoleKey.Delete:
+                            if (InputBuilder.Length > 0)
+                            {
+                                InputBuilder.Remove(InputBuilder.Length - 1, 1);
+                            }
+                            break;
+                        default:
+                            InputBuilder.Append(keyInfo.KeyChar);
+                            break;
+                    }
+
+                    Console.SetCursorPosition(ConsoleUtil.Prompt.Length, Console.CursorTop);
+                    Console.Write(InputBuilder + " ");
+                    Console.SetCursorPosition(InputBuilder.Length + ConsoleUtil.Prompt.Length, Console.CursorTop);
+
+                    ConsoleUtil.SetTempInput(InputBuilder.ToString());
+                }
             }
         }).Start();
     }
