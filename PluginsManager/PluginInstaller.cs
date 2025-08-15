@@ -1,3 +1,5 @@
+using LocalAdmin.V2.Core;
+using LocalAdmin.V2.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,8 +9,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using LocalAdmin.V2.Core;
-using LocalAdmin.V2.IO;
 using Utf8Json;
 
 namespace LocalAdmin.V2.PluginsManager;
@@ -26,8 +26,9 @@ internal static class PluginInstaller
             ? null
             : new AuthenticationHeaderValue("Bearer", Core.LocalAdmin.DataJson.GitHubPersonalAccessToken);
 
-    internal static string PluginsPath(string port) => $"{PathManager.GameUserDataRoot}LabAPI{Path.DirectorySeparatorChar}plugins{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
-    private static string DependenciesPath(string port) => $"{PathManager.GameUserDataRoot}LabAPI{Path.DirectorySeparatorChar}dependencies{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
+    internal static string MetadataPath() => $"{PathManager.LabApiRoot}metadata-{Core.LocalAdmin.GamePort}.json";
+    internal static string PluginsPath(string path) => $"{PathManager.PluginsPath}{PluginContext.FormatPath(path)}{Path.DirectorySeparatorChar}";
+    private static string DependenciesPath(string path) => $"{PathManager.DependenciesPath}{PluginContext.FormatPath(path)}{Path.DirectorySeparatorChar}";
     private static string TempPath(ushort port) => $"{PathManager.GameUserDataRoot}internal{Path.DirectorySeparatorChar}LA Temp{Path.DirectorySeparatorChar}{port}{Path.DirectorySeparatorChar}";
 
     internal const uint DefaultLockTime = 30000;
@@ -166,14 +167,14 @@ internal static class PluginInstaller
         TryGetVersionDetails(string name, string version, bool interactive = true) => await QueryRelease(name,
         $"https://api.github.com/repos/{name}/releases/tags/{version}", interactive);
 
-    internal static async Task<bool> TryInstallPlugin(string name, PluginVersionCache plugin, string targetVersion, string port, bool overwriteFiles, bool ignoreLocks)
+    internal static async Task<bool> TryInstallPlugin(string name, PluginVersionCache plugin, string targetVersion, string path, string dependenciesPath, bool overwriteFiles, bool ignoreLocks)
     {
         var tempPath = TempPath(Core.LocalAdmin.GamePort);
 
         try
         {
-            var pluginsPath = PluginsPath(port);
-            var depPath = DependenciesPath(port);
+            var pluginsPath = PluginsPath(path);
+            var depPath = DependenciesPath(dependenciesPath);
 
             if (!Directory.Exists(pluginsPath))
                 Directory.CreateDirectory(pluginsPath);
@@ -182,7 +183,7 @@ internal static class PluginInstaller
                 Directory.CreateDirectory(depPath);
 
             var safeName = name.Replace("/", "_", StringComparison.Ordinal);
-            var metadataPath = pluginsPath + "metadata.json";
+            var metadataPath = MetadataPath();
             var pluginPath = pluginsPath + $"{safeName}.dll";
             var abort = false;
             ServerPluginsConfig? metadata = null;
@@ -305,6 +306,7 @@ internal static class PluginInstaller
                             metadata.Dependencies.Add(fn, new Dependency
                             {
                                 FileHash = newHash,
+                                FilePath = dependenciesPath,
                                 InstallationDate = DateTime.UtcNow,
                                 UpdateDate = DateTime.UtcNow,
                                 InstalledByPlugins = usedBy,
@@ -357,6 +359,7 @@ internal static class PluginInstaller
                             if (overwrite)
                             {
                                 metadata.Dependencies[fn].FileHash = newHash;
+                                metadata.Dependencies[fn].FilePath = dependenciesPath;
                                 metadata.Dependencies[fn].UpdateDate = DateTime.UtcNow;
                             }
 
@@ -427,6 +430,7 @@ internal static class PluginInstaller
                 if (metadata!.InstalledPlugins.ContainsKey(name))
                 {
                     metadata.InstalledPlugins[name].FileHash = hash;
+                    metadata.InstalledPlugins[name].FilePath = path;
                     metadata.InstalledPlugins[name].UpdateDate = DateTime.UtcNow;
                     metadata.InstalledPlugins[name].CurrentVersion = plugin.Version;
                     metadata.InstalledPlugins[name].TargetVersion = targetVersion;
@@ -435,6 +439,7 @@ internal static class PluginInstaller
                     metadata.InstalledPlugins.Add(name, new InstalledPlugin
                     {
                         FileHash = hash,
+                        FilePath = path,
                         InstallationDate = DateTime.UtcNow,
                         UpdateDate = DateTime.UtcNow,
                         CurrentVersion = plugin.Version,
@@ -490,7 +495,7 @@ internal static class PluginInstaller
             if (runMaintenance)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Performing automatic maintenance...", ConsoleColor.Blue);
-                await PluginsMaintenance(port, false);
+                await PluginsMaintenance(false);
             }
 
             return true;
@@ -558,7 +563,7 @@ internal static class PluginInstaller
         }
     }
 
-    internal static async Task<bool> TryUninstallPlugin(string name, string port, bool ignoreLocks, bool skipUpdate)
+    internal static async Task<bool> TryUninstallPlugin(string name, bool ignoreLocks, bool skipUpdate)
     {
         var performUpdate = OfficialPluginsList.IsRefreshNeeded();
 
@@ -580,43 +585,16 @@ internal static class PluginInstaller
         }
 
         ServerPluginsConfig? metadata = null;
-        var pluginsPath = PluginsPath(port);
-
-        if (!Directory.Exists(pluginsPath))
-            Directory.CreateDirectory(pluginsPath);
-
         var success = false;
-        var metadataPath = PluginsPath(port) + "metadata.json";
+        var metadataPath = MetadataPath();
 
         try
         {
-            var depPath = DependenciesPath(port);
-
-            if (!Directory.Exists(depPath))
-                Directory.CreateDirectory(depPath);
-
-            var safeName = name.Replace("/", "_", StringComparison.Ordinal);
-
-            var pluginPath = PluginsPath(port) + $"{safeName}.dll";
-
-            try
-            {
-                if (FileUtils.DeleteIfExists(pluginPath))
-                    ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugin DLL deleted.", ConsoleColor.Blue);
-                else ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugin DLL does not exist.", ConsoleColor.Yellow);
-            }
-            catch (Exception e)
-            {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to delete plugin {name}! Exception: {e.Message}",
-                    ConsoleColor.Red);
-                return false;
-            }
-
             if (!File.Exists(metadataPath))
             {
-                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Metadata file does not exist.", ConsoleColor.Yellow);
-                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Uninstallation complete.", ConsoleColor.Blue);
-                return true;
+                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Metadata file does not exist.", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Uninstallation failed.", ConsoleColor.Red);
+                return false;
             }
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Reading metadata...", ConsoleColor.Blue);
@@ -624,19 +602,35 @@ internal static class PluginInstaller
 
             if (metadata == null)
             {
-                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Failed to read metadata (null)!", ConsoleColor.Yellow);
-                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Uninstallation complete.", ConsoleColor.Blue);
-                return true;
+                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Failed to read metadata (null)!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine("[PLUGIN MANAGER] Uninstallation failed.", ConsoleColor.Red);
+                return false;
             }
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Processing metadata...", ConsoleColor.Blue);
             if (metadata.InstalledPlugins.ContainsKey(name))
             {
-                metadata.InstalledPlugins.Remove(name);
-                await metadata.TrySave(metadataPath, 0);
+                var safeName = name.Replace("/", "_", StringComparison.Ordinal);
+                var pluginPath = PluginsPath(metadata.InstalledPlugins[name].FilePath ?? string.Empty) + $"{safeName}.dll";
+
+                try
+                {
+                    if (FileUtils.DeleteIfExists(pluginPath))
+                        ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugin DLL deleted.", ConsoleColor.Blue);
+                    else ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugin DLL does not exist.", ConsoleColor.Yellow);
+
+                    metadata.InstalledPlugins.Remove(name);
+                    await metadata.TrySave(metadataPath, 0);
+                }
+                catch (Exception e)
+                {
+                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to delete plugin {name}! Exception: {e.Message}",
+                        ConsoleColor.Red);
+                    return false;
+                }
             }
 
-            List<string> depToRemove = new();
+            Dictionary<string, Dependency> depToRemove = new();
 
             foreach (var dep in metadata.Dependencies)
             {
@@ -644,7 +638,7 @@ internal static class PluginInstaller
                     dep.Value.InstalledByPlugins.Remove(name);
 
                 if (dep.Value.InstalledByPlugins.Count == 0 && !dep.Value.ManuallyInstalled)
-                    depToRemove.Add(dep.Key);
+                    depToRemove.Add(dep.Key, dep.Value);
             }
 
             foreach (var dep in depToRemove)
@@ -654,11 +648,11 @@ internal static class PluginInstaller
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Removing redundant dependency {dep}...",
                         ConsoleColor.Blue);
 
-                    if (FileUtils.DeleteIfExists(depPath + dep))
+                    if (FileUtils.DeleteIfExists(DependenciesPath(dep.Value.FilePath ?? string.Empty) + dep))
                         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Dependency deleted.", ConsoleColor.Blue);
                     else ConsoleUtil.WriteLine("[PLUGIN MANAGER] Dependency does not exist.", ConsoleColor.Yellow);
 
-                    metadata.Dependencies.Remove(dep);
+                    metadata.Dependencies.Remove(dep.Key);
                 }
                 catch (Exception e)
                 {
@@ -691,30 +685,17 @@ internal static class PluginInstaller
         }
     }
 
-    internal static async Task<bool> PluginsMaintenance(string port, bool ignoreLocks)
+    internal static async Task<bool> PluginsMaintenance(bool ignoreLocks)
     {
-        var pluginsPath = PluginsPath(port);
-
-        if (!Directory.Exists(pluginsPath))
-        {
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins path for port {port} doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
-            return true;
-        }
-
-        var depPath = DependenciesPath(port);
-
-        if (!Directory.Exists(depPath))
-            Directory.CreateDirectory(depPath);
-
         ServerPluginsConfig? metadata = null;
         var success = false;
-        var metadataPath = pluginsPath + "metadata.json";
+        var metadataPath = MetadataPath();
 
         try
         {
             if (!File.Exists(metadataPath))
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Metadata file for port {port} doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Metadata file for port {Core.LocalAdmin.GamePort} doesn't exist. No need to perform maintenance.", ConsoleColor.Blue);
                 success = true;
                 return true;
             }
@@ -724,31 +705,32 @@ internal static class PluginInstaller
 
             if (metadata == null)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to parse metadata file for port {port}!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to parse metadata file for port {Core.LocalAdmin.GamePort}!", ConsoleColor.Red);
                 return false;
             }
 
-            List<string> depToRemove = new(), plToRemove = new();
+            Dictionary<string, Dependency> depToRemove = new();
+            Dictionary<string, InstalledPlugin> plToRemove = new();
 
             foreach (var pl in metadata.InstalledPlugins)
             {
-                var pluginPath = pluginsPath + $"{pl.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
+                var pluginPath = PluginsPath(pl.Value.FilePath ?? string.Empty) + $"{pl.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
 
                 if (File.Exists(pluginPath))
                     continue;
 
-                plToRemove.Add(pl.Key);
+                plToRemove.Add(pl.Key, pl.Value);
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugin {pl.Key} has been manually removed.", ConsoleColor.Blue);
             }
 
-            foreach (var pl in plToRemove)
+            foreach (var pl in plToRemove.Keys)
                 metadata.InstalledPlugins.Remove(pl);
 
             foreach (var dep in metadata.Dependencies)
             {
-                if (!File.Exists(depPath + dep.Key))
+                if (!File.Exists(DependenciesPath(dep.Value.FilePath ?? string.Empty) + dep.Key))
                 {
-                    depToRemove.Add(dep.Key);
+                    depToRemove.Add(dep.Key, dep.Value);
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependency {dep.Key} has been manually removed.", ConsoleColor.Blue);
                     continue;
                 }
@@ -759,15 +741,15 @@ internal static class PluginInstaller
                     if (metadata.InstalledPlugins.ContainsKey(pl))
                         continue;
 
-                    plToRemove.Add(pl);
+                    plToRemove.Add(pl, null!);
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Removed non-existing plugin {pl} from dependency {dep.Key}.", ConsoleColor.Blue);
                 }
 
-                foreach (var pl in plToRemove)
+                foreach (var pl in plToRemove.Keys)
                     metadata.Dependencies[dep.Key].InstalledByPlugins.Remove(pl);
 
                 if (dep.Value.InstalledByPlugins.Count == 0 && !dep.Value.ManuallyInstalled)
-                    depToRemove.Add(dep.Key);
+                    depToRemove.Add(dep.Key, dep.Value);
             }
 
             foreach (var dep in depToRemove)
@@ -778,11 +760,11 @@ internal static class PluginInstaller
                         ConsoleColor.Blue);
 
                     ConsoleUtil.WriteLine(
-                        FileUtils.DeleteIfExists(depPath + dep)
+                        FileUtils.DeleteIfExists(DependenciesPath(dep.Value.FilePath ?? string.Empty) + dep)
                             ? "[PLUGIN MANAGER] Dependency deleted."
                             : "[PLUGIN MANAGER] Dependency does not exist.", ConsoleColor.Blue);
 
-                    metadata.Dependencies.Remove(dep);
+                    metadata.Dependencies.Remove(dep.Key);
                 }
                 catch (Exception e)
                 {
@@ -796,7 +778,7 @@ internal static class PluginInstaller
         }
         catch (Exception e)
         {
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to perform maintenance for port {port}! Exception: {e.Message}",
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to perform maintenance for port {Core.LocalAdmin.GamePort}! Exception: {e.Message}",
                 ConsoleColor.Red);
             return false;
         }
@@ -811,7 +793,7 @@ internal static class PluginInstaller
             }
 
             if (success)
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins maintenance for port {port} complete!", ConsoleColor.DarkGreen);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins maintenance for port {Core.LocalAdmin.GamePort} complete!", ConsoleColor.DarkGreen);
         }
     }
 

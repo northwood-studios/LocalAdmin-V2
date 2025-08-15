@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
 
@@ -8,31 +9,31 @@ namespace LocalAdmin.V2.PluginsManager;
 
 internal static class PluginUpdater
 {
-    internal static async Task<bool> CheckForUpdates(string port, bool ignoreLocks)
+    internal static async Task<bool> CheckForUpdates(bool ignoreLocks)
     {
-        var metadataPath = PluginInstaller.PluginsPath(port) + "metadata.json";
+        var metadataPath = PluginInstaller.MetadataPath();
 
         try
         {
             if (!File.Exists(metadataPath))
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No metadata file for port {port}. Skipped.", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No metadata file for port {Core.LocalAdmin.GamePort}. Skipped.", ConsoleColor.Blue);
                 return true;
             }
 
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {Core.LocalAdmin.GamePort}...", ConsoleColor.Blue);
             var metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime, true);
 
             if (metadata == null)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {Core.LocalAdmin.GamePort}. Skipped.", ConsoleColor.Blue);
                 JsonFile.UnlockFile(metadataPath);
                 return true;
             }
 
             if (metadata.InstalledPlugins.Count == 0)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {Core.LocalAdmin.GamePort}. Skipped.", ConsoleColor.Blue);
                 metadata.LastUpdateCheck = DateTime.UtcNow;
 
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing metadata...", ConsoleColor.Blue);
@@ -78,7 +79,7 @@ internal static class PluginUpdater
                 fixedOutdated++;
             }
 
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Finished checking for plugins updates for port {port}. Up to date: {ok}, outdated: {outdated}, outdated (with specific version set): {fixedOutdated}, failed: {failed}.", ConsoleColor.DarkGreen);
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Finished checking for plugins updates for port {Core.LocalAdmin.GamePort}. Up to date: {ok}, outdated: {outdated}, outdated (with specific version set): {fixedOutdated}, failed: {failed}.", ConsoleColor.DarkGreen);
 
             ConsoleUtil.WriteLine("[PLUGIN MANAGER] Writing LocalAdmin config file...", ConsoleColor.Blue);
             await Core.LocalAdmin.Singleton.SaveJsonOrTerminate();
@@ -97,7 +98,7 @@ internal static class PluginUpdater
         }
         catch (Exception e)
         {
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to check for plugin updates for port {port}! Exception: {e.Message}",
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to check for plugin updates for port {Core.LocalAdmin.GamePort}! Exception: {e.Message}",
                 ConsoleColor.Red);
             JsonFile.UnlockFile(metadataPath);
 
@@ -105,25 +106,24 @@ internal static class PluginUpdater
         }
     }
 
-    internal static async Task UpdatePlugins(string port, bool ignoreLocks, bool overwrite, bool skipUpdateCheck)
+    internal static async Task UpdatePlugins(bool ignoreLocks, bool overwrite, bool skipUpdateCheck)
     {
-        var pluginsPath = PluginInstaller.PluginsPath(port);
-        var metadataPath = pluginsPath + "metadata.json";
+        var metadataPath = PluginInstaller.MetadataPath();
 
         try
         {
-            if (!File.Exists(metadataPath) || !Directory.Exists(pluginsPath))
+            if (!File.Exists(metadataPath))
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No metadata file for port {port}. Skipped.", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No metadata file for port {Core.LocalAdmin.GamePort}. Skipped.", ConsoleColor.Blue);
                 return;
             }
 
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {Core.LocalAdmin.GamePort}...", ConsoleColor.Blue);
             var metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime);
 
             if (metadata == null || metadata.InstalledPlugins.Count == 0)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {Core.LocalAdmin.GamePort}. Skipped.", ConsoleColor.Blue);
                 return;
             }
 
@@ -131,12 +131,12 @@ internal static class PluginUpdater
 
             if (metadata.LastUpdateCheck == null)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins update check for port {port} was never performed.", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins update check for port {Core.LocalAdmin.GamePort} was never performed.", ConsoleColor.Yellow);
                 performUpdate = true;
             }
             else if ((DateTime.UtcNow - metadata.LastUpdateCheck).Value.TotalMinutes > 30)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Last plugins update check for port {port} was performed more than 30 minutes ago.", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Last plugins update check for port {Core.LocalAdmin.GamePort} was performed more than 30 minutes ago.", ConsoleColor.Yellow);
                 performUpdate = true;
             }
 
@@ -144,18 +144,18 @@ internal static class PluginUpdater
             {
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Performing plugins update check...", ConsoleColor.Yellow);
 
-                if (!await CheckForUpdates(port, ignoreLocks))
+                if (!await CheckForUpdates(ignoreLocks))
                 {
                     ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins update check failed! Aborting plugins update.", ConsoleColor.Red);
                     return;
                 }
 
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {Core.LocalAdmin.GamePort}...", ConsoleColor.Blue);
                 metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime);
 
                 if (metadata == null || metadata.InstalledPlugins.Count == 0)
                 {
-                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
+                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {Core.LocalAdmin.GamePort}. Skipped.", ConsoleColor.Blue);
                     return;
                 }
             }
@@ -173,7 +173,8 @@ internal static class PluginUpdater
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Processing plugin {plugin.Key} ({i}/{metadata.InstalledPlugins.Count})...", ConsoleColor.Blue);
 
                 var safeName = plugin.Key.Replace("/", "_", StringComparison.Ordinal);
-                var pluginPath = pluginsPath + $"{safeName}.dll";
+                var pluginFilePath = plugin.Value.FilePath ?? string.Empty;
+                var pluginPath = PluginInstaller.PluginsPath(pluginFilePath) + $"{safeName}.dll";
 
                 if (!File.Exists(pluginPath))
                 {
@@ -219,14 +220,15 @@ internal static class PluginUpdater
                 }
 
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Updating plugin {plugin.Key}...", ConsoleColor.Blue);
-                await PluginInstaller.TryInstallPlugin(plugin.Key, cachedPlugin, "latest", port, overwrite, ignoreLocks);
+                var dependenciesPath = metadata.Dependencies.Values.FirstOrDefault(d => d.InstalledByPlugins.Contains(plugin.Key))?.FilePath ?? PluginContext.DependenciesFolder;
+                await PluginInstaller.TryInstallPlugin(plugin.Key, cachedPlugin, "latest", pluginFilePath, dependenciesPath, overwrite, ignoreLocks);
             }
 
             if (toRemove.Count != 0)
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Removing manually uninstalled plugins from metadata file...", ConsoleColor.Blue);
 
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {Core.LocalAdmin.GamePort}...", ConsoleColor.Blue);
                 metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime, true);
 
                 if (metadata == null || metadata.InstalledPlugins.Count == 0)
@@ -250,7 +252,7 @@ internal static class PluginUpdater
         }
         catch (Exception e)
         {
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to update plugins for port {port}! Exception: {e.Message}",
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to update plugins for port {Core.LocalAdmin.GamePort}! Exception: {e.Message}",
                 ConsoleColor.Red);
             JsonFile.UnlockFile(metadataPath);
         }
