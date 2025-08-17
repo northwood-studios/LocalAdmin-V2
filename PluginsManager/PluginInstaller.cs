@@ -167,13 +167,13 @@ internal static class PluginInstaller
         TryGetVersionDetails(string name, string version, bool interactive = true) => await QueryRelease(name,
         $"https://api.github.com/repos/{name}/releases/tags/{version}", interactive);
 
-    internal static async Task<bool> TryInstallPlugin(string name, PluginVersionCache plugin, string targetVersion, string path, string dependenciesPath, bool overwriteFiles, bool ignoreLocks)
+    internal static async Task<bool> TryInstallPlugin(string name, PluginVersionCache plugin, string targetVersion, string plPath, string dependenciesPath, bool overwriteFiles, bool ignoreLocks)
     {
         var tempPath = TempPath(Core.LocalAdmin.GamePort);
 
         try
         {
-            var pluginsPath = PluginsPath(path);
+            var pluginsPath = PluginsPath(plPath);
             var depPath = DependenciesPath(dependenciesPath);
 
             if (!Directory.Exists(pluginsPath))
@@ -430,7 +430,7 @@ internal static class PluginInstaller
                 if (metadata!.InstalledPlugins.ContainsKey(name))
                 {
                     metadata.InstalledPlugins[name].FileHash = hash;
-                    metadata.InstalledPlugins[name].FilePath = path;
+                    metadata.InstalledPlugins[name].FilePath = plPath;
                     metadata.InstalledPlugins[name].UpdateDate = DateTime.UtcNow;
                     metadata.InstalledPlugins[name].CurrentVersion = plugin.Version;
                     metadata.InstalledPlugins[name].TargetVersion = targetVersion;
@@ -439,7 +439,7 @@ internal static class PluginInstaller
                     metadata.InstalledPlugins.Add(name, new InstalledPlugin
                     {
                         FileHash = hash,
-                        FilePath = path,
+                        FilePath = plPath,
                         InstallationDate = DateTime.UtcNow,
                         UpdateDate = DateTime.UtcNow,
                         CurrentVersion = plugin.Version,
@@ -741,7 +741,7 @@ internal static class PluginInstaller
                     if (metadata.InstalledPlugins.ContainsKey(pl))
                         continue;
 
-                    plToRemove.Add(pl, null!);
+                    plToRemove.Add(pl, null!); // We can put null here, only keys are used later
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Removed non-existing plugin {pl} from dependency {dep.Key}.", ConsoleColor.Blue);
                 }
 

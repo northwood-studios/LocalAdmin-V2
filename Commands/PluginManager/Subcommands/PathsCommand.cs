@@ -31,8 +31,8 @@ internal static class PathsCommand
             }
         }
 
-        ConsoleUtil.WriteLine("[PLUGIN MANAGER] Current paths configuration used for plugins management:", ConsoleColor.Blue);
-        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins path: {PluginContext.PluginsFolder}", ConsoleColor.Blue);
-        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependencies path: {PluginContext.DependenciesFolder}", ConsoleColor.Blue);
+        ConsoleUtil.WriteLine("[PLUGIN MANAGER] Current paths configuration used for plugins installation:", ConsoleColor.Green);
+        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins path: {PluginContext.PluginsFolder}", ConsoleColor.Green);
+        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependencies path: {PluginContext.DependenciesFolder}", ConsoleColor.Green);
     }
 }

@@ -10,13 +10,15 @@ internal static class PluginStorage
 {
     internal static async Task<List<PluginListEntry>?> ListPlugins(bool ignoreLocks, bool skipUpdateCheck)
     {
+        var port = Core.LocalAdmin.GamePort.ToString();
+
         try
         {
             var metadataPath = PluginInstaller.MetadataPath();
 
             if (!File.Exists(metadataPath))
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Metadata file for port {Core.LocalAdmin.GamePort} doesn't exist. Skipped.", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Metadata file for port {port} doesn't exist. Skipped.", ConsoleColor.Blue);
                 return null;
             }
 
@@ -25,7 +27,7 @@ internal static class PluginStorage
 
             if (metadata == null)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to parse metadata file for port {Core.LocalAdmin.GamePort}!", ConsoleColor.Red);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to parse metadata file for port {port}!", ConsoleColor.Red);
                 return null;
             }
 
@@ -33,13 +35,12 @@ internal static class PluginStorage
 
             if (metadata.LastUpdateCheck == null)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins update check for port {Core.LocalAdmin.GamePort} was never performed.", ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins update check for port {port} was never performed.", ConsoleColor.Yellow);
                 performUpdate = true;
             }
             else if ((DateTime.UtcNow - metadata.LastUpdateCheck).Value.TotalMinutes > 30)
             {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Last plugins update check for port {Core.LocalAdmin.GamePort} was performed more than 30 minutes ago.",
-                    ConsoleColor.Yellow);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Last plugins update check for port {port} was performed more than 30 minutes ago.", ConsoleColor.Yellow);
                 performUpdate = true;
             }
 
@@ -50,12 +51,12 @@ internal static class PluginStorage
                 if (!await PluginUpdater.CheckForUpdates(ignoreLocks))
                     ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins update check failed! Aborting plugins update.", ConsoleColor.Yellow);
 
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {Core.LocalAdmin.GamePort}...", ConsoleColor.Blue);
+                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
                 metadata = await JsonFile.Load<ServerPluginsConfig>(metadataPath, ignoreLocks ? 0 : PluginInstaller.DefaultLockTime);
 
                 if (metadata == null || metadata.InstalledPlugins.Count == 0)
                 {
-                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {Core.LocalAdmin.GamePort}. Skipped.", ConsoleColor.Blue);
+                    ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No plugins installed for port {port}. Skipped.", ConsoleColor.Blue);
                     return null;
                 }
             }
@@ -99,7 +100,7 @@ internal static class PluginStorage
         }
         catch (Exception e)
         {
-            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to list plugins for port {Core.LocalAdmin.GamePort}! Exception: {e.Message}",
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Failed to list plugins for port {port}! Exception: {e.Message}",
                 ConsoleColor.Red);
             return null;
         }
