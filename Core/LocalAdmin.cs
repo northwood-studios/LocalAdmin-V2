@@ -46,7 +46,7 @@ public sealed class LocalAdmin : IDisposable
     private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
 
     internal readonly CommandService CommandService = new();
-    private readonly string _scpslExecutable;
+    private readonly string _scpslExecutable = string.Empty;
     private volatile bool _processClosing;
     private bool _idleMode;
     private uint _heartbeatSpanMaxThreshold;
@@ -107,17 +107,14 @@ public sealed class LocalAdmin : IDisposable
 
     internal LocalAdmin()
     {
-        if (OperatingSystem.IsWindows())
-            _scpslExecutable = "SCPSL.exe";
-        else if (OperatingSystem.IsLinux())
-            _scpslExecutable = "SCPSL.x86_64";
-        else
-        {
-            ConsoleUtil.WriteLine("Failed - Unsupported platform! Please switch to the Windows, or Linux platform to continue.", ConsoleColor.Red);
-            // shut up dotnet
-            _scpslExecutable = string.Empty;
-            Exit(1);
-        }
+#if OS_WIN32 // Haha, precompiler definitions go brr.
+        _scpslExecutable = "SCPSL.exe";
+#elif OS_LINUX
+        _scpslExecutable = "SCPSL.x86_64";
+#else
+        ConsoleUtil.WriteLine("Failed - Unsupported platform! Please switch to Windows, or any Linux distribution to continue.", ConsoleColor.Red);
+        Exit(1);
+#endif
     }
 
     internal async Task Start(string[] args)
@@ -133,22 +130,19 @@ public sealed class LocalAdmin : IDisposable
         {
             ConsoleUtil.WriteLine($"Welcome to LocalAdmin version {VersionString}!", ConsoleColor.Red);
             ConsoleUtil.WriteLine("Can't obtain a valid user home directory path!", ConsoleColor.Red);
-            if (OperatingSystem.IsWindows())
-            {
-                ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
-                ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
-            }
-            else if (OperatingSystem.IsLinux())
-            {
-                ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
-                ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
-            }
-            else
-            {
-                ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform, please switch to Windows or Linux!", ConsoleColor.Red);
-                throw new PlatformNotSupportedException();
-            }
+
+#if OS_WIN32
+            ConsoleUtil.WriteLine("Such error should never occur on Windows.", ConsoleColor.Red);
+            ConsoleUtil.WriteLine("Open issue on the LocalAdmin GitHub repository (https://github.com/northwood-studios/LocalAdmin-V2/issues) or contact our technical support!", ConsoleColor.Red);
+#elif OS_LINUX
+            ConsoleUtil.WriteLine("Make sure to export a valid path, for example using command: export HOME=/home/username-here", ConsoleColor.Red);
+            ConsoleUtil.WriteLine("You may want to add that command to the top of ~/.bashrc file and restart the terminal session to avoid having to enter that command every time.", ConsoleColor.Red);
+#else
+            ConsoleUtil.WriteLine("You are running LocalAdmin on an unsupported platform, please switch to Windows or Linux!", ConsoleColor.Red);
+            throw new PlatformNotSupportedException();
+#endif
             ConsoleUtil.WriteLine("To skip this check, use --skipHomeCheck argument.", ConsoleColor.Red);
+
             Terminate();
             return;
         }
@@ -188,7 +182,7 @@ public sealed class LocalAdmin : IDisposable
                 if (args.Contains("--acceptEULA", StringComparer.Ordinal) ||
                     Environment.GetEnvironmentVariable("ACCEPT_SCPSL_EULA")?.ToUpperInvariant() is "1" or "TRUE")
                 {
-                    DataJson!.EulaAccepted = DateTime.UtcNow;
+                    DataJson.EulaAccepted = DateTime.UtcNow;
                     autoEula = true;
 
                     await SaveJsonOrTerminate();
@@ -201,7 +195,7 @@ public sealed class LocalAdmin : IDisposable
                     ConsoleUtil.WriteLine("", ConsoleColor.Cyan);
                     ConsoleUtil.WriteLine("Do you accept the EULA? [yes/no]", ConsoleColor.Cyan);
 
-                    ReadInput((input) =>
+                    ReadInput(input =>
                         {
                             if (input == null)
                                 return false;
@@ -248,7 +242,7 @@ public sealed class LocalAdmin : IDisposable
                     Console.WriteLine(string.Empty);
                     ConsoleUtil.Write($"Port number (default: {DefaultPort}): ", ConsoleColor.Green);
 
-                    ReadInput((input) =>
+                    ReadInput(input =>
                         {
                             if (!string.IsNullOrEmpty(input))
                                 return ushort.TryParse(input, out GamePort);
@@ -270,7 +264,7 @@ public sealed class LocalAdmin : IDisposable
                     switch (capture)
                     {
                         case CaptureArgs.None:
-                            if (arg.StartsWith("-", StringComparison.Ordinal) &&
+                            if (arg.StartsWith('-') &&
                                 !arg.StartsWith("--", StringComparison.Ordinal) && arg.Length > 1)
                             {
                                 for (var i = 1; i < arg.Length; i++)
@@ -588,7 +582,7 @@ public sealed class LocalAdmin : IDisposable
     /// </summary>
     private void StartSession()
     {
-        // Terminate the game, if the game process is exists
+        // Terminate the game, if the game process is still running.
         if (_gameProcess is { HasExited: false })
             TerminateGame();
 
@@ -613,7 +607,7 @@ public sealed class LocalAdmin : IDisposable
         ConsoleUtil.WriteLine($"SCP: Secret Laboratory - LocalAdmin v. {VersionString}", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Licensed under The MIT License (use command \"license\" to get license text).", ConsoleColor.Cyan);
-        ConsoleUtil.WriteLine("Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - 2025", ConsoleColor.Cyan);
+        ConsoleUtil.WriteLine($"Copyright by Łukasz \"zabszk\" Jurczyk and KernelError, 2019 - {DateTime.Now:yyyy}", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
         ConsoleUtil.WriteLine("Type 'help' to get list of available commands.", ConsoleColor.Cyan);
         ConsoleUtil.WriteLine(string.Empty, ConsoleColor.Cyan);
@@ -624,41 +618,38 @@ public sealed class LocalAdmin : IDisposable
         ProcessHandler.Handler.Setup();
         AppDomainHandler.Handler.Setup();
 
-        if (OperatingSystem.IsWindows())
-            WindowsHandler.Handler.Setup();
-        else if (OperatingSystem.IsLinux())
+#if OS_WIN32
+        WindowsHandler.Handler.Setup();
+#elif (OS_LINUX && LINUX_SIGNALS)
+        try
         {
-#if LINUX_SIGNALS
-                try
-                {
-                    UnixHandler.Handler.Setup();
-                }
-                catch (DllNotFoundException ex)
-                {
-                    if (!CheckMonoException(ex)) throw;
-                }
-                catch (EntryPointNotFoundException ex)
-                {
-                    if (!CheckMonoException(ex)) throw;
-                }
-                catch (TypeInitializationException ex)
-                {
-                    switch (ex.InnerException)
-                    {
-                        case DllNotFoundException dll:
-                            if (!CheckMonoException(dll)) throw;
-                            break;
-                        case EntryPointNotFoundException dll:
-                            if (!CheckMonoException(dll)) throw;
-                            break;
-                        default:
-                            throw;
-                    }
-                }
-#else
-            ConsoleUtil.WriteLine("Invalid Linux build! Please download LocalAdmin from GitHub here: https://github.com/northwood-studios/LocalAdmin-V2/releases", ConsoleColor.Red);
-#endif
+            UnixHandler.Handler.Setup();
         }
+        catch (DllNotFoundException ex)
+        {
+            if (!CheckMonoException(ex)) throw;
+        }
+        catch (EntryPointNotFoundException ex)
+        {
+            if (!CheckMonoException(ex)) throw;
+        }
+        catch (TypeInitializationException ex)
+        {
+            switch (ex.InnerException)
+            {
+                case DllNotFoundException dll:
+                    if (!CheckMonoException(dll)) throw;
+                    break;
+                case EntryPointNotFoundException dll:
+                    if (!CheckMonoException(dll)) throw;
+                    break;
+                default:
+                    throw;
+            }
+        }
+#else
+        ConsoleUtil.WriteLine("Invalid Linux build! Please download LocalAdmin from GitHub here: https://github.com/northwood-studios/LocalAdmin-V2/releases", ConsoleColor.Red);
+#endif
     }
 
 #if LINUX_SIGNALS

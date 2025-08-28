@@ -13,16 +13,8 @@
         <PackageId>LocalAdmin V2</PackageId>
         <Company>Northwood Studios</Company>
         <Authors>Łukasz "zabszk" Jurczyk, KernelError</Authors>
-        <Copyright>Copyright by Łukasz "zabszk" Jurczyk and KernelError, 2019 - 2025</Copyright>
+        <Copyright>Copyright by Łukasz "zabszk" Jurczyk and KernelError, 2019 - $([System.DateTime]::Now.ToString("yyyy"))</Copyright>
 
-        <SuppressAotAnalysisWarnings>true</SuppressAotAnalysisWarnings>
-        <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
-        <IlcTrimMetadata>true</IlcTrimMetadata>
-        <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
-        <IlcDisableReflection>false</IlcDisableReflection>
-        <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
-        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
-        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
         <Optimize>true</Optimize>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
@@ -33,34 +25,30 @@
         <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
         <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     </PropertyGroup>
-
-    <!-- Linux only exit handling -->
-    <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('linux', StringComparison.OrdinalIgnoreCase))">
-        <DefineConstants>LINUX_SIGNALS</DefineConstants>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <PlatformTarget>x64</PlatformTarget>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <PlatformTarget>x64</PlatformTarget>
-        <DebugType>none</DebugType>
-    </PropertyGroup>
-    <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('linux', StringComparison.OrdinalIgnoreCase))">
-        <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
-    </ItemGroup>
-
-    <PropertyGroup>
-        <PublishAot>true</PublishAot>
+    
+    <PropertyGroup Label="I don't know what this is ¯\_(ツ)_/¯">
+        <SuppressAotAnalysisWarnings>true</SuppressAotAnalysisWarnings>
+        <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
+        <IlcTrimMetadata>true</IlcTrimMetadata>
+        <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
+        <IlcDisableReflection>false</IlcDisableReflection>
+        <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
+        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
     </PropertyGroup>
     
-    <ItemGroup>
-        <Content Include="LICENSE">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
+    <PropertyGroup Label="Common Build Configurations">
+        <PlatformTarget>x64</PlatformTarget>
 
-        <Content Include="NOTICE-LocalAdmin">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
+        <DebugType Condition="'$(Configuration)' == 'Debug'">portable</DebugType>
+        <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+
+        <PublishAot>true</PublishAot>
+    </PropertyGroup>
+
+    <ItemGroup Label="Dependencies (Sources)">
+        <Content Include="LICENSE" CopyToOutputDirectory="Always"></Content>
+        <Content Include="NOTICE-LocalAdmin" CopyToOutputDirectory="Always"></Content>
 
         <None Remove=".editorconfig" />
         <None Remove=".gitignore" />
@@ -69,8 +57,29 @@
         <None Remove="Properties\launchSettings.json" />
         <None Remove="README.md" />
     </ItemGroup>
-    <ItemGroup>
+
+    <ItemGroup Label="Dependencies (Packages)">
         <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
         <PackageReference Include="Utf8Json" Version="1.3.7" />
+    </ItemGroup>
+
+    <!-- ================================== -->
+    <!-- = Windows Specific Configuration = -->
+    <!-- ================================== -->
+
+    <PropertyGroup Condition="$([MSBuild]::IsOSplatform('Windows'))">
+        <DefineConstants>OS_WIN32</DefineConstants>
+    </PropertyGroup>
+
+    <!-- ================================== -->
+    <!-- =  Linux Specific Configuration  = -->
+    <!-- ================================== -->
+
+    <PropertyGroup Condition="$([MSBuild]::IsOSplatform('Linux'))">
+        <DefineConstants>OS_LINUX;LINUX_SIGNALS</DefineConstants>
+    </PropertyGroup>
+    
+    <ItemGroup Condition="$([MSBuild]::IsOSplatform('Linux'))">
+        <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
     </ItemGroup>
 </Project>
