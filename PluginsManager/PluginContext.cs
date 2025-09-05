@@ -40,10 +40,8 @@ internal static class PluginContext
                 return;
             }
 
-            var content = File.ReadAllText(configPath);
-            ConsoleUtil.WriteLine(content);
             var deserializer = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).IgnoreUnmatchedProperties().Build();
-            var newConfig = deserializer.Deserialize<LabApiConfig>(configPath);
+            var newConfig = deserializer.Deserialize<LabApiConfig>(File.ReadAllText(configPath));
 
             if (newConfig is null)
             {
