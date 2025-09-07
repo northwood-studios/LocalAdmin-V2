@@ -885,7 +885,7 @@ public sealed class LocalAdmin : IDisposable
             };
 
             _gameProcess!.EnableRaisingEvents = true;
-            PluginContext.LoadLabApiConfig();
+            PluginPaths.LoadLabApiConfig();
         }
         else
         {

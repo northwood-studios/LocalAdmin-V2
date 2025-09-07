@@ -7,7 +7,7 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace LocalAdmin.V2.PluginsManager;
 
-internal static class PluginContext
+internal static class PluginPaths
 {
     internal const string PortFolder = "$port";
 

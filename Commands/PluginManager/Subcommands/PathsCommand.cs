@@ -12,7 +12,7 @@ internal static class PathsCommand
         {
             if (options.Contains('p', StringComparison.Ordinal))
             {
-                var success = PluginContext.SetPluginsFolder(args[0]);
+                var success = PluginPaths.SetPluginsFolder(args[0]);
 
                 if (!success)
                 {
@@ -22,7 +22,7 @@ internal static class PathsCommand
 
             if (options.Contains('d', StringComparison.Ordinal))
             {
-                var success = PluginContext.SetDependenciesFolder(args[0]);
+                var success = PluginPaths.SetDependenciesFolder(args[0]);
 
                 if (!success)
                 {
@@ -32,7 +32,7 @@ internal static class PathsCommand
         }
 
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Current paths configuration used for plugins installation:", ConsoleColor.Green);
-        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins path: {PluginContext.PluginsFolder}", ConsoleColor.Green);
-        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependencies path: {PluginContext.DependenciesFolder}", ConsoleColor.Green);
+        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins path: {PluginPaths.PluginsFolder}", ConsoleColor.Green);
+        ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependencies path: {PluginPaths.DependenciesFolder}", ConsoleColor.Green);
     }
 }

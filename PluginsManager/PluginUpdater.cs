@@ -222,7 +222,7 @@ internal static class PluginUpdater
                 }
 
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Updating plugin {plugin.Key}...", ConsoleColor.Blue);
-                var dependenciesPath = metadata.Dependencies.Values.FirstOrDefault(d => d.InstalledByPlugins.Contains(plugin.Key))?.FilePath ?? PluginContext.DependenciesFolder;
+                var dependenciesPath = metadata.Dependencies.Values.FirstOrDefault(d => d.InstalledByPlugins.Contains(plugin.Key))?.FilePath ?? PluginPaths.DependenciesFolder;
                 await PluginInstaller.TryInstallPlugin(plugin.Key, cachedPlugin, "latest", pluginFilePath, dependenciesPath, overwrite, ignoreLocks);
             }
 
