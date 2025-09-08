@@ -282,8 +282,18 @@ internal static class PluginInstaller
                         ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Processing dependency {fn}...", ConsoleColor.Blue);
 
                         currentDependencies.Add(fn);
-                        var installed = (metadata!.Dependencies.ContainsKey(fn) && File.Exists(DependenciesPath(metadata.Dependencies[fn].FilePath ?? string.Empty) + fn)) || File.Exists(depPath + fn);
+                        bool installed;
                         var newHash = Sha.Sha256File(dep);
+
+                        if (metadata!.Dependencies.ContainsKey(fn))
+                        {
+                            var path = metadata.Dependencies[fn].FilePath ?? string.Empty;
+                            installed = (PluginPaths.IsValidDependenciesFolder(path) && File.Exists(DependenciesPath(path) + fn)) || File.Exists(depPath + fn);
+                        }
+                        else
+                        {
+                            installed = File.Exists(depPath + fn);
+                        }
 
                         if (!installed && metadata.Dependencies.ContainsKey(fn))
                             metadata.Dependencies.Remove(fn);
@@ -332,7 +342,7 @@ internal static class PluginInstaller
                         {
                             var depMeta = metadata.Dependencies[fn];
                             var depMetaPath = DependenciesPath(depMeta.FilePath ?? string.Empty) + fn;
-                            var currentHash = Sha.Sha256File(File.Exists(depMetaPath) ? depMetaPath : depPath + fn);
+                            var currentHash = Sha.Sha256File(PluginPaths.IsValidDependenciesFolder(depMeta.FilePath ?? string.Empty) && File.Exists(depMetaPath) ? depMetaPath : depPath + fn);
                             var overwrite = false;
 
                             if (currentHash != depMeta.FileHash)
