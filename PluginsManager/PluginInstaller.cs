@@ -169,6 +169,18 @@ internal static class PluginInstaller
 
     internal static async Task<bool> TryInstallPlugin(string name, PluginVersionCache plugin, string targetVersion, string plPath, string dependenciesPath, bool overwriteFiles, bool ignoreLocks)
     {
+        if (!PluginPaths.IsValidPluginsFolder(plPath))
+        {
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] '{plPath}' is not a valid plugin location! Aborting download!", ConsoleColor.Red);
+            return false;
+        }
+
+        if (!PluginPaths.IsValidDependenciesFolder(dependenciesPath))
+        {
+            ConsoleUtil.WriteLine($"[PLUGIN MANAGER] '{dependenciesPath}' is not a valid dependencies location! Aborting download!", ConsoleColor.Red);
+            return false;
+        }
+
         var tempPath = TempPath(Core.LocalAdmin.GamePort);
 
         try
@@ -270,10 +282,10 @@ internal static class PluginInstaller
                         ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Processing dependency {fn}...", ConsoleColor.Blue);
 
                         currentDependencies.Add(fn);
-                        var installed = File.Exists(depPath + fn);
+                        var installed = (metadata!.Dependencies.ContainsKey(fn) && File.Exists(DependenciesPath(metadata.Dependencies[fn].FilePath ?? string.Empty) + fn)) || File.Exists(depPath + fn);
                         var newHash = Sha.Sha256File(dep);
 
-                        if (!installed && metadata!.Dependencies.ContainsKey(fn))
+                        if (!installed && metadata.Dependencies.ContainsKey(fn))
                             metadata.Dependencies.Remove(fn);
 
                         if (!metadata!.Dependencies.ContainsKey(fn))
@@ -319,7 +331,8 @@ internal static class PluginInstaller
                         else
                         {
                             var depMeta = metadata.Dependencies[fn];
-                            var currentHash = Sha.Sha256File(depPath + fn);
+                            var depMetaPath = DependenciesPath(depMeta.FilePath ?? string.Empty) + fn;
+                            var currentHash = Sha.Sha256File(File.Exists(depMetaPath) ? depMetaPath : depPath + fn);
                             var overwrite = false;
 
                             if (currentHash != depMeta.FileHash)
@@ -648,7 +661,7 @@ internal static class PluginInstaller
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Removing redundant dependency {dep}...",
                         ConsoleColor.Blue);
 
-                    if (FileUtils.DeleteIfExists(DependenciesPath(dep.Value.FilePath ?? string.Empty) + dep))
+                    if (FileUtils.DeleteIfExists(DependenciesPath(dep.Value.FilePath ?? string.Empty) + dep.Key))
                         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Dependency deleted.", ConsoleColor.Blue);
                     else ConsoleUtil.WriteLine("[PLUGIN MANAGER] Dependency does not exist.", ConsoleColor.Yellow);
 
@@ -714,9 +727,10 @@ internal static class PluginInstaller
 
             foreach (var pl in metadata.InstalledPlugins)
             {
-                var pluginPath = PluginsPath(pl.Value.FilePath ?? string.Empty) + $"{pl.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
+                var plFolder = pl.Value.FilePath ?? string.Empty;
+                var pluginPath = PluginsPath(plFolder) + $"{pl.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
 
-                if (File.Exists(pluginPath))
+                if (File.Exists(pluginPath) && PluginPaths.IsValidPluginsFolder(plFolder))
                     continue;
 
                 plToRemove.Add(pl.Key, pl.Value);
@@ -728,7 +742,9 @@ internal static class PluginInstaller
 
             foreach (var dep in metadata.Dependencies)
             {
-                if (!File.Exists(DependenciesPath(dep.Value.FilePath ?? string.Empty) + dep.Key))
+                var depFolder = dep.Value.FilePath ?? string.Empty;
+
+                if (!File.Exists(DependenciesPath(depFolder) + dep.Key) || !PluginPaths.IsValidDependenciesFolder(depFolder))
                 {
                     depToRemove.Add(dep.Key, dep.Value);
                     ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Dependency {dep.Key} has been manually removed.", ConsoleColor.Blue);
@@ -760,7 +776,7 @@ internal static class PluginInstaller
                         ConsoleColor.Blue);
 
                     ConsoleUtil.WriteLine(
-                        FileUtils.DeleteIfExists(DependenciesPath(dep.Value.FilePath ?? string.Empty) + dep)
+                        FileUtils.DeleteIfExists(DependenciesPath(dep.Value.FilePath ?? string.Empty) + dep.Key)
                             ? "[PLUGIN MANAGER] Dependency deleted."
                             : "[PLUGIN MANAGER] Dependency does not exist.", ConsoleColor.Blue);
 

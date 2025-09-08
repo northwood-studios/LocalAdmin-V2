@@ -70,6 +70,8 @@ internal static class PluginPaths
                 DependenciesFolder = PortFolder;
                 ConsoleUtil.WriteLine("No dependency paths configured, using default port folder instead", ConsoleColor.Yellow);
             }
+
+            ConsoleUtil.WriteLine("LabAPI paths configuration loaded successfully", ConsoleColor.Blue);
         }
         catch (Exception ex)
         {
@@ -77,6 +79,8 @@ internal static class PluginPaths
             ConsoleUtil.WriteLine("Failed to load LabAPI configuration, using defaults for plugins management", ConsoleColor.Yellow);
         }
     }
+
+    internal static bool IsValidPluginsFolder(string path) => _labApiConfig.PluginPaths.Contains(path);
 
     internal static bool SetPluginsFolder(string path)
     {
@@ -88,6 +92,8 @@ internal static class PluginPaths
         PluginsFolder = path;
         return true;
     }
+
+    internal static bool IsValidDependenciesFolder(string path) => _labApiConfig.DependencyPaths.Contains(path);
 
     internal static bool SetDependenciesFolder(string path)
     {
