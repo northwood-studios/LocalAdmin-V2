@@ -12,7 +12,7 @@ public static class ConsoleUtil
 
     private static readonly object Lck = new object();
 
-    public static readonly string Prompt = "> ";
+    internal static string Prompt = "> ";
 
     private static string? _liveTimestampPadding, _logsTimestampPadding;
 

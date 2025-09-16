@@ -44,6 +44,7 @@ public sealed class LocalAdmin : IDisposable
     private static bool _stdPrint;
     private static bool _ignoreNextRestart;
     private static bool _noTerminalTitle;
+    private static bool _noTerminalPrompt;
     private static int _restarts = -1, _restartsLimit = 4, _restartsTimeWindow = 480; //480 seconds = 8 minutes
 
     internal readonly CommandService CommandService = new();
@@ -309,8 +310,13 @@ public sealed class LocalAdmin : IDisposable
                                         case 'a':
                                             NoPadding = true;
                                             break;
+
                                         case 't':
                                             _noTerminalTitle = true;
+                                            break;
+
+                                        case 'b':
+                                            _noTerminalPrompt = true;
                                             break;
                                     }
                                 }
@@ -389,6 +395,10 @@ public sealed class LocalAdmin : IDisposable
 
                                     case "--noTerminalTitle":
                                         _noTerminalTitle = true;
+                                        break;
+
+                                    case "--noTerminalPrompt":
+                                        _noTerminalPrompt = true;
                                         break;
 
                                     case "--":
@@ -500,6 +510,7 @@ public sealed class LocalAdmin : IDisposable
             }
 
             SetTerminalTitle();
+            SetTerminalPrompt();
 
             if (reconfigure)
                 ConfigWizard.RunConfigWizard(useDefault);
@@ -1213,6 +1224,12 @@ public sealed class LocalAdmin : IDisposable
             return;
 
         Console.Title = BaseWindowTitle;
+    }
+
+    private void SetTerminalPrompt()
+    {
+        if (_noTerminalPrompt)
+            ConsoleUtil.Prompt = "";
     }
 
     internal void SetIdleModeState(bool state)
