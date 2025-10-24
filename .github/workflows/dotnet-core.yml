@@ -38,7 +38,7 @@ jobs:
       run: dotnet publish "LocalAdmin V2.csproj" -r ${{ matrix.target }} -c release -o "${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}"
 
     - name: Upload ${{ matrix.target }} Build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: LocalAdmin-${{ matrix.target }}-${{ matrix.framework }}
         path: ${{ github.workspace }}/builds/${{ matrix.framework }}/${{ matrix.target }}
