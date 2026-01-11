@@ -61,8 +61,7 @@ internal static class InstallCommand
             version = args[1];
         }
 
-        await PluginInstaller.TryInstallPlugin(args[0], res.Result, version,
-            options.Contains('g', StringComparison.Ordinal) ? "global" : Core.LocalAdmin.GamePort.ToString(),
+        await PluginInstaller.TryInstallPlugin(args[0], res.Result, version, PluginPaths.PluginsFolder, PluginPaths.DependenciesFolder,
             options.Contains('o', StringComparison.Ordinal),
             options.Contains('i', StringComparison.Ordinal));
     }

@@ -8,20 +8,13 @@ namespace LocalAdmin.V2.PluginsManager;
 
 internal static class PluginStorage
 {
-    internal static async Task<List<PluginListEntry>?> ListPlugins(string port, bool ignoreLocks, bool skipUpdateCheck)
+    internal static async Task<List<PluginListEntry>?> ListPlugins(bool ignoreLocks, bool skipUpdateCheck)
     {
+        var port = Core.LocalAdmin.GamePort.ToString();
+
         try
         {
-            var pluginsPath = PluginInstaller.PluginsPath(port);
-
-            if (!Directory.Exists(pluginsPath))
-            {
-                ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Plugins path for port {port} doesn't exist. Skipped",
-                    ConsoleColor.Blue);
-                return null;
-            }
-
-            var metadataPath = pluginsPath + "metadata.json";
+            var metadataPath = PluginInstaller.MetadataPath();
 
             if (!File.Exists(metadataPath))
             {
@@ -55,7 +48,7 @@ internal static class PluginStorage
             {
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Performing plugins update check...", ConsoleColor.Yellow);
 
-                if (!await PluginUpdater.CheckForUpdates(port, ignoreLocks))
+                if (!await PluginUpdater.CheckForUpdates(ignoreLocks))
                     ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins update check failed! Aborting plugins update.", ConsoleColor.Yellow);
 
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Reading metadata for port {port}...", ConsoleColor.Blue);
@@ -75,7 +68,7 @@ internal static class PluginStorage
 
             foreach (var plugin in metadata.InstalledPlugins)
             {
-                var pluginPath = pluginsPath + $"{plugin.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
+                var pluginPath = PluginInstaller.PluginsPath(plugin.Value.FilePath ?? string.Empty) + $"{plugin.Key.Replace("/", "_", StringComparison.Ordinal)}.dll";
 
                 if (!File.Exists(pluginPath))
                 {

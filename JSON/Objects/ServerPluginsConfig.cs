@@ -35,6 +35,8 @@ public class InstalledPlugin
 
     public string? FileHash;
 
+    public string? FilePath;
+
     public DateTime InstallationDate;
 
     public DateTime UpdateDate;
@@ -42,11 +44,12 @@ public class InstalledPlugin
     internal InstalledPlugin() { }
 
     [SerializationConstructor]
-    public InstalledPlugin(string? targetVersion, string? currentVersion, string? fileHash, DateTime installationDate, DateTime updateDate)
+    public InstalledPlugin(string? targetVersion, string? currentVersion, string? fileHash, string? filePath, DateTime installationDate, DateTime updateDate)
     {
         TargetVersion = targetVersion;
         CurrentVersion = currentVersion;
         FileHash = fileHash;
+        FilePath = filePath;
         InstallationDate = installationDate;
         UpdateDate = updateDate;
     }
@@ -55,6 +58,8 @@ public class InstalledPlugin
 public class Dependency
 {
     public string? FileHash;
+
+    public string? FilePath;
 
     public DateTime InstallationDate;
 
@@ -70,9 +75,10 @@ public class Dependency
     }
 
     [SerializationConstructor]
-    public Dependency(string? fileHash, DateTime installationDate, DateTime updateDate, bool manuallyInstalled, List<string> installedByPlugins)
+    public Dependency(string? fileHash, string? filePath, DateTime installationDate, DateTime updateDate, bool manuallyInstalled, List<string> installedByPlugins)
     {
         FileHash = fileHash;
+        FilePath = filePath;
         InstallationDate = installationDate;
         UpdateDate = updateDate;
         ManuallyInstalled = manuallyInstalled;
