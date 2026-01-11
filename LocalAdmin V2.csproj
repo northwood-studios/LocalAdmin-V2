@@ -3,9 +3,9 @@
         <OutputType>Exe</OutputType>
         <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
         <TargetFramework Condition="$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net8.0-windows</TargetFramework>
-        <TargetFramework Condition="!$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net8.0</TargetFramework>
+        <TargetFramework Condition="!$(RuntimeIdentifier.StartsWith('win', StringComparison.OrdinalIgnoreCase))">net10.0</TargetFramework>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <LangVersion>10</LangVersion>
+        <LangVersion>14</LangVersion>
         <Nullable>enable</Nullable>
         <RootNamespace>LocalAdmin.V2</RootNamespace>
         <AssemblyName>LocalAdmin</AssemblyName>
@@ -13,7 +13,7 @@
         <PackageId>LocalAdmin V2</PackageId>
         <Company>Northwood Studios</Company>
         <Authors>Łukasz "zabszk" Jurczyk, KernelError</Authors>
-        <Copyright>Copyright by Łukasz "zabszk" Jurczyk and KernelError, 2019 - 2025</Copyright>
+        <Copyright>Copyright by Łukasz "zabszk" Jurczyk and KernelError, 2019 - 2026</Copyright>
 
         <SuppressAotAnalysisWarnings>true</SuppressAotAnalysisWarnings>
         <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
