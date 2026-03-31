@@ -212,7 +212,7 @@ public class TcpServer
                 return;
             }
 
-            MemoryMarshal.Cast<byte, int>(buffer)[0] = length;
+            MemoryMarshal.Write(buffer, length);
 
             _networkStream!.Write(buffer, 0, length + offset);
             ArrayPool<byte>.Shared.Return(buffer);

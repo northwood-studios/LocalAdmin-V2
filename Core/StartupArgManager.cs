@@ -30,7 +30,7 @@ namespace LocalAdmin.V2.Core
                 if (!File.Exists(StartupArgsPath))
                     return startupArgs.ToArray();
 
-                startupArgs.AddRange(File.ReadAllLines(StartupArgsPath).Where(arg => !arg.StartsWith("#", StringComparison.Ordinal)));
+                startupArgs.AddRange(File.ReadAllLines(StartupArgsPath).Where(arg => !arg.StartsWith('#')));
                 return startupArgs.ToArray();
             }
             catch (Exception ex)
