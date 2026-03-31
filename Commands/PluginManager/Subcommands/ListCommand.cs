@@ -10,43 +10,11 @@ internal static class ListCommand
     internal static async void List(string options)
     {
         bool iSet = options.Contains('i', StringComparison.Ordinal),
-            gSet = options.Contains('g', StringComparison.Ordinal),
-            lSet = options.Contains('l', StringComparison.Ordinal),
             sSet = options.Contains('s', StringComparison.Ordinal);
 
-        bool local = false, global = false;
-
-        switch (gSet)
-        {
-            case false when !lSet:
-            case true when lSet:
-                local = global = true;
-                break;
-
-            case true:
-                global = true;
-                break;
-
-            default:
-                local = true;
-                break;
-        }
-
-        List<PluginStorage.PluginListEntry>? localPlugins = null, globalPlugins = null;
-
-        if (local)
-            localPlugins = await PluginStorage.ListPlugins(Core.LocalAdmin.GamePort.ToString(), iSet, sSet);
-
-        if (global)
-            globalPlugins = await PluginStorage.ListPlugins("global", iSet, sSet);
-
+        List<PluginStorage.PluginListEntry>? plugins = await PluginStorage.ListPlugins(iSet, sSet);
         ConsoleUtil.WriteLine(null, ConsoleColor.Gray);
-
-        if (local)
-            PrintPlugins(Core.LocalAdmin.GamePort.ToString(), localPlugins);
-
-        if (global)
-            PrintPlugins("global", globalPlugins);
+        PrintPlugins(Core.LocalAdmin.GamePort.ToString(), plugins);
     }
 
     private static void PrintPlugins(string port, List<PluginStorage.PluginListEntry>? plugins)

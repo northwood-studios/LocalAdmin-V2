@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using LocalAdmin.V2.IO;
 
@@ -8,9 +9,10 @@ namespace LocalAdmin.V2.PluginsManager;
 
 internal static class PluginUpdater
 {
-    internal static async Task<bool> CheckForUpdates(string port, bool ignoreLocks)
+    internal static async Task<bool> CheckForUpdates(bool ignoreLocks)
     {
-        var metadataPath = PluginInstaller.PluginsPath(port) + "metadata.json";
+        var metadataPath = PluginInstaller.MetadataPath();
+        var port = Core.LocalAdmin.GamePort.ToString();
 
         try
         {
@@ -105,14 +107,14 @@ internal static class PluginUpdater
         }
     }
 
-    internal static async Task UpdatePlugins(string port, bool ignoreLocks, bool overwrite, bool skipUpdateCheck)
+    internal static async Task UpdatePlugins(bool ignoreLocks, bool overwrite, bool skipUpdateCheck)
     {
-        var pluginsPath = PluginInstaller.PluginsPath(port);
-        var metadataPath = pluginsPath + "metadata.json";
+        var metadataPath = PluginInstaller.MetadataPath();
+        var port = Core.LocalAdmin.GamePort.ToString();
 
         try
         {
-            if (!File.Exists(metadataPath) || !Directory.Exists(pluginsPath))
+            if (!File.Exists(metadataPath))
             {
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] No metadata file for port {port}. Skipped.", ConsoleColor.Blue);
                 return;
@@ -144,7 +146,7 @@ internal static class PluginUpdater
             {
                 ConsoleUtil.WriteLine("[PLUGIN MANAGER] Performing plugins update check...", ConsoleColor.Yellow);
 
-                if (!await CheckForUpdates(port, ignoreLocks))
+                if (!await CheckForUpdates(ignoreLocks))
                 {
                     ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins update check failed! Aborting plugins update.", ConsoleColor.Red);
                     return;
@@ -173,7 +175,8 @@ internal static class PluginUpdater
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Processing plugin {plugin.Key} ({i}/{metadata.InstalledPlugins.Count})...", ConsoleColor.Blue);
 
                 var safeName = plugin.Key.Replace("/", "_", StringComparison.Ordinal);
-                var pluginPath = pluginsPath + $"{safeName}.dll";
+                var pluginFilePath = plugin.Value.FilePath ?? string.Empty;
+                var pluginPath = PluginInstaller.PluginsPath(pluginFilePath) + $"{safeName}.dll";
 
                 if (!File.Exists(pluginPath))
                 {
@@ -219,7 +222,8 @@ internal static class PluginUpdater
                 }
 
                 ConsoleUtil.WriteLine($"[PLUGIN MANAGER] Updating plugin {plugin.Key}...", ConsoleColor.Blue);
-                await PluginInstaller.TryInstallPlugin(plugin.Key, cachedPlugin, "latest", port, overwrite, ignoreLocks);
+                var dependenciesPath = metadata.Dependencies.Values.FirstOrDefault(d => d.InstalledByPlugins.Contains(plugin.Key))?.FilePath ?? PluginPaths.DependenciesFolder;
+                await PluginInstaller.TryInstallPlugin(plugin.Key, cachedPlugin, "latest", pluginFilePath, dependenciesPath, overwrite, ignoreLocks);
             }
 
             if (toRemove.Count != 0)

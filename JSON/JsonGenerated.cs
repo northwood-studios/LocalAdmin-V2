@@ -1,4 +1,4 @@
-﻿#pragma warning disable 618
+#pragma warning disable 618
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
@@ -485,8 +485,9 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 { JsonWriter.GetEncodedPropertyNameWithoutQuotation("TargetVersion"), 0},
                 { JsonWriter.GetEncodedPropertyNameWithoutQuotation("CurrentVersion"), 1},
                 { JsonWriter.GetEncodedPropertyNameWithoutQuotation("FileHash"), 2},
-                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("InstallationDate"), 3},
-                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("UpdateDate"), 4},
+                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("FilePath"), 3},
+                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("InstallationDate"), 4},
+                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("UpdateDate"), 5},
             };
 
             this.____stringByteKeys = new byte[][]
@@ -494,6 +495,7 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 JsonWriter.GetEncodedPropertyNameWithBeginObject("TargetVersion"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("CurrentVersion"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("FileHash"),
+                JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("FilePath"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("InstallationDate"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("UpdateDate"),
                 
@@ -516,8 +518,10 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             writer.WriteRaw(this.____stringByteKeys[2]);
             formatterResolver.GetFormatterWithVerify<string?>().Serialize(ref writer, value.FileHash, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[3]);
-            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.InstallationDate, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<string?>().Serialize(ref writer, value.FilePath, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[4]);
+            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.InstallationDate, formatterResolver);
+            writer.WriteRaw(this.____stringByteKeys[5]);
             formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.UpdateDate, formatterResolver);
             
             writer.WriteEndObject();
@@ -537,6 +541,8 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             var __CurrentVersion__b__ = false;
             var __FileHash__ = default(string?);
             var __FileHash__b__ = false;
+            var __FilePath__ = default(string?);
+            var __FilePath__b__ = false;
             var __InstallationDate__ = default(global::System.DateTime);
             var __InstallationDate__b__ = false;
             var __UpdateDate__ = default(global::System.DateTime);
@@ -569,10 +575,14 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                         __FileHash__b__ = true;
                         break;
                     case 3:
+                        __FilePath__ = formatterResolver.GetFormatterWithVerify<string?>().Deserialize(ref reader, formatterResolver);
+                        __FilePath__b__ = true;
+                        break;
+                    case 4:
                         __InstallationDate__ = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(ref reader, formatterResolver);
                         __InstallationDate__b__ = true;
                         break;
-                    case 4:
+                    case 5:
                         __UpdateDate__ = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(ref reader, formatterResolver);
                         __UpdateDate__b__ = true;
                         break;
@@ -585,11 +595,12 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 continue;
             }
 
-            var ____result = new global::LocalAdmin.V2.PluginsManager.InstalledPlugin(__TargetVersion__, __CurrentVersion__, __FileHash__, __InstallationDate__, __UpdateDate__);
+            var ____result = new global::LocalAdmin.V2.PluginsManager.InstalledPlugin(__TargetVersion__, __CurrentVersion__, __FileHash__, __FilePath__, __InstallationDate__, __UpdateDate__);
             if(__TargetVersion__b__) ____result.TargetVersion = __TargetVersion__;
             if(__CurrentVersion__b__) ____result.CurrentVersion = __CurrentVersion__;
             if(__FileHash__b__) ____result.FileHash = __FileHash__;
-            if(__InstallationDate__b__) ____result.InstallationDate = __InstallationDate__;
+            if (__FilePath__b__) ____result.FilePath = __FilePath__;
+            if (__InstallationDate__b__) ____result.InstallationDate = __InstallationDate__;
             if(__UpdateDate__b__) ____result.UpdateDate = __UpdateDate__;
 
             return ____result;
@@ -607,15 +618,17 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             this.____keyMapping = new global::Utf8Json.Internal.AutomataDictionary()
             {
                 { JsonWriter.GetEncodedPropertyNameWithoutQuotation("FileHash"), 0},
-                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("InstallationDate"), 1},
-                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("UpdateDate"), 2},
-                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("ManuallyInstalled"), 3},
-                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("InstalledByPlugins"), 4},
+                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("FilePath"), 1},
+                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("InstallationDate"), 2},
+                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("UpdateDate"), 3},
+                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("ManuallyInstalled"), 4},
+                { JsonWriter.GetEncodedPropertyNameWithoutQuotation("InstalledByPlugins"), 5},
             };
 
             this.____stringByteKeys = new byte[][]
             {
                 JsonWriter.GetEncodedPropertyNameWithBeginObject("FileHash"),
+                JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("FilePath"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("InstallationDate"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("UpdateDate"),
                 JsonWriter.GetEncodedPropertyNameWithPrefixValueSeparator("ManuallyInstalled"),
@@ -636,12 +649,14 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
             writer.WriteRaw(this.____stringByteKeys[0]);
             formatterResolver.GetFormatterWithVerify<string?>().Serialize(ref writer, value.FileHash, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[1]);
-            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.InstallationDate, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<string?>().Serialize(ref writer, value.FilePath, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[2]);
-            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.UpdateDate, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.InstallationDate, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[3]);
-            writer.WriteBoolean(value.ManuallyInstalled);
+            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.UpdateDate, formatterResolver);
             writer.WriteRaw(this.____stringByteKeys[4]);
+            writer.WriteBoolean(value.ManuallyInstalled);
+            writer.WriteRaw(this.____stringByteKeys[5]);
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<string>>().Serialize(ref writer, value.InstalledByPlugins, formatterResolver);
             
             writer.WriteEndObject();
@@ -657,6 +672,8 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
 
             var __FileHash__ = default(string?);
             var __FileHash__b__ = false;
+            var __FilePath__ = default(string?);
+            var __FilePath__b__ = false;
             var __InstallationDate__ = default(global::System.DateTime);
             var __InstallationDate__b__ = false;
             var __UpdateDate__ = default(global::System.DateTime);
@@ -685,18 +702,22 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                         __FileHash__b__ = true;
                         break;
                     case 1:
+                        __FilePath__ = formatterResolver.GetFormatterWithVerify<string?>().Deserialize(ref reader, formatterResolver);
+                        __FilePath__b__ = true;
+                        break;
+                    case 2:
                         __InstallationDate__ = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(ref reader, formatterResolver);
                         __InstallationDate__b__ = true;
                         break;
-                    case 2:
+                    case 3:
                         __UpdateDate__ = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(ref reader, formatterResolver);
                         __UpdateDate__b__ = true;
                         break;
-                    case 3:
+                    case 4:
                         __ManuallyInstalled__ = reader.ReadBoolean();
                         __ManuallyInstalled__b__ = true;
                         break;
-                    case 4:
+                    case 5:
                         __InstalledByPlugins__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<string>>().Deserialize(ref reader, formatterResolver);
                         __InstalledByPlugins__b__ = true;
                         break;
@@ -709,9 +730,10 @@ namespace Utf8Json.Formatters.LocalAdmin.V2.PluginsManager
                 continue;
             }
 
-            var ____result = new global::LocalAdmin.V2.PluginsManager.Dependency(__FileHash__, __InstallationDate__, __UpdateDate__, __ManuallyInstalled__, __InstalledByPlugins__);
+            var ____result = new global::LocalAdmin.V2.PluginsManager.Dependency(__FileHash__, __FilePath__, __InstallationDate__, __UpdateDate__, __ManuallyInstalled__, __InstalledByPlugins__);
             if(__FileHash__b__) ____result.FileHash = __FileHash__;
-            if(__InstallationDate__b__) ____result.InstallationDate = __InstallationDate__;
+            if (__FilePath__b__) ____result.FilePath = __FilePath__;
+            if (__InstallationDate__b__) ____result.InstallationDate = __InstallationDate__;
             if(__UpdateDate__b__) ____result.UpdateDate = __UpdateDate__;
             if(__ManuallyInstalled__b__) ____result.ManuallyInstalled = __ManuallyInstalled__;
             if(__InstalledByPlugins__b__) ____result.InstalledByPlugins = __InstalledByPlugins__;
