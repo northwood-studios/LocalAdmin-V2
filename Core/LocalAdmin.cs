@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,6 +35,7 @@ public sealed class LocalAdmin : IDisposable
     private static readonly ConcurrentQueue<string> InputQueue = new();
     private static readonly Stopwatch RestartsStopwatch = new();
     private static string? _previousPat;
+    private static Thread? _keyboardInputReader;
     private static bool _firstRun = true;
     private static string _gameArguments = string.Empty;
     private static bool _exit, _processRefreshFail;
@@ -537,9 +537,9 @@ public sealed class LocalAdmin : IDisposable
             {
                 _exit = false;
                 _firstRun = false;
-                SetupKeyboardInput();
             }
 
+            SetupKeyboardInput();
             RegisterCommands();
             SetupReader();
 
@@ -685,18 +685,25 @@ public sealed class LocalAdmin : IDisposable
 
     private static void SetupKeyboardInput()
     {
-        new Task(() =>
-        {
-            while (!_exit)
-            {
-                var input = Console.ReadLine();
+        if (_keyboardInputReader is { IsAlive: true })
+            return;
 
+        _keyboardInputReader = new Thread(() =>
+        {
+            while (Console.ReadLine() is { } input)
+            {
                 if (string.IsNullOrWhiteSpace(input))
                     continue;
 
                 InputQueue.Enqueue(input);
             }
-        }).Start();
+        })
+        {
+            IsBackground = true,
+            Name = "LocalAdmin Keyboard Input"
+        };
+
+        _keyboardInputReader.Start();
     }
 
     private void SetupReader()
