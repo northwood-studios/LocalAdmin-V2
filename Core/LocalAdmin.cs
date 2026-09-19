@@ -533,11 +533,8 @@ public sealed class LocalAdmin : IDisposable
                 }
             }
 
-            if (_firstRun || _exit)
-            {
-                _exit = false;
-                _firstRun = false;
-            }
+            _exit = false;
+            _firstRun = false;
 
             SetupKeyboardInput();
             RegisterCommands();
