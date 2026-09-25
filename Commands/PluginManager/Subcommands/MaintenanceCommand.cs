@@ -8,33 +8,7 @@ internal static class MaintenanceCommand
 {
     internal static async void Maintenance(string options)
     {
-        bool iSet = options.Contains('i', StringComparison.Ordinal),
-            gSet = options.Contains('g', StringComparison.Ordinal),
-            lSet = options.Contains('l', StringComparison.Ordinal);
-
-        bool local = false, global = false;
-
-        switch (gSet)
-        {
-            case false when !lSet:
-            case true when lSet:
-                local = global = true;
-                break;
-
-            case true:
-                global = true;
-                break;
-
-            default:
-                local = true;
-                break;
-        }
-
-        if (local)
-            await PluginInstaller.PluginsMaintenance(Core.LocalAdmin.GamePort.ToString(), iSet);
-
-        if (global)
-            await PluginInstaller.PluginsMaintenance("global", iSet);
+        await PluginInstaller.PluginsMaintenance(options.Contains('i', StringComparison.Ordinal));
 
         ConsoleUtil.WriteLine("[PLUGIN MANAGER] Plugins maintenance complete.", ConsoleColor.DarkGreen);
     }

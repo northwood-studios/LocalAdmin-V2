@@ -11,6 +11,9 @@ internal static class PathManager
     internal static readonly string GameUserDataRoot;
     internal static readonly string ConfigPath;
     internal static readonly string InternalJsonDataPath;
+    internal static readonly string LabApiRoot;
+    internal static readonly string PluginsPath;
+    internal static readonly string DependenciesPath;
 
     internal static bool CorrectPathFound { get; private set; }
 
@@ -25,6 +28,12 @@ internal static class PathManager
         ConfigPath = $"{GameUserDataRoot}config{Path.DirectorySeparatorChar}";
 
         InternalJsonDataPath = ConfigPath + "localadmin_internal_data.json";
+
+        LabApiRoot = $"{GameUserDataRoot}LabAPI{Path.DirectorySeparatorChar}";
+
+        PluginsPath = $"{LabApiRoot}plugins{Path.DirectorySeparatorChar}";
+
+        DependenciesPath = $"{LabApiRoot}dependencies{Path.DirectorySeparatorChar}";
     }
 
     private static string GetSpecialFolderPath()
