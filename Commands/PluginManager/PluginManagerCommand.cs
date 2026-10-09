@@ -53,22 +53,25 @@ internal sealed class PluginManagerCommand : CommandBase
         {
             ConsoleUtil.WriteLine(string.Empty);
             ConsoleUtil.WriteLine("---- Plugin Manager Commands ----", ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("p check [-igl] - checks for plugins updates.");
-            ConsoleUtil.WriteLine("p install [-igos] <plugin name> [version] - downloads and installs a plugin.");
-            ConsoleUtil.WriteLine("p list [-igls] - lists all installed plugins.");
-            ConsoleUtil.WriteLine("p maintenance [-igl] - runs a plugins maintenance.");
+            ConsoleUtil.WriteLine("p check [-i] - checks for plugins updates.");
+            ConsoleUtil.WriteLine("p install [-ios] <plugin name> [version] - downloads and installs a plugin.");
+            ConsoleUtil.WriteLine("p list [-is] - lists all installed plugins.");
+            ConsoleUtil.WriteLine("p maintenance [-i] - runs a plugins maintenance.");
+            ConsoleUtil.WriteLine("p paths [-pd] [path] - manages paths used for plugins and dependencies.");
             ConsoleUtil.WriteLine("p refresh - refreshes list of plugin aliases.");
-            ConsoleUtil.WriteLine("p remove [-igs] <plugin name> - uninstalls a plugin.");
+            ConsoleUtil.WriteLine("p remove [-is] <plugin name> - uninstalls a plugin.");
             ConsoleUtil.WriteLine("p token [GitHub PAT] - sets, clears or provides more info about GitHub Personal Authentication Token.");
-            ConsoleUtil.WriteLine("p update [-iglos] - updates all installed plugins.");
+            ConsoleUtil.WriteLine("p update [-ios] - updates all installed plugins.");
             ConsoleUtil.WriteLine(string.Empty, ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("<required argument>, [optional argument] -g = global (all ports), -l = local (current port), -o = overwrite", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("<required argument>, [optional argument] -o = overwrite", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("-i = ignore locks (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("-s = skip checking for updates and refreshing list (don't use unless you know what you are doing)", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("-p = change used plugins path", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("-d = change used dependencies path", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("plugin name = GitHub repository author and name, eg. author-name/repo-name", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If no version is specified then latest non-preview release is used.", ConsoleColor.DarkGray);
             ConsoleUtil.WriteLine("If version is specified the plugin will be exempted from \"update\" command.", ConsoleColor.DarkGray);
-            ConsoleUtil.WriteLine("If both -g and -l arguments exist then by default (if unset) BOTH are used.", ConsoleColor.DarkGray);
+            ConsoleUtil.WriteLine("Use the same formatting for paths as in your LabAPI configuration.", ConsoleColor.DarkGray);
 
             if (string.IsNullOrEmpty(Core.LocalAdmin.DataJson!.GitHubPersonalAccessToken))
             {
@@ -109,6 +112,10 @@ internal sealed class PluginManagerCommand : CommandBase
             case "i" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
             case "install" when args == null || args.Length is 0 or > 2 || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
 
+            //Paths
+            case "paths" when args != null && args.Length > 1:
+            case "pth" when args != null && args.Length > 1:
+
             //Remove
             case "remove" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
             case "r" when args is not { Length: 1 } || string.IsNullOrEmpty(args[0]) || args[0].Count(x => x == '/') > 1:
@@ -141,6 +148,11 @@ internal sealed class PluginManagerCommand : CommandBase
                 MaintenanceCommand.Maintenance(options);
                 break;
 
+            case "paths":
+            case "pth":
+                PathsCommand.ManagePaths(args, options);
+                break;
+
             case "refresh":
             case "ref":
             case "rf":
@@ -153,7 +165,6 @@ internal sealed class PluginManagerCommand : CommandBase
             case "uninstall":
             case "un":
                 _ = PluginInstaller.TryUninstallPlugin(args[0],
-                    options.Contains('g', StringComparison.Ordinal) ? "global" : Core.LocalAdmin.GamePort.ToString(),
                     options.Contains('i', StringComparison.Ordinal),
                     options.Contains('s', StringComparison.Ordinal));
                 break;
